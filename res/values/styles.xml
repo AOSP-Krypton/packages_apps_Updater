@@ -11,5 +11,13 @@
      limitations under the License.
 -->
 <resources>
-    <style name="BaseAppTheme" parent="Theme.AppCompat.DayNight" />
+    <style name="PrimaryTextStyle" parent="TextAppearance.AppCompat">
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="BigText" parent="PrimaryTextStyle">
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">28sp</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
 </resources>

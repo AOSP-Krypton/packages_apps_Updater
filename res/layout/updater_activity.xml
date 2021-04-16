@@ -15,27 +15,49 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="@dimen/info_layout_margin"
-        android:layout_marginStart="@dimen/info_layout_margin"
-        android:layout_marginEnd="@dimen/info_layout_margin">
-
-        <ImageView
-            android:id="@+id/updater_logo"
-            android:layout_width="@dimen/updater_logo_size"
-            android:layout_height="@dimen/updater_logo_size"
-            android:layout_marginStart="@dimen/updater_logo_margin_start"
-            android:src="@drawable/ic_updater" />
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/info_layout_margin_top"
+        android:layout_marginStart="@dimen/info_layout_margin_side"
+        android:layout_marginEnd="@dimen/info_layout_margin_side"
+        android:padding="@dimen/info_layout_padding"
+        android:orientation="vertical"
+        android:background="@drawable/rounded_rectangle">
 
         <TextView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_toEndOf="@id/updater_logo"
-            android:layout_marginStart="@dimen/updater_title_margin_start"
-            android:gravity="center"
+            android:layout_height="wrap_content"
+            style="@style/BigText"
             android:text="@string/updater_app_title" />
-    </RelativeLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/margin_title"
+            style="@style/PrimaryTextStyle"
+            android:text="@string/build_info_title" />
+
+        <TextView
+            android:id="@+id/view_device"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/PrimaryTextStyle"
+            android:text="@string/device_name_text" />
+
+        <TextView
+            android:id="@+id/view_version"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/PrimaryTextStyle"
+            android:text="@string/version_text" />
+
+        <TextView
+            android:id="@+id/view_fingerprint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/PrimaryTextStyle"
+            android:text="@string/fingerprint_text" />
+    </LinearLayout>
 
 </LinearLayout>

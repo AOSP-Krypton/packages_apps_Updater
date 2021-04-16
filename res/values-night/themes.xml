@@ -11,19 +11,10 @@
      limitations under the License.
 -->
 <resources>
-    <!-- App name -->
-    <string name="app_name">Updater</string>
-
-    <!-- Main page title -->
-    <string name="updater_app_title">KOSP OTA Updater</string>
-
-    <!-- Menu -->
-    <string name="option_settings_text">Settings</string>
-
-    <!-- Build info -->
-    <string name="build_info_title">Current Build Info</string>
-    <string name="device_name_text">Device</string>
-    <string name="version_text">Version</string>
-    <string name="fingerprint_text">Fingerprint</string>
-
+    <style name="BaseAppTheme" parent="Theme.AppCompat">
+        <item name="colorPrimary">@color/black</item>
+        <item name="colorAccent">@color/green</item>
+        <item name="android:windowBackground">@color/black</item>
+        <item name="android:textColorPrimary">@color/white</item>
+    </style>
 </resources>

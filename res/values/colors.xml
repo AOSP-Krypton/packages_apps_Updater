@@ -11,5 +11,9 @@
      limitations under the License.
 -->
 <resources>
-    <color name="color_grey">#A9A9A9</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="grey">#A9A9A9</color>
+    <color name="blue">#0000FF</color>
+    <color name="green">#00FF00</color>
 </resources>
