@@ -24,6 +24,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.krypton.updater.R;
@@ -36,6 +37,8 @@ public class UpdaterActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.updater_activity);
         setBuildInfo();
     }
@@ -44,7 +47,7 @@ public class UpdaterActivity extends AppCompatActivity {
         Resources res = getResources();
         ((TextView) findViewById(R.id.view_device)).setText(Utils.getDevice(res));
         ((TextView) findViewById(R.id.view_version)).setText(Utils.getVersion(res));
-        ((TextView) findViewById(R.id.view_fingerprint)).setText(Utils.getFingerprint(res));
+        ((TextView) findViewById(R.id.view_timestamp)).setText(Utils.getTimestamp(res));
     }
 
     @Override

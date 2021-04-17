@@ -26,38 +26,25 @@
         android:background="@drawable/rounded_rectangle">
 
         <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             style="@style/BigText"
             android:text="@string/updater_app_title" />
 
         <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/margin_title"
             style="@style/PrimaryTextStyle"
             android:text="@string/build_info_title" />
 
         <TextView
             android:id="@+id/view_device"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            style="@style/PrimaryTextStyle"
-            android:text="@string/device_name_text" />
+            style="@style/PrimaryTextStyle" />
 
         <TextView
             android:id="@+id/view_version"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            style="@style/PrimaryTextStyle"
-            android:text="@string/version_text" />
+            style="@style/PrimaryTextStyle" />
 
         <TextView
-            android:id="@+id/view_fingerprint"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            style="@style/PrimaryTextStyle"
-            android:text="@string/fingerprint_text" />
+            android:id="@+id/view_timestamp"
+            style="@style/PrimaryTextStyle" />
     </LinearLayout>
 
 </LinearLayout>

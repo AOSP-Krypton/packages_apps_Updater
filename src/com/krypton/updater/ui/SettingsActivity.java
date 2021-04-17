@@ -18,6 +18,7 @@ package com.krypton.updater.ui;
 
 import android.os.Bundle;
 
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.krypton.updater.R;
@@ -27,6 +28,15 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.settings_activity);
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setTitle(getResources().getString(R.string.updater_settings_title));
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                .setReorderingAllowed(true)
+                .add(android.R.id.content, new SettingsFragment(), null)
+                .commit();
+        }
     }
+
 }

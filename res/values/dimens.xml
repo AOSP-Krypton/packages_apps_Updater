@@ -20,5 +20,6 @@
 
     <dimen name="margin_title">10dp</dimen>
 
-    <dimen name="updater_title_margin_start">10dp</dimen>
+    <dimen name="alert_dialog_min_width_minor">65%</dimen>
+    <dimen name="alert_dialog_min_width_major">45%</dimen>
 </resources>

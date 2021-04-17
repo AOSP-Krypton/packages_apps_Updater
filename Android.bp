@@ -11,6 +11,7 @@ android_app {
     ],
     static_libs: [
         "androidx.appcompat_appcompat",
+        "androidx.preference_preference",
     ],
     optimize: {
         enabled: false,

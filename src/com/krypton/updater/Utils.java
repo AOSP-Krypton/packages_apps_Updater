@@ -25,7 +25,7 @@ public class Utils {
 
     private static final String PROP_DEVICE = "ro.krypton.build.device";
     private static final String PROP_VERSION = "ro.krypton.build.version";
-    private static final String PROP_FINGERPRINT = "ro.krypton.build.fingerprint";
+    private static final String PROP_TIMESTAMP = "ro.krypton.build.timestamp";
 
     public static String getDevice(Resources res) {
         StringBuilder builder = new StringBuilder(res.getString(R.string.device_name_text));
@@ -41,10 +41,10 @@ public class Utils {
         return builder.toString();
     }
 
-    public static String getFingerprint(Resources res) {
-        StringBuilder builder = new StringBuilder(res.getString(R.string.fingerprint_text));
+    public static String getTimestamp(Resources res) {
+        StringBuilder builder = new StringBuilder(res.getString(R.string.timestamp_text));
         builder.append(": ");
-        builder.append(SystemProperties.get(PROP_FINGERPRINT, "unavailable"));
+        builder.append(SystemProperties.get(PROP_TIMESTAMP, "unavailable"));
         return builder.toString();
     }
 

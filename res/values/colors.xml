@@ -13,7 +13,9 @@
 <resources>
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
-    <color name="grey">#A9A9A9</color>
-    <color name="blue">#0000FF</color>
-    <color name="green">#00FF00</color>
+    <color name="grey">#4D4743</color>
+    <color name="light_grey">#696969</color>
+    <color name="dark_grey">#A9A9A9</color>
+    <color name="colorAccentLight">@*android:color/accent_device_default_light</color>
+    <color name="colorAccentDark">@*android:color/accent_device_default_dark</color>
 </resources>
