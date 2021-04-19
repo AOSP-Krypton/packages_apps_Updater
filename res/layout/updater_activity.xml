@@ -10,10 +10,9 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -21,16 +20,12 @@
         android:layout_marginTop="@dimen/info_layout_margin_top"
         android:layout_marginStart="@dimen/info_layout_margin_side"
         android:layout_marginEnd="@dimen/info_layout_margin_side"
+        android:layout_gravity="center"
         android:padding="@dimen/info_layout_padding"
         android:orientation="vertical"
         android:background="@drawable/rounded_rectangle">
 
         <TextView
-            style="@style/BigText"
-            android:text="@string/updater_app_title" />
-
-        <TextView
-            android:layout_marginTop="@dimen/margin_title"
             style="@style/PrimaryTextStyle"
             android:text="@string/build_info_title" />
 
@@ -45,6 +40,52 @@
         <TextView
             android:id="@+id/view_timestamp"
             style="@style/PrimaryTextStyle" />
+
+        <LinearLayout android:layout_width="match_parent"
+            android:layout_height="@dimen/fetch_build_status_height"
+            android:orientation="horizontal">
+
+            <TextView
+                style="@style/PrimaryTextStyle"
+                android:id="@+id/view_latest_build"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/fetching_build_status_text" />
+
+            <ImageView
+                android:id="@+id/refresh_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/refresh_icon_margin"
+                android:src="@drawable/animated_refresh_icon" />
+
+        </LinearLayout>
+
+        <TextView
+            style="@style/PrimaryTextStyle"
+            android:id="@+id/view_latest_build_version"
+            android:visibility="gone" />
+
+        <TextView
+            style="@style/PrimaryTextStyle"
+            android:id="@+id/view_latest_build_timestamp"
+            android:visibility="gone" />
+
+        <TextView
+            style="@style/PrimaryTextStyle"
+            android:id="@+id/view_latest_build_filename"
+            android:visibility="gone" />
+
     </LinearLayout>
 
-</LinearLayout>
+    <Button
+        android:id="@+id/download_button"
+        style="@style/PrimaryButtonStyle"
+        android:layout_marginEnd="@dimen/button_margin_end"
+        android:layout_marginBottom="@dimen/button_margin_bootm"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:text="@string/download_update"
+        android:visibility="gone" />
+
+</RelativeLayout>

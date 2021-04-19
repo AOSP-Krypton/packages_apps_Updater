@@ -11,7 +11,11 @@
      limitations under the License.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.krypton.updater">
+    package="com.krypton.updater"
+    android:sharedUserId="android.uid.system">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:icon="@drawable/ic_launcher_updater"
@@ -28,7 +32,6 @@
 
         <activity
             android:name=".ui.SettingsActivity"
-            android:label="@string/updater_settings_title"
             android:parentActivityName=".ui.UpdaterActivity" />
     </application>
 </manifest>

@@ -21,29 +21,30 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.View;
 
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.DialogFragment;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import com.krypton.updater.R;
+import com.krypton.updater.Utils;
 
 public class SettingsFragment extends PreferenceFragmentCompat {
 
-    private static final String THEME_KEY = "theme_settings_preference";
     private static SharedPreferences mPrefs;
     private static SharedPreferences.Editor mEditor;
     private static int mCurThemeMode;
-    private static SelectThemeFragment mFragment;
+    private SelectThemeFragment mFragment;
 
     @Override
     public void onCreatePreferences(Bundle bundle, String key) {
         setPreferencesFromResource(R.xml.settings_fragment, key);
-        mPrefs = getActivity().getPreferences(Context.MODE_PRIVATE);
-        mCurThemeMode = mPrefs.getInt(THEME_KEY, 2);
+        mPrefs = getContext().getSharedPreferences(Utils.SHARED_PREFS, Context.MODE_PRIVATE);
+        mCurThemeMode = mPrefs.getInt(Utils.THEME_KEY, 2);
         mEditor = mPrefs.edit();
         mFragment = new SelectThemeFragment();
     }
@@ -52,7 +53,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     public boolean onPreferenceTreeClick(Preference preference) {
         String key = preference.getKey();
         if (key != null) {
-            if (key.equals(THEME_KEY)) {
+            if (key.equals(Utils.THEME_KEY)) {
                 mFragment.show(getParentFragmentManager(), null);
             }
         }
@@ -66,26 +67,17 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             builder.setTitle(R.string.theme_chooser_dialog_title)
                    .setSingleChoiceItems(R.array.theme_modes,
                         mCurThemeMode, (dialog, which) -> updateTheme(which));
-            return builder.create();
+            AlertDialog dialog = builder.create();
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            return dialog;
         }
     }
 
     private static void updateTheme(int mode) {
-        if (mode != mCurThemeMode) {
-            switch (mode) {
-                case 0:
-                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-                    break;
-                case 1:
-                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-                    break;
-                case 2:
-                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
-            }
-            mCurThemeMode = mode;
-            mEditor.putInt(THEME_KEY, mode);
-            mEditor.apply();
-        }
+        Utils.setTheme(mode);
+        mCurThemeMode = mode;
+        mEditor.putInt(Utils.THEME_KEY, mode);
+        mEditor.apply();
     }
 
 }

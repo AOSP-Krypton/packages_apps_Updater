@@ -12,7 +12,7 @@
 -->
 <resources>
     <style name="PrimaryTextStyle" parent="TextAppearance.AppCompat">
-        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textColor">@color/black</item>
     </style>
@@ -21,5 +21,19 @@
         <item name="android:gravity">center</item>
         <item name="android:textSize">28sp</item>
         <item name="android:textAllCaps">true</item>
+    </style>
+
+    <style name="PrimaryButtonStyle" parent="Widget.AppCompat.Button">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingTop">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:paddingBottom">10dp</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:background">@drawable/rounded_rectangle_small_radius</item>
+        <item name="android:backgroundTint">@color/colorAccentLight</item>
     </style>
 </resources>

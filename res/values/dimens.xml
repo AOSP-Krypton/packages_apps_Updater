@@ -11,15 +11,22 @@
      limitations under the License.
 -->
 <resources>
-    <dimen name="info_layout_margin_top">30dp</dimen>
+    <dimen name="info_layout_margin_top">20dp</dimen>
     <dimen name="info_layout_margin_side">15dp</dimen>
     <dimen name="info_layout_padding">15dp</dimen>
 
     <dimen name="rounded_corner_radius">12dp</dimen>
+    <dimen name="rounded_corner_radius_small">4dp</dimen>
     <dimen name="stroke_width">2dp</dimen>
-
-    <dimen name="margin_title">10dp</dimen>
 
     <dimen name="alert_dialog_min_width_minor">65%</dimen>
     <dimen name="alert_dialog_min_width_major">45%</dimen>
+
+    <dimen name="fetch_build_status_height">24dp</dimen>
+    <dimen name="fetch_build_status_margin">10dp</dimen>
+    <dimen name="refresh_icon_margin">8dp</dimen>
+
+    <dimen name="button_padding">2dp</dimen>
+    <dimen name="button_margin_end">25dp</dimen>
+    <dimen name="button_margin_bootm">15dp</dimen>
 </resources>

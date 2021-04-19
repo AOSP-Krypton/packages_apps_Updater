@@ -15,16 +15,24 @@
     <string name="app_name">Updater</string>
 
     <!-- Main page title -->
-    <string name="updater_app_title">KOSP OTA Updater</string>
+    <string name="updater_app_title">KOSP Updater</string>
 
     <!-- Menu -->
     <string name="option_settings_text">Settings</string>
 
     <!-- Build info -->
     <string name="build_info_title">Current Build Info</string>
-    <string name="device_name_text">Device</string>
-    <string name="version_text">Version</string>
-    <string name="timestamp_text">Timestamp</string>
+    <string name="device_name_text">Device:</string>
+    <string name="version_text">Version:</string>
+    <string name="timestamp_text">Timestamp:</string>
+    <string name="filename_text">Filename:</string>
+    <string name="new_build_text">New Update:</string>
+    <string name="latest_build_text">Current build is the latest!</string>
+    <string name="fetching_build_status_text">Fetching build info from github</string>
+    <string name="download_update">Download</string>
+    <string name="unable_to_fetch_details">Unable to fetch details</string>
+    <string name="check_internet">Check internet connectivity</string>
+    <string name="retrying">Retrying in 2 seconds</string>
 
     <!-- Updater Settings -->
     <string name="updater_settings_title">Updater Settings</string>
