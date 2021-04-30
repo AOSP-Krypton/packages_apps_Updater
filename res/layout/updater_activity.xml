@@ -14,78 +14,143 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <FrameLayout
+        android:id="@+id/display_build_info_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/info_layout_margin_top"
+            android:layout_marginStart="@dimen/info_layout_margin_side"
+            android:layout_marginEnd="@dimen/info_layout_margin_side"
+            android:layout_gravity="center_horizontal"
+            android:padding="@dimen/info_layout_padding"
+            android:orientation="vertical"
+            android:background="@drawable/rounded_rectangle">
+
+           <TextView
+                style="@style/PrimaryTextStyle"
+                android:text="@string/build_info_title" />
+
+           <TextView
+                android:id="@+id/view_device"
+                style="@style/PrimaryTextStyle" />
+
+           <TextView
+                android:id="@+id/view_version"
+                style="@style/PrimaryTextStyle" />
+
+           <TextView
+                android:id="@+id/view_timestamp"
+                style="@style/PrimaryTextStyle" />
+
+           <TextView
+                android:id="@+id/view_latest_build"
+                android:layout_marginTop="10dp"
+                style="@style/PrimaryTextStyle"
+                android:text="@string/fetching_build_status_text" />
+
+            <TextView
+                style="@style/PrimaryTextStyle"
+                android:id="@+id/view_latest_build_version"
+                android:visibility="gone" />
+
+            <TextView
+                style="@style/PrimaryTextStyle"
+                android:id="@+id/view_latest_build_timestamp"
+                android:visibility="gone" />
+
+            <TextView
+                style="@style/PrimaryTextStyle"
+                android:id="@+id/view_latest_build_filename"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/refresh_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:layout_gravity="center_horizontal"
+            android:src="@drawable/animated_refresh_icon" />
+
+    </FrameLayout>
+
     <LinearLayout
+        android:id="@+id/download_progress_layout"
+        android:layout_below="@id/display_build_info_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/info_layout_margin_top"
-        android:layout_marginStart="@dimen/info_layout_margin_side"
-        android:layout_marginEnd="@dimen/info_layout_margin_side"
-        android:layout_gravity="center"
-        android:padding="@dimen/info_layout_padding"
         android:orientation="vertical"
+        android:layout_marginTop="@dimen/download_layout_margin_top"
+        android:layout_marginStart="@dimen/download_layout_margin_side"
+        android:layout_marginEnd="@dimen/download_layout_margin_side"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        android:padding="@dimen/download_layout_padding"
         android:background="@drawable/rounded_rectangle">
 
         <TextView
             style="@style/PrimaryTextStyle"
-            android:text="@string/build_info_title" />
+            android:id="@+id/download_status" />
 
-        <TextView
-            android:id="@+id/view_device"
-            style="@style/PrimaryTextStyle" />
-
-        <TextView
-            android:id="@+id/view_version"
-            style="@style/PrimaryTextStyle" />
-
-        <TextView
-            android:id="@+id/view_timestamp"
-            style="@style/PrimaryTextStyle" />
-
-        <LinearLayout android:layout_width="match_parent"
-            android:layout_height="@dimen/fetch_build_status_height"
-            android:orientation="horizontal">
-
-            <TextView
-                style="@style/PrimaryTextStyle"
-                android:id="@+id/view_latest_build"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="@string/fetching_build_status_text" />
-
-            <ImageView
-                android:id="@+id/refresh_icon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/refresh_icon_margin"
-                android:src="@drawable/animated_refresh_icon" />
-
-        </LinearLayout>
+        <ProgressBar
+            android:id="@+id/download_progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            android:max="100"
+            android:min="0" />
 
         <TextView
             style="@style/PrimaryTextStyle"
-            android:id="@+id/view_latest_build_version"
-            android:visibility="gone" />
-
-        <TextView
-            style="@style/PrimaryTextStyle"
-            android:id="@+id/view_latest_build_timestamp"
-            android:visibility="gone" />
-
-        <TextView
-            style="@style/PrimaryTextStyle"
-            android:id="@+id/view_latest_build_filename"
-            android:visibility="gone" />
+            android:id="@+id/numeric_download_progress"
+            android:layout_gravity="end"
+            android:text="@string/numeric_download_progress_text_default" />
 
     </LinearLayout>
+
+    <Button
+        android:id="@+id/pause_resume_button"
+        style="@style/PrimaryButtonStyle"
+        android:layout_marginEnd="@dimen/button_margin_end"
+        android:layout_marginTop="@dimen/button_margin_top"
+        android:layout_below="@id/download_progress_layout"
+        android:layout_toStartOf="@id/cancel_button"
+        android:text="@string/pause_download"
+        android:onClick="pauseOrResumeDownload" />
+
+    <Button
+        android:id="@+id/cancel_button"
+        style="@style/PrimaryButtonStyle"
+        android:layout_marginEnd="@dimen/button_margin_end"
+        android:layout_marginTop="@dimen/button_margin_top"
+        android:layout_below="@id/download_progress_layout"
+        android:layout_alignParentEnd="true"
+        android:text="@string/cancel_download"
+        android:onClick="cancelDownload" />
 
     <Button
         android:id="@+id/download_button"
         style="@style/PrimaryButtonStyle"
         android:layout_marginEnd="@dimen/button_margin_end"
-        android:layout_marginBottom="@dimen/button_margin_bootm"
-        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="@dimen/button_margin_bottom"
         android:layout_alignParentEnd="true"
-        android:text="@string/download_update"
-        android:visibility="gone" />
+        android:layout_alignParentBottom="true"
+        android:text="@string/start_download"
+        android:onClick="startDownload" />
+
+    <Button
+        android:id="@+id/update_button"
+        style="@style/PrimaryButtonStyle"
+        android:layout_marginEnd="@dimen/button_margin_end"
+        android:layout_marginBottom="@dimen/button_margin_bottom"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:text="@string/update"
+        android:onClick="startUpdate" />
 
 </RelativeLayout>

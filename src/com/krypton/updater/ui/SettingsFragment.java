@@ -16,17 +16,15 @@
 
 package com.krypton.updater.ui;
 
-import android.app.ActionBar;
+import static android.graphics.Color.TRANSPARENT;
+
 import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.view.View;
+import android.preference.PreferenceManager;
 
-import androidx.fragment.app.DialogFragment;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
@@ -35,18 +33,16 @@ import com.krypton.updater.Utils;
 
 public class SettingsFragment extends PreferenceFragmentCompat {
 
-    private static SharedPreferences mPrefs;
-    private static SharedPreferences.Editor mEditor;
-    private static int mCurThemeMode;
-    private SelectThemeFragment mFragment;
+    private SharedPreferences sharedPrefs;
+    private SharedPreferences.Editor editor;
+    private int currThemeMode;
 
     @Override
     public void onCreatePreferences(Bundle bundle, String key) {
         setPreferencesFromResource(R.xml.settings_fragment, key);
-        mPrefs = getContext().getSharedPreferences(Utils.SHARED_PREFS, Context.MODE_PRIVATE);
-        mCurThemeMode = mPrefs.getInt(Utils.THEME_KEY, 2);
-        mEditor = mPrefs.edit();
-        mFragment = new SelectThemeFragment();
+        sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        currThemeMode = sharedPrefs.getInt(Utils.THEME_KEY, 2);
+        editor = sharedPrefs.edit();
     }
 
     @Override
@@ -54,30 +50,24 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         String key = preference.getKey();
         if (key != null) {
             if (key.equals(Utils.THEME_KEY)) {
-                mFragment.show(getParentFragmentManager(), null);
+                AlertDialog themePickerDialog = new AlertDialog.Builder(getActivity(), R.style.AlertDialogTheme)
+                    .setTitle(R.string.theme_chooser_dialog_title)
+                    .setSingleChoiceItems(R.array.theme_modes,
+                            currThemeMode, (dialog, which) -> {
+                                dialog.dismiss();
+                                currThemeMode = which;
+                                editor.putInt(Utils.THEME_KEY, currThemeMode);
+                                editor.apply();
+                                UpdaterActivity.setAppTheme(currThemeMode);
+                            })
+                    .create();
+                themePickerDialog.getWindow().setBackgroundDrawable(new ColorDrawable(TRANSPARENT));
+                themePickerDialog.show();
+            } else if (key.equals(Utils.DOWNLOAD_LOCATION_KEY)) {
+                getActivity().startActivityForResult(
+                    new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), Utils.REQUEST_CODE);
             }
         }
         return super.onPreferenceTreeClick(preference);
     }
-
-    public static class SelectThemeFragment extends DialogFragment {
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.AlertDialogTheme);
-            builder.setTitle(R.string.theme_chooser_dialog_title)
-                   .setSingleChoiceItems(R.array.theme_modes,
-                        mCurThemeMode, (dialog, which) -> updateTheme(which));
-            AlertDialog dialog = builder.create();
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-            return dialog;
-        }
-    }
-
-    private static void updateTheme(int mode) {
-        Utils.setTheme(mode);
-        mCurThemeMode = mode;
-        mEditor.putInt(Utils.THEME_KEY, mode);
-        mEditor.apply();
-    }
-
 }

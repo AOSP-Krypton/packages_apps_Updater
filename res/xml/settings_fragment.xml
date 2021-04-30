@@ -17,4 +17,9 @@
         android:title="@string/theme_settings_title"
         android:summary="@string/theme_settings_summary" />
 
+    <Preference
+        android:key="download_location_preference"
+        android:title="@string/download_location_preference_title"
+        android:summary="@string/download_location_preference_summary" />
+
 </PreferenceScreen>

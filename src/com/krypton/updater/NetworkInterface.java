@@ -16,55 +16,160 @@
 
 package com.krypton.updater;
 
+import android.net.Network;
+
+import com.krypton.updater.BuildInfo;
+
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.net.URL;
+
+import javax.net.ssl.HttpsURLConnection;
+
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class NetworkInterface {
 
-    private boolean buildInfoUpdated = false;
-    private boolean newBuildFound = false;
+    private BuildInfo buildInfo;
+    private URL downloadUrl;
+    private HttpsURLConnection dlConnection;
+    private FileOutputStream outStream;
+    private FileChannel fileChannel;
+    private ReadableByteChannel rByteChannel;
+    private Listener listener;
 
-    private URL parseUrl() throws Exception {
-        String device = Utils.getDevice();
-        StringBuilder urlBuilder = new StringBuilder(Utils.BUILD_INFO_SOURCE_URL);
-        urlBuilder.append(device + "/" + device + ".json");
-        return new URL(urlBuilder.toString());
+    public static interface Listener {
+        public void onStartedDownload();
     }
 
-    private void parseJSON(JSONObject obj) throws Exception {
-        JSONObject buildInfo = obj.getJSONObject(Utils.BUILD_INFO);
-        String version = buildInfo.getString(Utils.BUILD_VERSION);
-        String timestamp = buildInfo.getString(Utils.BUILD_TIMESTAMP);
-        String filename = buildInfo.getString(Utils.BUILD_NAME);
-        newBuildFound = Utils.checkBuildStatus(version, timestamp);
-        if (newBuildFound) {
-            Utils.buildInfo = new Utils.BuildInfo(version, timestamp, filename);
+    public void setListener(Listener listener) {
+        this.listener = listener;
+    }
+
+    public void setDownloadUrl() {
+        StringBuilder urlBuilder = new StringBuilder(Utils.DOWNLOAD_SOURCE_URL);
+        urlBuilder.append(Utils.getDevice());
+        urlBuilder.append('/');
+        urlBuilder.append(buildInfo.getFileName());
+        try {
+            downloadUrl = new URL(urlBuilder.toString());
+        } catch(MalformedURLException e) {
+            Utils.log(e);
         }
     }
 
-    public void fetchBuildInfo() throws Exception {
-        buildInfoUpdated = newBuildFound = false;
-        InputStream rawStream = parseUrl().openStream();
+    private String parseJSONUrl() {
+        String device = Utils.getDevice();
+        StringBuilder urlBuilder = new StringBuilder(Utils.BUILD_INFO_SOURCE_URL);
+        urlBuilder.append(device + "/" + device + ".json");
+        return urlBuilder.toString();
+    }
+
+    public BuildInfo fetchBuildInfo() throws IOException, JSONException {
+        StringBuilder builder = new StringBuilder();
+        InputStream rawStream;
+
+        try {
+            rawStream = new URL(parseJSONUrl()).openStream();
+        } catch(MalformedURLException e) {
+            return null;
+        }
+
         BufferedReader buffReader = new BufferedReader(new InputStreamReader(rawStream));
         String tmp = buffReader.readLine();
-        StringBuilder builder = new StringBuilder();
+
         while (tmp != null) {
             builder.append(tmp);
             tmp = buffReader.readLine();
         }
+        buffReader.close();
         rawStream.close();
-        parseJSON(new JSONObject(builder.toString()));
-        buildInfoUpdated = true;
+
+        JSONObject jsonObj = new JSONObject(builder.toString()).getJSONObject(Utils.BUILD_INFO);
+        String version = jsonObj.getString(Utils.BUILD_VERSION);
+        String timestamp = jsonObj.getString(Utils.BUILD_TIMESTAMP);
+        if (Utils.checkBuildStatus(version, timestamp)) {
+            String fileName = jsonObj.getString(Utils.BUILD_NAME);
+            long fileSize = jsonObj.getLong(Utils.BUILD_SIZE);
+            buildInfo = new BuildInfo(version, timestamp, fileName, fileSize);
+            return buildInfo;
+        }
+
+        return null;
     }
 
-    public boolean hasUpdatedBuildInfo() {
-        return buildInfoUpdated;
+    public void startDownload(File file, Network network, long startByte) {
+        boolean append = startByte != 0;
+        try {
+            if (network != null) {
+                dlConnection = (HttpsURLConnection) network.openConnection(downloadUrl);
+            }
+        } catch (IOException e) {
+            return;
+        }
+
+        if (append) {
+            dlConnection.setRequestProperty("Range", "bytes=" + startByte + "-");
+        }
+
+        try {
+            rByteChannel = Channels.newChannel(dlConnection.getInputStream());
+        } catch(IOException e) {
+            return;
+        }
+
+        try {
+            outStream = new FileOutputStream(file, append);
+        } catch(FileNotFoundException e) {
+            Utils.log(e);
+            return;
+        }
+
+        fileChannel = outStream.getChannel();
+        listener.onStartedDownload();
+        try {
+            fileChannel.transferFrom(rByteChannel, 0, Long.MAX_VALUE);
+        } catch (IOException e) {
+            return;
+        }
     }
 
-    public boolean hasFoundNewBuild() {
-        return newBuildFound;
+    public void cleanup() {
+        try {
+            if (fileChannel != null) {
+                fileChannel.close();
+            }
+            if (outStream != null) {
+                outStream.close();
+            }
+            if (dlConnection != null) {
+                dlConnection.disconnect();
+            }
+        } catch (IOException e) {
+            // Do nothing
+        }
+    }
+
+    public long getDownloadProgress() {
+        try {
+            if (fileChannel != null && fileChannel.isOpen()) {
+                return fileChannel.size();
+            } else {
+                return -1;
+            }
+        } catch(IOException e) {
+            // Do nothing
+        }
+        return -1;
     }
 }

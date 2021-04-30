@@ -16,12 +16,19 @@
 
 package com.krypton.updater.ui;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.krypton.updater.R;
+import com.krypton.updater.Utils;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -39,4 +46,21 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode,
+            Intent resultData) {
+        if (requestCode == Utils.REQUEST_CODE
+                && resultCode == Activity.RESULT_OK) {
+            if (resultData != null) {
+                Uri uri = resultData.getData();
+                if (uri != null) {
+                    SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+                    SharedPreferences.Editor editor = sharedPrefs.edit();
+                    editor.putString(Utils.DOWNLOAD_LOCATION_KEY,
+                        uri.getLastPathSegment().replace("primary:", "/sdcard/"));
+                    editor.apply();
+                }
+            }
+        }
+    }
 }

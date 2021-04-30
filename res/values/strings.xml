@@ -21,7 +21,7 @@
     <string name="option_settings_text">Settings</string>
 
     <!-- Build info -->
-    <string name="build_info_title">Current Build Info</string>
+    <string name="build_info_title">Current Build Info:</string>
     <string name="device_name_text">Device:</string>
     <string name="version_text">Version:</string>
     <string name="timestamp_text">Timestamp:</string>
@@ -29,15 +29,33 @@
     <string name="new_build_text">New Update:</string>
     <string name="latest_build_text">Current build is the latest!</string>
     <string name="fetching_build_status_text">Fetching build info from github</string>
-    <string name="download_update">Download</string>
-    <string name="unable_to_fetch_details">Unable to fetch details</string>
+    <string name="unable_to_fetch_details">Unable to fetch details, swipe down to try again</string>
     <string name="check_internet">Check internet connectivity</string>
-    <string name="retrying">Retrying in 2 seconds</string>
+    <string name="no_internet">No internet connection</string>
+
+    <!-- Download -->
+    <string name="start_download">Download</string>
+    <string name="pause_download">Pause</string>
+    <string name="cancel_download">Cancel</string>
+    <string name="resume_download">Resume</string>
+    <string name="status_downloading">Downloading</string>
+    <string name="status_no_internet">No internet, download paused</string>
+    <string name="status_download_paused">Download paused</string>
+    <string name="status_download_finished">Download finished</string>
+    <string name="status_download_cancelled">Download cancelled</string>
+    <string name="numeric_download_progress_text_default">0/0 MB</string>
+    <string name="delete_file">Delete downloaded file?</string>
+    <string name="unable_to_delete">Unable to delete downloaded file</string>
+
+    <!-- Updater -->
+    <string name="update">Update</string>
 
     <!-- Updater Settings -->
     <string name="updater_settings_title">Updater Settings</string>
     <string name="theme_settings_title">Theme</string>
     <string name="theme_settings_summary">Select theme for the app</string>
-    <string name="theme_chooser_dialog_title">Select Theme</string>
+    <string name="theme_chooser_dialog_title">Select theme</string>
+    <string name="download_location_preference_title">Select download location</string>
+    <string name="download_location_preference_summary">Choose a different location (default /sdcard/Download) to store downloaded zips</string>
 
 </resources>
