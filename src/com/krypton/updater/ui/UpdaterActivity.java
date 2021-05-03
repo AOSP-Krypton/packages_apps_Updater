@@ -69,6 +69,7 @@ public class UpdaterActivity extends AppCompatActivity {
     private TextView latestBuildVersion;
     private TextView latestBuildTimestamp;
     private TextView latestBuildName;
+    private TextView latestBuildMd5sum;
     private ImageView refreshIcon;
     private Button downloadButton;
     private Button pauseButton;
@@ -95,15 +96,20 @@ public class UpdaterActivity extends AppCompatActivity {
         setCurrentBuildInfo();
         setWidgets();
         Intent intent = new Intent(this, NetworkService.class);
-        intent.putExtra(Utils.MESSAGE, Utils.APP_IN_FOREGROUND);
         intent.putExtra("Handler", new Messenger(handler));
         startService(intent);
         updateBuildInfo();
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
+    public void onResume() {
+        super.onResume();
+        startService(Utils.APP_IN_FOREGROUND);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
         startService(Utils.APP_IN_BACKGROUND);
     }
 
@@ -171,6 +177,7 @@ public class UpdaterActivity extends AppCompatActivity {
         latestBuildVersion = (TextView) findViewById(R.id.view_latest_build_version);
         latestBuildTimestamp = (TextView) findViewById(R.id.view_latest_build_timestamp);
         latestBuildName = (TextView) findViewById(R.id.view_latest_build_filename);
+        latestBuildMd5sum = (TextView) findViewById(R.id.view_latest_build_md5sum);
 
         downloadButton = (Button) findViewById(R.id.download_button);
         pauseButton = (Button) findViewById(R.id.pause_resume_button);
@@ -198,9 +205,8 @@ public class UpdaterActivity extends AppCompatActivity {
     }
 
     private void resetBuildInfo() {
-        latestBuildVersion.setVisibility(GONE);
-        latestBuildTimestamp.setVisibility(GONE);
-        latestBuildName.setVisibility(GONE);
+        setVisibile(false, latestBuildVersion,
+            latestBuildTimestamp, latestBuildName, latestBuildMd5sum);
     }
 
     private void restoreActivityState(Bundle bundle) {
@@ -215,7 +221,7 @@ public class UpdaterActivity extends AppCompatActivity {
             downloadPaused = bundle.getBoolean(Utils.DOWNLOAD_PAUSED);
         }
         setNewBuildInfo(bundle.getBundle(Utils.BUILD_INFO));
-        setDownloadLayout(bundle.getInt(Utils.DOWNLOADED_SIZE), bundle.getInt(Utils.BUILD_SIZE));
+        setDownloadLayout(bundle);
     }
 
     private void setBuildFetchResult(int textId) {
@@ -226,15 +232,15 @@ public class UpdaterActivity extends AppCompatActivity {
     private void setNewBuildInfo(Bundle bundle) {
         latestBuildVersion.setText(getString(R.string.version_text,
             bundle.getString(Utils.BUILD_VERSION)));
-        latestBuildVersion.setVisibility(VISIBLE);
-
         latestBuildTimestamp.setText(getString(R.string.timestamp_text,
             bundle.getString(Utils.BUILD_TIMESTAMP)));
-        latestBuildTimestamp.setVisibility(VISIBLE);
-
         latestBuildName.setText(getString(R.string.filename_text,
             bundle.getString(Utils.BUILD_NAME)));
-        latestBuildName.setVisibility(VISIBLE);
+        latestBuildMd5sum.setText(getString(R.string.md5sum_text,
+            bundle.getString(Utils.BUILD_MD5SUM)));
+
+        setVisibile(true, latestBuildVersion,
+            latestBuildTimestamp, latestBuildName, latestBuildMd5sum);
 
         if (!downloading && !downloadFinished) {
             downloadButton.setVisibility(VISIBLE);
@@ -253,8 +259,11 @@ public class UpdaterActivity extends AppCompatActivity {
         pauseButton.setText(getString(R.string.resume_download));
     }
 
-    private void setDownloadLayout(int downloaded, int total) {
-        updateProgressBar((downloaded*100)/total);
+    private void setDownloadLayout(Bundle bundle) {
+        long downloaded = bundle.getLong(Utils.DOWNLOADED_SIZE);
+        long total = bundle.getLong(Utils.BUILD_SIZE);
+        downloadButton.setVisibility(GONE);
+        updateProgressBar((int) ((downloaded*100)/total));
         if (downloading) {
             downloadStatus.setText(getString(downloadPaused ?
                 R.string.status_download_paused : R.string.status_downloading));
@@ -263,10 +272,9 @@ public class UpdaterActivity extends AppCompatActivity {
         }
         downloadProgressLayout.setVisibility(VISIBLE);
         if (downloading) {
-            pauseButton.setVisibility(VISIBLE);
             pauseButton.setText(getString(downloadPaused ?
                 R.string.resume_download : R.string.pause_download));
-            cancelButton.setVisibility(VISIBLE);
+            setVisibile(true, pauseButton, cancelButton);
         }
         updateDownloadedSize(Utils.parseProgressText(downloaded, total));
     }
@@ -282,13 +290,17 @@ public class UpdaterActivity extends AppCompatActivity {
         downloadProgressBar.setProgress(progress);
     }
 
+    private void setVisibile(boolean visible, View... views) {
+        for (View v: views) {
+            v.setVisibility(visible ? VISIBLE : GONE);
+        }
+    }
+
     private void setDownloadFinished() {
         downloading = false;
         downloadFinished = true;
         downloadStatus.setText(getString(R.string.status_download_finished));
-        downloadButton.setVisibility(GONE);
-        pauseButton.setVisibility(GONE);
-        cancelButton.setVisibility(GONE);
+        setVisibile(false, downloadButton, pauseButton, cancelButton);
         updateButton.setVisibility(VISIBLE);
     }
 
@@ -300,6 +312,7 @@ public class UpdaterActivity extends AppCompatActivity {
         v.performHapticFeedback(KEYBOARD_PRESS);
         v.setVisibility(GONE);
         downloading = true;
+        downloadFinished = false;
         startService(Utils.START_DOWNLOAD);
     }
 
@@ -316,10 +329,8 @@ public class UpdaterActivity extends AppCompatActivity {
 
     public void cancelDownload(View v) {
         v.performHapticFeedback(KEYBOARD_PRESS);
-        v.setVisibility(GONE);
         downloading = false;
-        pauseButton.setVisibility(GONE);
-        downloadProgressLayout.setVisibility(GONE);
+        setVisibile(false, v, pauseButton, downloadProgressLayout);
         downloadButton.setVisibility(VISIBLE);
         startService(Utils.CANCEL_DOWNLOAD);
         AlertDialog confirmDeleteDialog = new AlertDialog.Builder(this, R.style.AlertDialogTheme)
@@ -366,7 +377,7 @@ public class UpdaterActivity extends AppCompatActivity {
             switch (msg.what) {
                 case Utils.UPDATED_BUILD_INFO:
                     setBuildFetchResult(R.string.new_build_text);
-                    setNewBuildInfo((Bundle) msg.obj);
+                    setNewBuildInfo(msg.getData());
                     break;
                 case Utils.FAILED_TO_UPDATE_BUILD_INFO:
                     resetBuildInfo();
@@ -380,10 +391,10 @@ public class UpdaterActivity extends AppCompatActivity {
                     break;
                 case Utils.RESTORE_STATUS:
                     setBuildFetchResult(R.string.new_build_text);
-                    restoreActivityState((Bundle) msg.obj);
+                    restoreActivityState(msg.getData());
                     break;
                 case Utils.SET_INITIAL_DOWNLOAD_PROGRESS:
-                    setDownloadLayout(msg.arg1, msg.arg2);
+                    setDownloadLayout(msg.getData());
                     break;
                 case Utils.UPDATE_DOWNLOADED_SIZE:
                     updateDownloadedSize((String) msg.obj);

@@ -61,6 +61,7 @@ public final class Utils {
     public static final String BUILD_TIMESTAMP = "timestamp";
     public static final String BUILD_NAME = "filename";
     public static final String BUILD_SIZE = "filesize";
+    public static final String BUILD_MD5SUM = "md5sum";
 
     public static final String DOWNLOAD_SOURCE_URL = "https://sourceforge.net/projects/kosp/files/KOSP-A11-Releases/";
     public static final String DEFAULT_DOWNLOAD_LOC = "/sdcard/Download";

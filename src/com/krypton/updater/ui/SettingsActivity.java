@@ -19,7 +19,6 @@ package com.krypton.updater.ui;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -37,7 +36,7 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
-        actionBar.setTitle(getResources().getString(R.string.updater_settings_title));
+        actionBar.setTitle(R.string.updater_settings_title);
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
                 .setReorderingAllowed(true)
@@ -54,11 +53,11 @@ public class SettingsActivity extends AppCompatActivity {
             if (resultData != null) {
                 Uri uri = resultData.getData();
                 if (uri != null) {
-                    SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-                    SharedPreferences.Editor editor = sharedPrefs.edit();
-                    editor.putString(Utils.DOWNLOAD_LOCATION_KEY,
-                        uri.getLastPathSegment().replace("primary:", "/sdcard/"));
-                    editor.apply();
+                    PreferenceManager.getDefaultSharedPreferences(this)
+                        .edit()
+                        .putString(Utils.DOWNLOAD_LOCATION_KEY,
+                            uri.getLastPathSegment().replace("primary:", "/sdcard/"))
+                        .apply();
                 }
             }
         }

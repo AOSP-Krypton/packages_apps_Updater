@@ -23,7 +23,7 @@ public final class BuildInfo {
     private Bundle bundle;
 
     public BuildInfo(String version, String timestamp,
-            String fileName, long size) {
+            String fileName, long size, String md5sum) {
         if (bundle == null) {
             bundle = new Bundle();
         }
@@ -31,6 +31,7 @@ public final class BuildInfo {
         bundle.putString(Utils.BUILD_TIMESTAMP, timestamp);
         bundle.putString(Utils.BUILD_NAME, fileName);
         bundle.putLong(Utils.BUILD_SIZE, size);
+        bundle.putString(Utils.BUILD_MD5SUM, md5sum);
     }
 
     public Bundle getBundle() {
@@ -43,13 +44,17 @@ public final class BuildInfo {
 
     public String getTimestamp() {
         return bundle.getString(Utils.BUILD_TIMESTAMP);
-
     }
+
     public String getFileName() {
         return bundle.getString(Utils.BUILD_NAME);
     }
 
     public long getFileSize() {
         return bundle.getLong(Utils.BUILD_SIZE);
+    }
+
+    public String getMd5sum() {
+        return bundle.getString(Utils.BUILD_MD5SUM);
     }
 }

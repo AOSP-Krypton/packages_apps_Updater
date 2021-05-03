@@ -34,7 +34,6 @@ import com.krypton.updater.Utils;
 public class SettingsFragment extends PreferenceFragmentCompat {
 
     private SharedPreferences sharedPrefs;
-    private SharedPreferences.Editor editor;
     private int currThemeMode;
 
     @Override
@@ -42,31 +41,31 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         setPreferencesFromResource(R.xml.settings_fragment, key);
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         currThemeMode = sharedPrefs.getInt(Utils.THEME_KEY, 2);
-        editor = sharedPrefs.edit();
     }
 
     @Override
     public boolean onPreferenceTreeClick(Preference preference) {
         String key = preference.getKey();
-        if (key != null) {
-            if (key.equals(Utils.THEME_KEY)) {
-                AlertDialog themePickerDialog = new AlertDialog.Builder(getActivity(), R.style.AlertDialogTheme)
-                    .setTitle(R.string.theme_chooser_dialog_title)
-                    .setSingleChoiceItems(R.array.theme_modes,
-                            currThemeMode, (dialog, which) -> {
-                                dialog.dismiss();
-                                currThemeMode = which;
-                                editor.putInt(Utils.THEME_KEY, currThemeMode);
-                                editor.apply();
-                                UpdaterActivity.setAppTheme(currThemeMode);
-                            })
-                    .create();
-                themePickerDialog.getWindow().setBackgroundDrawable(new ColorDrawable(TRANSPARENT));
-                themePickerDialog.show();
-            } else if (key.equals(Utils.DOWNLOAD_LOCATION_KEY)) {
-                getActivity().startActivityForResult(
-                    new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), Utils.REQUEST_CODE);
-            }
+        if (key.equals(Utils.THEME_KEY)) {
+            AlertDialog themePickerDialog = new AlertDialog.Builder(getActivity(), R.style.AlertDialogTheme)
+                .setTitle(R.string.theme_chooser_dialog_title)
+                .setSingleChoiceItems(R.array.theme_modes,
+                        currThemeMode, (dialog, which) -> {
+                            dialog.dismiss();
+                            currThemeMode = which;
+                            sharedPrefs.edit()
+                                .putInt(Utils.THEME_KEY, currThemeMode)
+                                .apply();
+                            UpdaterActivity.setAppTheme(currThemeMode);
+                        })
+                .create();
+            themePickerDialog.getWindow().setBackgroundDrawable(new ColorDrawable(TRANSPARENT));
+            themePickerDialog.show();
+            return true;
+        } else if (key.equals(Utils.DOWNLOAD_LOCATION_KEY)) {
+            getActivity().startActivityForResult(
+                new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), Utils.REQUEST_CODE);
+            return true;
         }
         return super.onPreferenceTreeClick(preference);
     }

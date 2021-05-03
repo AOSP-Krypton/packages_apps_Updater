@@ -67,6 +67,11 @@
                 android:id="@+id/view_latest_build_filename"
                 android:visibility="gone" />
 
+            <TextView
+                style="@style/PrimaryTextStyle"
+                android:id="@+id/view_latest_build_md5sum"
+                android:visibility="gone" />
+
         </LinearLayout>
 
         <ImageView

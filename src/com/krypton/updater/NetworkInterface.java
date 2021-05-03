@@ -42,6 +42,7 @@ public class NetworkInterface {
 
     private BuildInfo buildInfo;
     private URL downloadUrl;
+    private boolean setUrl = false;
     private HttpsURLConnection dlConnection;
     private FileOutputStream outStream;
     private FileChannel fileChannel;
@@ -63,6 +64,7 @@ public class NetworkInterface {
         urlBuilder.append(buildInfo.getFileName());
         try {
             downloadUrl = new URL(urlBuilder.toString());
+            setUrl = true;
         } catch(MalformedURLException e) {
             Utils.log(e);
         }
@@ -99,9 +101,11 @@ public class NetworkInterface {
         String version = jsonObj.getString(Utils.BUILD_VERSION);
         String timestamp = jsonObj.getString(Utils.BUILD_TIMESTAMP);
         if (Utils.checkBuildStatus(version, timestamp)) {
-            String fileName = jsonObj.getString(Utils.BUILD_NAME);
-            long fileSize = jsonObj.getLong(Utils.BUILD_SIZE);
-            buildInfo = new BuildInfo(version, timestamp, fileName, fileSize);
+            setUrl = false;
+            buildInfo = new BuildInfo(version, timestamp,
+                jsonObj.getString(Utils.BUILD_NAME),
+                jsonObj.getLong(Utils.BUILD_SIZE),
+                jsonObj.getString(Utils.BUILD_MD5SUM));
             return buildInfo;
         }
 
@@ -150,6 +154,7 @@ public class NetworkInterface {
                 fileChannel.close();
             }
             if (outStream != null) {
+                outStream.flush();
                 outStream.close();
             }
             if (dlConnection != null) {
@@ -171,5 +176,9 @@ public class NetworkInterface {
             // Do nothing
         }
         return -1;
+    }
+
+    public boolean hasSetUrl() {
+        return setUrl;
     }
 }

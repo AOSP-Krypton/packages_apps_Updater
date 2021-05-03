@@ -19,7 +19,6 @@ package com.krypton.updater.services;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.os.Bundle;
@@ -49,8 +48,7 @@ import java.util.concurrent.Future;
 
 import org.json.JSONException;
 
-public class NetworkService extends Service implements NetworkInterface.Listener,
-            SharedPreferences.OnSharedPreferenceChangeListener {
+public class NetworkService extends Service implements NetworkInterface.Listener {
 
     private ServiceHandler serviceHandler;
     private NetworkInterface netInterface;
@@ -63,6 +61,7 @@ public class NetworkService extends Service implements NetworkInterface.Listener
     private BuildInfo buildInfo;
     private String downloadLocation;
     private File file;
+    private int startId;
     private boolean downloadStarted = false;
     private boolean downloadPaused = false;
     private boolean downloadFinished = false;
@@ -91,14 +90,16 @@ public class NetworkService extends Service implements NetworkInterface.Listener
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        this.startId = startId;
         if (intent != null) {
-            Messenger tmp = intent.getParcelableExtra("Handler");
-            if (tmp != null) {
-                uiMessenger = tmp;
+            if (intent.hasExtra("Handler")) {
+                uiMessenger = intent.getParcelableExtra("Handler");
+            } else {
+                Message msg = serviceHandler.obtainMessage();
+                msg.what = intent.getIntExtra(Utils.MESSAGE, -1);
+                msg.arg1 = startId;
+                serviceHandler.sendMessage(msg);
             }
-            Message msg = serviceHandler.obtainMessage();
-            msg.what = intent.getIntExtra(Utils.MESSAGE, -1);
-            serviceHandler.sendMessage(msg);
         }
         return START_STICKY;
     }
@@ -137,8 +138,8 @@ public class NetworkService extends Service implements NetworkInterface.Listener
 
                 if (foundNew) {
                     totalSize = buildInfo.getFileSize();
-                    updateFile();
                     sendMessage(Utils.UPDATED_BUILD_INFO, buildInfo.getBundle());
+                    checkIfAlreadyDownloaded();
                 } else {
                     sendMessage(Utils.NO_NEW_BUILD_FOUND);
                 }
@@ -162,26 +163,13 @@ public class NetworkService extends Service implements NetworkInterface.Listener
                             sendMessage(downloadProgress, Utils.UPDATE_PROGRESS_BAR);
                         }
                         if (downloadedSize == totalSize) {
-                            downloadFinished();
+                            setDownloadFinished();
                             return;
                         }
-                    } else if (size == totalSize) {
-                        downloadedSize = totalSize;
-                        downloadFinished();
-                        return;
                     }
                     size = netInterface.getDownloadProgress();
                 }
             });
-    }
-
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPrefs, String key) {
-        if (key.equals(Utils.DOWNLOAD_LOCATION_KEY)) {
-            downloadLocation = sharedPrefs.getString(
-                Utils.DOWNLOAD_LOCATION_KEY, Utils.DEFAULT_DOWNLOAD_LOC);
-            updateFile();
-        }
     }
 
     private void sendMessage(int what) {
@@ -189,25 +177,30 @@ public class NetworkService extends Service implements NetworkInterface.Listener
     }
 
     private void sendMessage(int arg1, int what) {
-        sendMessage(arg1, -1, what);
-    }
-
-    private void sendMessage(int arg1, int arg2, int what) {
-        sendMessage(arg1, arg2, what, null);
+        sendMessage(arg1, -1, what, null, null);
     }
 
     private void sendMessage(int what, Object obj) {
-        sendMessage(-1, -1, what, obj);
+        sendMessage(-1, -1, what, null, obj);
     }
 
-    private void sendMessage(int arg1, int arg2, int what, Object obj) {
+    private void sendMessage(int what, Bundle bundle) {
+        sendMessage(-1, -1, what, bundle, null);
+    }
+
+    private void sendMessage(int arg1, int arg2, int what, Bundle bundle, Object obj) {
         if (!isInBackround && uiMessenger != null) {
             try {
                 Message msg = Message.obtain();
                 msg.arg1 = arg1;
                 msg.arg2 = arg2;
                 msg.what = what;
-                msg.obj = obj;
+                if (bundle != null) {
+                    msg.setData(bundle);
+                }
+                if (obj != null) {
+                    msg.obj = obj;
+                }
                 uiMessenger.send(msg);
             } catch (RemoteException e) {
                 Utils.log("Target handler does not exist anymore");
@@ -217,20 +210,17 @@ public class NetworkService extends Service implements NetworkInterface.Listener
 
     private void startDownload() {
         executor.execute(() -> {
-            if (file.exists()) {
-                downloadedSize = file.length();
-            }
-            if (downloadedSize == totalSize) {
-                downloadFinished = true;
-                restoreState();
-            } else {
-                downloadStarted = true;
-                toast(R.string.status_downloading);
+            checkIfAlreadyDownloaded();
+            downloadStarted = true;
+            serviceHandler.post(() -> toast(R.string.status_downloading));
+            if (!netInterface.hasSetUrl()) {
                 netInterface.setDownloadUrl();
-                sendMessage(Utils.convertToMB(downloadedSize),
-                    Utils.convertToMB(totalSize), Utils.SET_INITIAL_DOWNLOAD_PROGRESS);
-                netInterface.startDownload(file, network, downloadedSize);
             }
+            Bundle bundle = new Bundle();
+            bundle.putLong(Utils.DOWNLOADED_SIZE, downloadedSize);
+            bundle.putLong(Utils.BUILD_SIZE, totalSize);
+            sendMessage(Utils.SET_INITIAL_DOWNLOAD_PROGRESS, bundle);
+            netInterface.startDownload(file, network, downloadedSize);
         });
     }
 
@@ -242,23 +232,32 @@ public class NetworkService extends Service implements NetworkInterface.Listener
         } else {
             bundle.putBoolean(Utils.DOWNLOAD_FINISHED, downloadFinished);
         }
-        bundle.putInt(Utils.DOWNLOADED_SIZE, Utils.convertToMB(downloadedSize));
-        bundle.putInt(Utils.BUILD_SIZE, Utils.convertToMB(totalSize));
+        bundle.putLong(Utils.DOWNLOADED_SIZE, downloadedSize);
+        bundle.putLong(Utils.BUILD_SIZE, totalSize);
         sendMessage(Utils.RESTORE_STATUS, bundle);
     }
 
-    private void updateFile() {
+    private void checkIfAlreadyDownloaded() {
         File dir = new File(downloadLocation);
         if (!dir.exists() || (dir.exists() && !dir.isDirectory())) {
             dir.mkdirs();
         }
         file = new File(dir, buildInfo.getFileName());
+        if (file.exists()) {
+            downloadedSize = file.length();
+        }
+        if (downloadedSize == totalSize) {
+            downloadFinished = true;
+            restoreState();
+            stopSelf(startId);
+        }
     }
 
     private void reset() {
         toast(R.string.status_download_cancelled);
         downloadStarted = false;
         downloadPaused = false;
+        downloadFinished = false;
         if (future != null) {
             future.cancel(true);
         }
@@ -278,10 +277,11 @@ public class NetworkService extends Service implements NetworkInterface.Listener
         }
     }
 
-    private void downloadFinished() {
+    private void setDownloadFinished() {
         downloadStarted = false;
         downloadFinished = true;
         sendMessage(Utils.FINISHED_DOWNLOAD);
+        stopSelf(startId);
     }
 
     private void waitAndDispatchMessage() {

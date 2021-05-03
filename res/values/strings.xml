@@ -26,6 +26,7 @@
     <string name="version_text">Version:</string>
     <string name="timestamp_text">Timestamp:</string>
     <string name="filename_text">Filename:</string>
+    <string name="md5sum_text">md5sum:</string>
     <string name="new_build_text">New Update:</string>
     <string name="latest_build_text">Current build is the latest!</string>
     <string name="fetching_build_status_text">Fetching build info from github</string>
