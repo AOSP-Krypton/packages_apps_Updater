@@ -31,7 +31,6 @@
     <string name="latest_build_text">Current build is the latest!</string>
     <string name="fetching_build_status_text">Fetching build info from github</string>
     <string name="unable_to_fetch_details">Unable to fetch details, swipe down to try again</string>
-    <string name="check_internet">Check internet connectivity</string>
     <string name="no_internet">No internet connection</string>
 
     <!-- Download -->
@@ -47,6 +46,8 @@
     <string name="numeric_download_progress_text_default">0/0 MB</string>
     <string name="delete_file">Delete downloaded file?</string>
     <string name="unable_to_delete">Unable to delete downloaded file</string>
+    <string name="file_not_found">Downloaded zip file not found</string>
+    <string name="md5sum_check_failed">md5sum check failed, redownload the file</string>
 
     <!-- Updater -->
     <string name="update">Update</string>

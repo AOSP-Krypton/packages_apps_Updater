@@ -26,10 +26,6 @@
     <dimen name="fetch_build_status_margin">10dp</dimen>
     <dimen name="refresh_icon_margin">8dp</dimen>
 
-    <dimen name="download_layout_margin_top">20dp</dimen>
-    <dimen name="download_layout_margin_side">15dp</dimen>
-    <dimen name="download_layout_padding">15dp</dimen>
-
     <dimen name="button_padding">10dp</dimen>
     <dimen name="button_min_width">75dp</dimen>
     <dimen name="button_margin_end">25dp</dimen>

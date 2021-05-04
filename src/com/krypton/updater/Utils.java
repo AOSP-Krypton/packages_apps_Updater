@@ -26,26 +26,6 @@ public final class Utils {
 
     private static final String TAG = "Utils";
 
-    // Message constants
-    public static final String MESSAGE = "com.krypton.updater.MESSAGE";
-    public static final int APP_IN_BACKGROUND = 1;
-    public static final int APP_IN_FOREGROUND = 2;
-    public static final int FAILED_TO_UPDATE_BUILD_INFO = 3;
-    public static final int FETCH_BUILD_INFO = 4;
-    public static final int SET_INITIAL_DOWNLOAD_PROGRESS = 5;
-    public static final int FINISHED_DOWNLOAD = 6;
-    public static final int NO_INTERNET = 7;
-    public static final int NO_NEW_BUILD_FOUND = 8;
-    public static final int START_DOWNLOAD = 9;
-    public static final int UPDATED_BUILD_INFO = 10;
-    public static final int UPDATE_DOWNLOADED_SIZE = 11;
-    public static final int UPDATE_PROGRESS_BAR = 12;
-    public static final int RESTORE_STATUS = 13;
-    public static final int PAUSE_DOWNLOAD = 14;
-    public static final int RESUME_DOWNLOAD = 15;
-    public static final int CANCEL_DOWNLOAD = 16;
-    public static final int DELETE_DOWNLOAD = 17;
-
     public static final String SHARED_PREFS = "com.krypton.updater.shared_prefs";
     public static final String THEME_KEY = "theme_settings_preference";
     public static final String DOWNLOAD_LOCATION_KEY = "download_location_preference";
@@ -65,6 +45,7 @@ public final class Utils {
 
     public static final String DOWNLOAD_SOURCE_URL = "https://sourceforge.net/projects/kosp/files/KOSP-A11-Releases/";
     public static final String DEFAULT_DOWNLOAD_LOC = "/sdcard/Download";
+
     public static final String DOWNLOADED_SIZE = "downloadedSize";
     public static final String DOWNLOAD_PAUSED = "downloadPaused";
     public static final String DOWNLOAD_FINISHED = "downloadFinished";

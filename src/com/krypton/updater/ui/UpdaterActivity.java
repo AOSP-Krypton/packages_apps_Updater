@@ -22,8 +22,11 @@ import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
 import android.app.AlertDialog;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Animatable2.AnimationCallback;
 import android.graphics.drawable.AnimatedVectorDrawable;
@@ -31,6 +34,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
@@ -52,12 +56,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.view.GestureDetectorCompat;
 
+import com.krypton.updater.BuildInfo;
 import com.krypton.updater.R;
 import com.krypton.updater.services.NetworkService;
+import com.krypton.updater.services.NetworkService.NetworkBinder;
 import com.krypton.updater.Utils;
 
-public class UpdaterActivity extends AppCompatActivity {
+public class UpdaterActivity extends AppCompatActivity
+            implements NetworkService.ActivityCallbacks {
 
+    private NetworkService networkService;
     private Handler handler;
     private GestureDetectorCompat detector;
     private LinearLayout downloadProgressLayout;
@@ -76,15 +84,35 @@ public class UpdaterActivity extends AppCompatActivity {
     private Button cancelButton;
     private Button updateButton;
     private SharedPreferences sharedPrefs;
+    private boolean bound = false;
     private boolean hasUpdatedBuildInfo = true;
     private boolean downloading = false;
     private boolean downloadPaused = false;
     private boolean downloadFinished = false;
 
+    private ServiceConnection connection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder binder) {
+            networkService = ((NetworkBinder) binder).getService();
+            networkService.registerCallback(UpdaterActivity.this);
+            bound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            networkService.unregisterCallback();
+            bound = false;
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        handler = new UIHandler(Looper.getMainLooper());
+        handler = new Handler(Looper.getMainLooper());
+        Intent intent = new Intent(this, NetworkService.class);
+        startService(intent);
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         setAppTheme(sharedPrefs.getInt(Utils.THEME_KEY, 2));
         ActionBar actionBar = getSupportActionBar();
@@ -95,22 +123,16 @@ public class UpdaterActivity extends AppCompatActivity {
         detector = new GestureDetectorCompat(this, new GestureListener());
         setCurrentBuildInfo();
         setWidgets();
-        Intent intent = new Intent(this, NetworkService.class);
-        intent.putExtra("Handler", new Messenger(handler));
-        startService(intent);
         updateBuildInfo();
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        startService(Utils.APP_IN_FOREGROUND);
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        startService(Utils.APP_IN_BACKGROUND);
+    public void onStop() {
+        super.onStop();
+        if (bound) {
+            unbindService(connection);
+            bound = false;
+        }
     }
 
     @Override
@@ -135,6 +157,94 @@ public class UpdaterActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void restoreActivityState(Bundle bundle) {
+        handler.post(() -> setBuildFetchResult(R.string.new_build_text));
+        hasUpdatedBuildInfo = true;
+        if (bundle.getBoolean(Utils.DOWNLOAD_FINISHED)) {
+            downloading = false;
+            downloadFinished = true;
+        } else {
+            downloading = true;
+            downloadFinished = false;
+            downloadPaused = bundle.getBoolean(Utils.DOWNLOAD_PAUSED);
+        }
+        handler.post(() -> {
+            setNewBuildInfo(bundle.getBundle(Utils.BUILD_INFO));
+            setDownloadLayout(bundle.getLong(Utils.DOWNLOADED_SIZE),
+                bundle.getLong(Utils.BUILD_SIZE));
+        });
+    }
+
+    @Override
+    public void onFetchedBuildInfo(Bundle bundle) {
+        handler.post(() -> {
+            setBuildFetchResult(R.string.new_build_text);
+            setNewBuildInfo(bundle);
+        });
+    }
+
+    @Override
+    public void fetchBuildInfoFailed() {
+        handler.post(() -> setBuildFetchResult(R.string.unable_to_fetch_details));
+    }
+
+    @Override
+    public void noUpdates() {
+        handler.post(() -> {
+            setVisibile(false, latestBuildVersion,
+                latestBuildTimestamp, latestBuildName, latestBuildMd5sum);
+                setBuildFetchResult(R.string.latest_build_text);
+        });
+    }
+
+    @Override
+    public void noInternet() {
+        handler.post(() -> showToastAndResumeButton());
+    }
+
+    @Override
+    public void setInitialProgress(long downloaded, long total) {
+        handler.post(() -> setDownloadLayout(downloaded, total));
+    }
+
+    @Override
+    public void updateDownloadedSize(String progressText) {
+        handler.post(() -> downloadProgressText.setText(progressText));
+    }
+
+    @Override
+    public void updateDownloadProgress(int progress) {
+        handler.post(() -> {
+            if (downloadProgressBar.isIndeterminate()) {
+            downloadProgressBar.setIndeterminate(false);
+            }
+            downloadProgressBar.setProgress(progress);
+        });
+    }
+
+    @Override
+    public void onFinishedDownload() {
+        downloading = false;
+        downloadFinished = true;
+        handler.post(() -> {
+            downloadStatus.setText(getString(R.string.status_download_finished));
+            setVisibile(false, downloadButton, pauseButton, cancelButton);
+        });
+    }
+
+    @Override
+    public void md5sumCheckPassed(boolean passed) {
+        handler.post(() -> {
+            if (passed) {
+                updateButton.setVisibility(VISIBLE);
+            } else {
+                Toast.makeText(this, getString(R.string.md5sum_check_failed), Toast.LENGTH_SHORT).show();
+                resetDownloadLayout();
+            }
+        });
     }
 
     protected static void setAppTheme(int mode) {
@@ -199,29 +309,11 @@ public class UpdaterActivity extends AppCompatActivity {
         }
         refreshIcon.setVisibility(VISIBLE);
         animatedDrawable.start();
-        Intent intent = new Intent(this, NetworkService.class);
-        intent.putExtra(Utils.MESSAGE, Utils.FETCH_BUILD_INFO);
-        startService(intent);
-    }
-
-    private void resetBuildInfo() {
-        setVisibile(false, latestBuildVersion,
-            latestBuildTimestamp, latestBuildName, latestBuildMd5sum);
-    }
-
-    private void restoreActivityState(Bundle bundle) {
-        hasUpdatedBuildInfo = true;
-        if (bundle.getBoolean(Utils.DOWNLOAD_FINISHED)) {
-            downloading = false;
-            downloadFinished = true;
-            updateButton.setVisibility(VISIBLE);
-        } else {
-            downloading = true;
-            downloadFinished = false;
-            downloadPaused = bundle.getBoolean(Utils.DOWNLOAD_PAUSED);
-        }
-        setNewBuildInfo(bundle.getBundle(Utils.BUILD_INFO));
-        setDownloadLayout(bundle);
+        handler.postDelayed(() -> {
+            if (bound) {
+                networkService.updateBuildInfo();
+            }
+        }, 50);
     }
 
     private void setBuildFetchResult(int textId) {
@@ -259,11 +351,9 @@ public class UpdaterActivity extends AppCompatActivity {
         pauseButton.setText(getString(R.string.resume_download));
     }
 
-    private void setDownloadLayout(Bundle bundle) {
-        long downloaded = bundle.getLong(Utils.DOWNLOADED_SIZE);
-        long total = bundle.getLong(Utils.BUILD_SIZE);
+    private void setDownloadLayout(long downloaded, long total) {
         downloadButton.setVisibility(GONE);
-        updateProgressBar((int) ((downloaded*100)/total));
+        updateDownloadProgress((int) ((downloaded*100)/total));
         if (downloading) {
             downloadStatus.setText(getString(downloadPaused ?
                 R.string.status_download_paused : R.string.status_downloading));
@@ -279,33 +369,21 @@ public class UpdaterActivity extends AppCompatActivity {
         updateDownloadedSize(Utils.parseProgressText(downloaded, total));
     }
 
-    private void updateDownloadedSize(String text) {
-        downloadProgressText.setText(text);
-    }
-
-    private void updateProgressBar(int progress) {
-        if (downloadProgressBar.isIndeterminate()) {
-            downloadProgressBar.setIndeterminate(false);
-        }
-        downloadProgressBar.setProgress(progress);
-    }
-
     private void setVisibile(boolean visible, View... views) {
         for (View v: views) {
             v.setVisibility(visible ? VISIBLE : GONE);
         }
     }
 
-    private void setDownloadFinished() {
-        downloading = false;
-        downloadFinished = true;
-        downloadStatus.setText(getString(R.string.status_download_finished));
-        setVisibile(false, downloadButton, pauseButton, cancelButton);
-        updateButton.setVisibility(VISIBLE);
+    private void resetDownloadLayout() {
+        downloadFinished = false;
+        downloadProgressLayout.setVisibility(GONE);
+        downloadButton.setVisibility(VISIBLE);
     }
 
     public void startUpdate(View v) {
-        // Nothing for now
+        v.performHapticFeedback(KEYBOARD_PRESS);
+        //v.setVisibility(GONE);
     }
 
     public void startDownload(View v) {
@@ -313,7 +391,9 @@ public class UpdaterActivity extends AppCompatActivity {
         v.setVisibility(GONE);
         downloading = true;
         downloadFinished = false;
-        startService(Utils.START_DOWNLOAD);
+        if (bound) {
+            networkService.startDownload();
+        }
     }
 
     public void pauseOrResumeDownload(View v) {
@@ -323,8 +403,9 @@ public class UpdaterActivity extends AppCompatActivity {
             R.string.status_download_paused : R.string.status_downloading));
         pauseButton.setText(getString(downloadPaused ?
             R.string.resume_download : R.string.pause_download));
-        startService(downloadPaused ?
-            Utils.PAUSE_DOWNLOAD : Utils.RESUME_DOWNLOAD);
+        if (bound) {
+            networkService.pauseDownload(downloadPaused);
+        }
     }
 
     public void cancelDownload(View v) {
@@ -332,25 +413,27 @@ public class UpdaterActivity extends AppCompatActivity {
         downloading = false;
         setVisibile(false, v, pauseButton, downloadProgressLayout);
         downloadButton.setVisibility(VISIBLE);
-        startService(Utils.CANCEL_DOWNLOAD);
+        if (bound) {
+            networkService.cancelDownload();
+        }
+        showDeleteDialog();
+    }
+
+    private void showDeleteDialog() {
         AlertDialog confirmDeleteDialog = new AlertDialog.Builder(this, R.style.AlertDialogTheme)
             .setTitle(R.string.delete_file)
             .setCancelable(false)
             .setPositiveButton(android.R.string.yes, (dialog, which) -> {
                     dialog.dismiss();
-                    startService(Utils.DELETE_DOWNLOAD);
+                    if (bound) {
+                        networkService.deleteDownload();
+                    }
                 })
             .setNegativeButton(android.R.string.no, (dialog, which) ->
                     dialog.dismiss())
             .create();
         confirmDeleteDialog.getWindow().setBackgroundDrawable(new ColorDrawable(TRANSPARENT));
         confirmDeleteDialog.show();
-    }
-
-    private void startService(int msgId) {
-        Intent intent = new Intent(this, NetworkService.class);
-        intent.putExtra(Utils.MESSAGE, msgId);
-        startService(intent);
     }
 
     private final class GestureListener extends GestureDetector.SimpleOnGestureListener {
@@ -360,57 +443,10 @@ public class UpdaterActivity extends AppCompatActivity {
                 float velocityX, float velocityY) {
             float diffX = event2.getRawX() - event1.getRawX();
             float diffY = event2.getRawY() - event1.getRawY();
-            if (Math.abs(diffX) < 100 && diffY > 300 && !downloading) {
+            if (Math.abs(diffX) < 100 && diffY > 300 && !downloading && !downloadFinished) {
                 updateBuildInfo();
             }
             return true;
-        }
-    }
-
-    private final class UIHandler extends Handler {
-        public UIHandler(Looper looper) {
-            super(looper);
-        }
-
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case Utils.UPDATED_BUILD_INFO:
-                    setBuildFetchResult(R.string.new_build_text);
-                    setNewBuildInfo(msg.getData());
-                    break;
-                case Utils.FAILED_TO_UPDATE_BUILD_INFO:
-                    resetBuildInfo();
-                    setBuildFetchResult(R.string.unable_to_fetch_details);
-                    Toast.makeText(UpdaterActivity.this,
-                        getString(R.string.check_internet), Toast.LENGTH_SHORT).show();
-                    break;
-                case Utils.NO_NEW_BUILD_FOUND:
-                    resetBuildInfo();
-                    setBuildFetchResult(R.string.latest_build_text);
-                    break;
-                case Utils.RESTORE_STATUS:
-                    setBuildFetchResult(R.string.new_build_text);
-                    restoreActivityState(msg.getData());
-                    break;
-                case Utils.SET_INITIAL_DOWNLOAD_PROGRESS:
-                    setDownloadLayout(msg.getData());
-                    break;
-                case Utils.UPDATE_DOWNLOADED_SIZE:
-                    updateDownloadedSize((String) msg.obj);
-                    break;
-                case Utils.UPDATE_PROGRESS_BAR:
-                    updateProgressBar(msg.arg1);
-                    break;
-                case Utils.NO_INTERNET:
-                    showToastAndResumeButton();
-                    break;
-                case Utils.FINISHED_DOWNLOAD:
-                    setDownloadFinished();
-                    break;
-                default:
-                    Utils.log("Unknown message", msg.what);
-            }
         }
     }
 }

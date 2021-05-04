@@ -21,6 +21,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.Network;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -39,7 +40,11 @@ import com.krypton.updater.NetworkInterface;
 import com.krypton.updater.Utils;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.Duration;
 import java.util.concurrent.Executors;
@@ -50,7 +55,9 @@ import org.json.JSONException;
 
 public class NetworkService extends Service implements NetworkInterface.Listener {
 
-    private ServiceHandler serviceHandler;
+    private Handler handler;
+    private IBinder networkBinder = new NetworkBinder();
+    private ActivityCallbacks callback;
     private NetworkInterface netInterface;
     private ConnectivityManager connManager;
     private NetCallback netCallback;
@@ -65,7 +72,6 @@ public class NetworkService extends Service implements NetworkInterface.Listener
     private boolean downloadStarted = false;
     private boolean downloadPaused = false;
     private boolean downloadFinished = false;
-    private boolean isInBackround = false;
     private boolean isOnline = false;
     private long totalSize = 0;
     private long downloadedSize = 0;
@@ -76,8 +82,7 @@ public class NetworkService extends Service implements NetworkInterface.Listener
         final HandlerThread thread = new HandlerThread("NetworkService",
             Process.THREAD_PRIORITY_BACKGROUND);
         thread.start();
-
-        serviceHandler = new ServiceHandler(thread.getLooper());
+        handler = new Handler(thread.getLooper());
         netInterface = new NetworkInterface();
         netInterface.setListener(this);
         connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -91,22 +96,12 @@ public class NetworkService extends Service implements NetworkInterface.Listener
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         this.startId = startId;
-        if (intent != null) {
-            if (intent.hasExtra("Handler")) {
-                uiMessenger = intent.getParcelableExtra("Handler");
-            } else {
-                Message msg = serviceHandler.obtainMessage();
-                msg.what = intent.getIntExtra(Utils.MESSAGE, -1);
-                msg.arg1 = startId;
-                serviceHandler.sendMessage(msg);
-            }
-        }
         return START_STICKY;
     }
 
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return networkBinder;
     }
 
     @Override
@@ -115,7 +110,15 @@ public class NetworkService extends Service implements NetworkInterface.Listener
         connManager.unregisterNetworkCallback(netCallback);
     }
 
-    private void updateBuildInfo() {
+    public void registerCallback(ActivityCallbacks callback) {
+        this.callback = callback;
+    }
+
+    public void unregisterCallback() {
+        callback = null;
+    }
+
+    public void updateBuildInfo() {
         executor.execute(() -> {
             if (downloadStarted || downloadFinished) {
                 restoreState();
@@ -127,21 +130,23 @@ public class NetworkService extends Service implements NetworkInterface.Listener
                         buildInfo = tmp;
                         foundNew = true;
                     }
-                } catch (IOException e) {
-                    sendMessage(Utils.FAILED_TO_UPDATE_BUILD_INFO);
-                    return;
-                } catch (JSONException e) {
-                    sendMessage(Utils.FAILED_TO_UPDATE_BUILD_INFO);
-                    Utils.log(e);
+                } catch (JSONException|IOException e) {
+                    if (callback != null) {
+                        callback.fetchBuildInfoFailed();
+                    }
                     return;
                 }
 
                 if (foundNew) {
                     totalSize = buildInfo.getFileSize();
-                    sendMessage(Utils.UPDATED_BUILD_INFO, buildInfo.getBundle());
+                    if (callback != null) {
+                        callback.onFetchedBuildInfo(buildInfo.getBundle());
+                    }
                     checkIfAlreadyDownloaded();
                 } else {
-                    sendMessage(Utils.NO_NEW_BUILD_FOUND);
+                    if (callback != null) {
+                        callback.noUpdates();
+                    }
                 }
             }
         });
@@ -155,15 +160,20 @@ public class NetworkService extends Service implements NetworkInterface.Listener
                 while (size != -1) {
                     if (size > downloadedSize) {
                         downloadedSize = size;
-                        sendMessage(Utils.UPDATE_DOWNLOADED_SIZE,
-                            Utils.parseProgressText(downloadedSize, totalSize));
+                        if (callback != null) {
+                            callback.updateDownloadedSize(
+                                Utils.parseProgressText(downloadedSize, totalSize));
+                        }
                         int progress = (int) ((downloadedSize*100)/totalSize);
                         if (progress > downloadProgress) {
                             downloadProgress = progress;
-                            sendMessage(downloadProgress, Utils.UPDATE_PROGRESS_BAR);
+                            if (callback != null) {
+                                callback.updateDownloadProgress(downloadProgress);
+                            }
                         }
                         if (downloadedSize == totalSize) {
                             setDownloadFinished();
+                            checkMd5sum();
                             return;
                         }
                     }
@@ -172,54 +182,17 @@ public class NetworkService extends Service implements NetworkInterface.Listener
             });
     }
 
-    private void sendMessage(int what) {
-        sendMessage(what, null);
-    }
-
-    private void sendMessage(int arg1, int what) {
-        sendMessage(arg1, -1, what, null, null);
-    }
-
-    private void sendMessage(int what, Object obj) {
-        sendMessage(-1, -1, what, null, obj);
-    }
-
-    private void sendMessage(int what, Bundle bundle) {
-        sendMessage(-1, -1, what, bundle, null);
-    }
-
-    private void sendMessage(int arg1, int arg2, int what, Bundle bundle, Object obj) {
-        if (!isInBackround && uiMessenger != null) {
-            try {
-                Message msg = Message.obtain();
-                msg.arg1 = arg1;
-                msg.arg2 = arg2;
-                msg.what = what;
-                if (bundle != null) {
-                    msg.setData(bundle);
-                }
-                if (obj != null) {
-                    msg.obj = obj;
-                }
-                uiMessenger.send(msg);
-            } catch (RemoteException e) {
-                Utils.log("Target handler does not exist anymore");
-            }
-        }
-    }
-
-    private void startDownload() {
+    public void startDownload() {
         executor.execute(() -> {
             checkIfAlreadyDownloaded();
             downloadStarted = true;
-            serviceHandler.post(() -> toast(R.string.status_downloading));
+            toast(R.string.status_downloading);
             if (!netInterface.hasSetUrl()) {
                 netInterface.setDownloadUrl();
             }
-            Bundle bundle = new Bundle();
-            bundle.putLong(Utils.DOWNLOADED_SIZE, downloadedSize);
-            bundle.putLong(Utils.BUILD_SIZE, totalSize);
-            sendMessage(Utils.SET_INITIAL_DOWNLOAD_PROGRESS, bundle);
+            if (callback != null) {
+                callback.setInitialProgress(downloadedSize, totalSize);
+            }
             netInterface.startDownload(file, network, downloadedSize);
         });
     }
@@ -234,7 +207,9 @@ public class NetworkService extends Service implements NetworkInterface.Listener
         }
         bundle.putLong(Utils.DOWNLOADED_SIZE, downloadedSize);
         bundle.putLong(Utils.BUILD_SIZE, totalSize);
-        sendMessage(Utils.RESTORE_STATUS, bundle);
+        if (callback != null) {
+            callback.restoreActivityState(bundle);
+        }
     }
 
     private void checkIfAlreadyDownloaded() {
@@ -249,11 +224,54 @@ public class NetworkService extends Service implements NetworkInterface.Listener
         if (downloadedSize == totalSize) {
             downloadFinished = true;
             restoreState();
+            checkMd5sum();
             stopSelf(startId);
         }
     }
 
-    private void reset() {
+    private void checkMd5sum() {
+        executor.execute(() -> {
+            try {
+                byte[] buffer = new byte[1048576];
+                int bytesRead = 0;
+                MessageDigest md5Digest = MessageDigest.getInstance("MD5");
+                FileInputStream inStream = new FileInputStream(file);
+                while ((bytesRead = inStream.read(buffer)) != -1) {
+                    md5Digest.update(buffer, 0, bytesRead);
+                }
+                inStream.close();
+
+                StringBuilder sb = new StringBuilder();
+                for (byte b: md5Digest.digest()) {
+                    sb.append(String.format("%02x", b));
+                }
+                boolean pass = sb.toString().equals(buildInfo.getMd5sum());
+                if (callback != null) {
+                    callback.md5sumCheckPassed(pass);
+                }
+                if (!pass) {
+                    deleteDownload();
+                }
+            } catch (NoSuchAlgorithmException e) {
+                // I am pretty sure MD5 exists
+            } catch (FileNotFoundException e) {
+                toast(R.string.file_not_found);
+            } catch (IOException e) {
+                // Do nothing
+            }
+        });
+    }
+
+    public void pauseDownload(boolean pause) {
+        downloadPaused = pause;
+        if (downloadPaused) {
+            netInterface.cleanup();
+        } else {
+            startDownload();
+        }
+    }
+
+    public void cancelDownload() {
         toast(R.string.status_download_cancelled);
         downloadStarted = false;
         downloadPaused = false;
@@ -266,7 +284,7 @@ public class NetworkService extends Service implements NetworkInterface.Listener
         downloadProgress = 0;
     }
 
-    private void deleteDownload() {
+    public void deleteDownload() {
         try {
             if (!file.isDirectory() && file.exists()) {
                 file.delete();
@@ -280,7 +298,10 @@ public class NetworkService extends Service implements NetworkInterface.Listener
     private void setDownloadFinished() {
         downloadStarted = false;
         downloadFinished = true;
-        sendMessage(Utils.FINISHED_DOWNLOAD);
+        if (callback != null) {
+            callback.onFinishedDownload();
+        }
+        checkMd5sum();
         stopSelf(startId);
     }
 
@@ -292,7 +313,9 @@ public class NetworkService extends Service implements NetworkInterface.Listener
                 Utils.sleepThread(500);
                 end = Instant.now();
                 if (Duration.between(start, end).toMillis() >= 5000) {
-                    sendMessage(Utils.NO_INTERNET);
+                    if (callback != null) {
+                        callback.noInternet();
+                    }
                     return;
                 }
             }
@@ -300,52 +323,29 @@ public class NetworkService extends Service implements NetworkInterface.Listener
     }
 
     private void toast(int id) {
-        Toast.makeText(this, getString(id), Toast.LENGTH_SHORT).show();
+        handler.post(() ->
+            Toast.makeText(this, getString(id), Toast.LENGTH_SHORT).show());
     }
 
-    private final class ServiceHandler extends Handler {
-        public ServiceHandler(Looper looper) {
-            super(looper);
+    public final class NetworkBinder extends Binder {
+
+        public NetworkService getService() {
+            return NetworkService.this;
         }
 
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case Utils.FETCH_BUILD_INFO:
-                    updateBuildInfo();
-                    break;
-                case Utils.APP_IN_BACKGROUND:
-                    isInBackround = true;
-                    break;
-                case Utils.APP_IN_FOREGROUND:
-                    isInBackround = false;
-                    break;
-                case Utils.START_DOWNLOAD:
-                    startDownload();
-                    break;
-                case Utils.PAUSE_DOWNLOAD:
-                    downloadPaused = true;
-                    netInterface.cleanup();
-                    break;
-                case Utils.RESUME_DOWNLOAD:
-                    downloadPaused = false;
-                    startDownload();
-                    break;
-                case Utils.CANCEL_DOWNLOAD:
-                    if (downloadStarted) {
-                        reset();
-                    }
-                    break;
-                case Utils.DELETE_DOWNLOAD:
-                    deleteDownload();
-                    break;
-                case Utils.NO_INTERNET:
-                    NetworkService.this.sendMessage(Utils.NO_INTERNET);
-                    break;
-                default:
-                    Utils.log("Unknown message", msg.what);
-            }
-        }
+    }
+
+    public static interface ActivityCallbacks {
+        public void restoreActivityState(Bundle bundle);
+        public void onFetchedBuildInfo(Bundle bundle);
+        public void fetchBuildInfoFailed();
+        public void noUpdates();
+        public void noInternet();
+        public void setInitialProgress(long downloaded, long total);
+        public void updateDownloadedSize(String progressText);
+        public void updateDownloadProgress(int progress);
+        public void onFinishedDownload();
+        public void md5sumCheckPassed(boolean passed);
     }
 
     private final class NetCallback extends ConnectivityManager.NetworkCallback {
