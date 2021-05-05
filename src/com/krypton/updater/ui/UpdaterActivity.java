@@ -58,14 +58,14 @@ import androidx.core.view.GestureDetectorCompat;
 
 import com.krypton.updater.BuildInfo;
 import com.krypton.updater.R;
-import com.krypton.updater.services.NetworkService;
-import com.krypton.updater.services.NetworkService.NetworkBinder;
+import com.krypton.updater.services.UpdaterService;
+import com.krypton.updater.services.UpdaterService.ActivityBinder;
 import com.krypton.updater.Utils;
 
 public class UpdaterActivity extends AppCompatActivity
-            implements NetworkService.ActivityCallbacks {
+            implements UpdaterService.ActivityCallbacks {
 
-    private NetworkService networkService;
+    private UpdaterService updaterService;
     private Handler handler;
     private GestureDetectorCompat detector;
     private LinearLayout downloadProgressLayout;
@@ -94,23 +94,24 @@ public class UpdaterActivity extends AppCompatActivity
 
         @Override
         public void onServiceConnected(ComponentName className, IBinder binder) {
-            networkService = ((NetworkBinder) binder).getService();
-            networkService.registerCallback(UpdaterActivity.this);
+            updaterService = ((ActivityBinder) binder).getService();
+            updaterService.registerCallback(UpdaterActivity.this);
             bound = true;
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
-            networkService.unregisterCallback();
+            updaterService.unregisterCallback();
             bound = false;
         }
+
     };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         handler = new Handler(Looper.getMainLooper());
-        Intent intent = new Intent(this, NetworkService.class);
+        Intent intent = new Intent(this, UpdaterService.class);
         startService(intent);
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -161,7 +162,6 @@ public class UpdaterActivity extends AppCompatActivity
 
     @Override
     public void restoreActivityState(Bundle bundle) {
-        handler.post(() -> setBuildFetchResult(R.string.new_build_text));
         hasUpdatedBuildInfo = true;
         if (bundle.getBoolean(Utils.DOWNLOAD_FINISHED)) {
             downloading = false;
@@ -172,6 +172,7 @@ public class UpdaterActivity extends AppCompatActivity
             downloadPaused = bundle.getBoolean(Utils.DOWNLOAD_PAUSED);
         }
         handler.post(() -> {
+            setBuildFetchResult(R.string.new_build_text);
             setNewBuildInfo(bundle.getBundle(Utils.BUILD_INFO));
             setDownloadLayout(bundle.getLong(Utils.DOWNLOADED_SIZE),
                 bundle.getLong(Utils.BUILD_SIZE));
@@ -311,7 +312,7 @@ public class UpdaterActivity extends AppCompatActivity
         animatedDrawable.start();
         handler.postDelayed(() -> {
             if (bound) {
-                networkService.updateBuildInfo();
+                updaterService.updateBuildInfo();
             }
         }, 50);
     }
@@ -382,8 +383,7 @@ public class UpdaterActivity extends AppCompatActivity
     }
 
     public void startUpdate(View v) {
-        v.performHapticFeedback(KEYBOARD_PRESS);
-        //v.setVisibility(GONE);
+        // Nothing for now
     }
 
     public void startDownload(View v) {
@@ -392,7 +392,7 @@ public class UpdaterActivity extends AppCompatActivity
         downloading = true;
         downloadFinished = false;
         if (bound) {
-            networkService.startDownload();
+            updaterService.startDownload();
         }
     }
 
@@ -404,7 +404,7 @@ public class UpdaterActivity extends AppCompatActivity
         pauseButton.setText(getString(downloadPaused ?
             R.string.resume_download : R.string.pause_download));
         if (bound) {
-            networkService.pauseDownload(downloadPaused);
+            updaterService.pauseDownload(downloadPaused);
         }
     }
 
@@ -414,7 +414,7 @@ public class UpdaterActivity extends AppCompatActivity
         setVisibile(false, v, pauseButton, downloadProgressLayout);
         downloadButton.setVisibility(VISIBLE);
         if (bound) {
-            networkService.cancelDownload();
+            updaterService.cancelDownload();
         }
         showDeleteDialog();
     }
@@ -426,7 +426,7 @@ public class UpdaterActivity extends AppCompatActivity
             .setPositiveButton(android.R.string.yes, (dialog, which) -> {
                     dialog.dismiss();
                     if (bound) {
-                        networkService.deleteDownload();
+                        updaterService.deleteDownload();
                     }
                 })
             .setNegativeButton(android.R.string.no, (dialog, which) ->
@@ -448,5 +448,6 @@ public class UpdaterActivity extends AppCompatActivity
             }
             return true;
         }
+
     }
 }

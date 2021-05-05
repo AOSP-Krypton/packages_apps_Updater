@@ -38,7 +38,7 @@ import javax.net.ssl.HttpsURLConnection;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class NetworkInterface {
+public class NetworkHelper {
 
     private BuildInfo buildInfo;
     private URL downloadUrl;

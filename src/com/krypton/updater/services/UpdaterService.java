@@ -36,7 +36,7 @@ import android.widget.Toast;
 
 import com.krypton.updater.R;
 import com.krypton.updater.BuildInfo;
-import com.krypton.updater.NetworkInterface;
+import com.krypton.updater.NetworkHelper;
 import com.krypton.updater.Utils;
 
 import java.io.File;
@@ -53,12 +53,12 @@ import java.util.concurrent.Future;
 
 import org.json.JSONException;
 
-public class NetworkService extends Service implements NetworkInterface.Listener {
+public class UpdaterService extends Service implements NetworkHelper.Listener {
 
     private Handler handler;
-    private IBinder networkBinder = new NetworkBinder();
+    private IBinder activityBinder = new ActivityBinder();
     private ActivityCallbacks callback;
-    private NetworkInterface netInterface;
+    private NetworkHelper networkHelper;
     private ConnectivityManager connManager;
     private NetCallback netCallback;
     private Network network;
@@ -68,7 +68,6 @@ public class NetworkService extends Service implements NetworkInterface.Listener
     private BuildInfo buildInfo;
     private String downloadLocation;
     private File file;
-    private int startId;
     private boolean downloadStarted = false;
     private boolean downloadPaused = false;
     private boolean downloadFinished = false;
@@ -79,12 +78,12 @@ public class NetworkService extends Service implements NetworkInterface.Listener
 
     @Override
     public void onCreate() {
-        final HandlerThread thread = new HandlerThread("NetworkService",
+        final HandlerThread thread = new HandlerThread("UpdaterService",
             Process.THREAD_PRIORITY_BACKGROUND);
         thread.start();
         handler = new Handler(thread.getLooper());
-        netInterface = new NetworkInterface();
-        netInterface.setListener(this);
+        networkHelper = new NetworkHelper();
+        networkHelper.setListener(this);
         connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         netCallback = new NetCallback();
         connManager.registerDefaultNetworkCallback(netCallback);
@@ -95,13 +94,12 @@ public class NetworkService extends Service implements NetworkInterface.Listener
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        this.startId = startId;
         return START_STICKY;
     }
 
     @Override
     public IBinder onBind(Intent intent) {
-        return networkBinder;
+        return activityBinder;
     }
 
     @Override
@@ -125,7 +123,7 @@ public class NetworkService extends Service implements NetworkInterface.Listener
             } else {
                 boolean foundNew = false;
                 try {
-                    BuildInfo tmp = netInterface.fetchBuildInfo();
+                    BuildInfo tmp = networkHelper.fetchBuildInfo();
                     if (tmp != null) {
                         buildInfo = tmp;
                         foundNew = true;
@@ -156,7 +154,7 @@ public class NetworkService extends Service implements NetworkInterface.Listener
     public void onStartedDownload() {
         future =
             executor.submit(() -> {
-                long size = netInterface.getDownloadProgress();
+                long size = networkHelper.getDownloadProgress();
                 while (size != -1) {
                     if (size > downloadedSize) {
                         downloadedSize = size;
@@ -177,7 +175,7 @@ public class NetworkService extends Service implements NetworkInterface.Listener
                             return;
                         }
                     }
-                    size = netInterface.getDownloadProgress();
+                    size = networkHelper.getDownloadProgress();
                 }
             });
     }
@@ -187,13 +185,13 @@ public class NetworkService extends Service implements NetworkInterface.Listener
             checkIfAlreadyDownloaded();
             downloadStarted = true;
             toast(R.string.status_downloading);
-            if (!netInterface.hasSetUrl()) {
-                netInterface.setDownloadUrl();
+            if (!networkHelper.hasSetUrl()) {
+                networkHelper.setDownloadUrl();
             }
             if (callback != null) {
                 callback.setInitialProgress(downloadedSize, totalSize);
             }
-            netInterface.startDownload(file, network, downloadedSize);
+            networkHelper.startDownload(file, network, downloadedSize);
         });
     }
 
@@ -225,7 +223,6 @@ public class NetworkService extends Service implements NetworkInterface.Listener
             downloadFinished = true;
             restoreState();
             checkMd5sum();
-            stopSelf(startId);
         }
     }
 
@@ -265,7 +262,7 @@ public class NetworkService extends Service implements NetworkInterface.Listener
     public void pauseDownload(boolean pause) {
         downloadPaused = pause;
         if (downloadPaused) {
-            netInterface.cleanup();
+            networkHelper.cleanup();
         } else {
             startDownload();
         }
@@ -279,7 +276,7 @@ public class NetworkService extends Service implements NetworkInterface.Listener
         if (future != null) {
             future.cancel(true);
         }
-        netInterface.cleanup();
+        networkHelper.cleanup();
         downloadedSize = 0;
         downloadProgress = 0;
     }
@@ -302,7 +299,6 @@ public class NetworkService extends Service implements NetworkInterface.Listener
             callback.onFinishedDownload();
         }
         checkMd5sum();
-        stopSelf(startId);
     }
 
     private void waitAndDispatchMessage() {
@@ -327,10 +323,10 @@ public class NetworkService extends Service implements NetworkInterface.Listener
             Toast.makeText(this, getString(id), Toast.LENGTH_SHORT).show());
     }
 
-    public final class NetworkBinder extends Binder {
+    public final class ActivityBinder extends Binder {
 
-        public NetworkService getService() {
-            return NetworkService.this;
+        public UpdaterService getService() {
+            return UpdaterService.this;
         }
 
     }
@@ -353,12 +349,12 @@ public class NetworkService extends Service implements NetworkInterface.Listener
         @Override
         public void onAvailable(Network network) {
             isOnline = true;
-            NetworkService.this.network = network;
+            UpdaterService.this.network = network;
             if (downloadStarted && !downloadPaused) {
                 if (future != null) {
                     future.cancel(true);
                 }
-                netInterface.cleanup();
+                networkHelper.cleanup();
                 startDownload();
             }
         }
@@ -369,11 +365,11 @@ public class NetworkService extends Service implements NetworkInterface.Listener
             if (!downloadFinished) {
                 waitAndDispatchMessage();
             }
-            NetworkService.this.network = null;
+            UpdaterService.this.network = null;
             if (future != null) {
                 future.cancel(true);
             }
-            netInterface.cleanup();
+            networkHelper.cleanup();
         }
     }
 }

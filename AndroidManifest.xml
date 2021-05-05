@@ -37,7 +37,7 @@
             android:parentActivityName=".ui.UpdaterActivity" />
 
         <service
-            android:name=".services.NetworkService"
+            android:name=".services.UpdaterService"
             android:exported="false" />
     </application>
 </manifest>
