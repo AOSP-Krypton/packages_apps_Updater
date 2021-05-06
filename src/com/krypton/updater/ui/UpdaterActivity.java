@@ -172,7 +172,6 @@ public class UpdaterActivity extends AppCompatActivity
             downloadPaused = bundle.getBoolean(Utils.DOWNLOAD_PAUSED);
         }
         handler.post(() -> {
-            setBuildFetchResult(R.string.new_build_text);
             setNewBuildInfo(bundle.getBundle(Utils.BUILD_INFO));
             setDownloadLayout(bundle.getLong(Utils.DOWNLOADED_SIZE),
                 bundle.getLong(Utils.BUILD_SIZE));
@@ -181,10 +180,7 @@ public class UpdaterActivity extends AppCompatActivity
 
     @Override
     public void onFetchedBuildInfo(Bundle bundle) {
-        handler.post(() -> {
-            setBuildFetchResult(R.string.new_build_text);
-            setNewBuildInfo(bundle);
-        });
+        handler.post(() -> setNewBuildInfo(bundle));
     }
 
     @Override
@@ -323,6 +319,8 @@ public class UpdaterActivity extends AppCompatActivity
     }
 
     private void setNewBuildInfo(Bundle bundle) {
+        setBuildFetchResult(R.string.new_build_text);
+
         latestBuildVersion.setText(getString(R.string.version_text,
             bundle.getString(Utils.BUILD_VERSION)));
         latestBuildTimestamp.setText(getString(R.string.timestamp_text,

@@ -47,6 +47,7 @@
     <string name="delete_file">Delete downloaded file?</string>
     <string name="unable_to_delete">Unable to delete downloaded file</string>
     <string name="file_not_found">Downloaded zip file not found</string>
+    <string name="checking_md5sum">Checking md5sum of downloaded file</string>
     <string name="md5sum_check_failed">md5sum check failed, redownload the file</string>
 
     <!-- Updater -->

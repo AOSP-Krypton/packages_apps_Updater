@@ -66,7 +66,6 @@ public class UpdaterService extends Service implements NetworkHelper.Listener {
     private Future future;
     private Messenger uiMessenger;
     private BuildInfo buildInfo;
-    private String downloadLocation;
     private File file;
     private boolean downloadStarted = false;
     private boolean downloadPaused = false;
@@ -88,8 +87,6 @@ public class UpdaterService extends Service implements NetworkHelper.Listener {
         netCallback = new NetCallback();
         connManager.registerDefaultNetworkCallback(netCallback);
         executor = Executors.newFixedThreadPool(4);
-        downloadLocation = PreferenceManager.getDefaultSharedPreferences(this)
-            .getString(Utils.DOWNLOAD_LOCATION_KEY, Utils.DEFAULT_DOWNLOAD_LOC);
     }
 
     @Override
@@ -137,10 +134,12 @@ public class UpdaterService extends Service implements NetworkHelper.Listener {
 
                 if (foundNew) {
                     totalSize = buildInfo.getFileSize();
-                    if (callback != null) {
-                        callback.onFetchedBuildInfo(buildInfo.getBundle());
+                    updateFile();
+                    if (!checkIfAlreadyDownloaded()) {
+                        if (callback != null) {
+                            callback.onFetchedBuildInfo(buildInfo.getBundle());
+                        }
                     }
-                    checkIfAlreadyDownloaded();
                 } else {
                     if (callback != null) {
                         callback.noUpdates();
@@ -171,7 +170,6 @@ public class UpdaterService extends Service implements NetworkHelper.Listener {
                         }
                         if (downloadedSize == totalSize) {
                             setDownloadFinished();
-                            checkMd5sum();
                             return;
                         }
                     }
@@ -181,17 +179,19 @@ public class UpdaterService extends Service implements NetworkHelper.Listener {
     }
 
     public void startDownload() {
+        updateFile();
         executor.execute(() -> {
-            checkIfAlreadyDownloaded();
-            downloadStarted = true;
-            toast(R.string.status_downloading);
-            if (!networkHelper.hasSetUrl()) {
-                networkHelper.setDownloadUrl();
+            if (!checkIfAlreadyDownloaded()) {
+                downloadStarted = true;
+                toast(R.string.status_downloading);
+                if (!networkHelper.hasSetUrl()) {
+                    networkHelper.setDownloadUrl();
+                }
+                if (callback != null) {
+                    callback.setInitialProgress(downloadedSize, totalSize);
+                }
+                networkHelper.startDownload(file, network, downloadedSize);
             }
-            if (callback != null) {
-                callback.setInitialProgress(downloadedSize, totalSize);
-            }
-            networkHelper.startDownload(file, network, downloadedSize);
         });
     }
 
@@ -208,27 +208,26 @@ public class UpdaterService extends Service implements NetworkHelper.Listener {
         if (callback != null) {
             callback.restoreActivityState(bundle);
         }
+        checkMd5sum();
     }
 
-    private void checkIfAlreadyDownloaded() {
-        File dir = new File(downloadLocation);
-        if (!dir.exists() || (dir.exists() && !dir.isDirectory())) {
-            dir.mkdirs();
-        }
-        file = new File(dir, buildInfo.getFileName());
+    private boolean checkIfAlreadyDownloaded() {
         if (file.exists()) {
             downloadedSize = file.length();
         }
         if (downloadedSize == totalSize) {
             downloadFinished = true;
             restoreState();
-            checkMd5sum();
+            return true;
+        } else {
+            return false;
         }
     }
 
     private void checkMd5sum() {
         executor.execute(() -> {
             try {
+                toast(R.string.checking_md5sum);
                 byte[] buffer = new byte[1048576];
                 int bytesRead = 0;
                 MessageDigest md5Digest = MessageDigest.getInstance("MD5");
@@ -257,6 +256,16 @@ public class UpdaterService extends Service implements NetworkHelper.Listener {
                 // Do nothing
             }
         });
+    }
+
+    private void updateFile() {
+        File dir = new File(PreferenceManager
+            .getDefaultSharedPreferences(this)
+            .getString(Utils.DOWNLOAD_LOCATION_KEY, Utils.DEFAULT_DOWNLOAD_LOC));
+        if (!dir.exists() || (dir.exists() && !dir.isDirectory())) {
+            dir.mkdirs();
+        }
+        file = new File(dir, buildInfo.getFileName());
     }
 
     public void pauseDownload(boolean pause) {
