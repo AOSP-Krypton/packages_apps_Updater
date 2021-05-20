@@ -34,10 +34,10 @@
     <string name="no_internet">No internet connection</string>
 
     <!-- Download -->
-    <string name="start_download">Download</string>
-    <string name="pause_download">Pause</string>
-    <string name="cancel_download">Cancel</string>
-    <string name="resume_download">Resume</string>
+    <string name="download">Download</string>
+    <string name="pause">Pause</string>
+    <string name="cancel">Cancel</string>
+    <string name="resume">Resume</string>
     <string name="status_downloading">Downloading</string>
     <string name="status_no_internet">No internet, download paused</string>
     <string name="status_download_paused">Download paused</string>
@@ -52,6 +52,21 @@
 
     <!-- Updater -->
     <string name="update">Update</string>
+    <string name="updating">Applying Update</string>
+    <string name="update_downloading">Update engine is processing payload</string>
+    <string name="update_paused">Update paused</string>
+    <string name="update_finished">Update finished</string>
+    <string name="update_failed">Failed to update</string>
+    <string name="local_upgrade">Local Upgrade</string>
+    <string name="invalid_zip_file">Selected file is not a valid zip file</string>
+    <string name="step">Step</string>
+    <string name="reboot">Reboot</string>
+    <string name="post_update_tips">
+        Update is now complete, next reboot will be to the updated slot.
+        Now is a really good time to go ahead and flash magisk to the new slot.
+        If you don\'t have magisk installed or don\'t care about losing magisk after update then hit the reboot button
+    </string>
+    <string name="payload_transfer_error_retry">Payload transfer error, please retry</string>
 
     <!-- Updater Settings -->
     <string name="updater_settings_title">Updater Settings</string>

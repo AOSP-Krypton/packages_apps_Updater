@@ -20,8 +20,7 @@
         android:layout_height="wrap_content">
 
         <LinearLayout
-            style="@style/SectionLayoutStyle"
-            android:layout_marginTop="0dp">
+            style="@style/SectionLayoutStyle">
 
            <TextView
                 style="@style/PrimaryTextStyle"
@@ -110,7 +109,7 @@
         android:layout_marginTop="@dimen/button_margin_top"
         android:layout_below="@id/download_progress_layout"
         android:layout_toStartOf="@id/cancel_button"
-        android:text="@string/pause_download"
+        android:text="@string/pause"
         android:onClick="pauseOrResumeDownload" />
 
     <Button
@@ -120,7 +119,7 @@
         android:layout_marginTop="@dimen/button_margin_top"
         android:layout_below="@id/download_progress_layout"
         android:layout_alignParentEnd="true"
-        android:text="@string/cancel_download"
+        android:text="@string/cancel"
         android:onClick="cancelDownload" />
 
     <Button
@@ -130,8 +129,19 @@
         android:layout_marginBottom="@dimen/button_margin_bottom"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:text="@string/start_download"
+        android:text="@string/download"
         android:onClick="startDownload" />
+
+    <Button
+        android:id="@+id/local_upgrade_button"
+        style="@style/PrimaryButtonStyle"
+        android:layout_marginStart="@dimen/button_margin_end"
+        android:layout_marginBottom="@dimen/button_margin_bottom"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:text="@string/local_upgrade"
+        android:visibility="visible"
+        android:onClick="localUpgrade" />
 
     <Button
         android:id="@+id/update_button"
@@ -142,5 +152,72 @@
         android:layout_alignParentBottom="true"
         android:text="@string/update"
         android:onClick="startUpdate" />
+
+    <LinearLayout
+        android:id="@+id/update_progress_layout"
+        android:layout_below="@id/download_progress_layout"
+        android:visibility="gone"
+        style="@style/SectionLayoutStyle">
+
+        <TextView
+            style="@style/PrimaryTextStyle"
+            android:id="@+id/update_status" />
+
+        <ProgressBar
+            android:id="@+id/update_progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            android:max="100"
+            android:min="0" />
+
+        <TextView
+            style="@style/PrimaryTextStyle"
+            android:id="@+id/update_step"
+            android:layout_gravity="end" />
+
+    </LinearLayout>
+
+    <TextView
+        style="@style/PrimaryTextStyle"
+        android:id="@+id/post_update_info"
+        android:text="@string/post_update_tips"
+        android:visibility="gone"
+        android:layout_below="@id/update_progress_layout"
+        android:layout_marginStart="@dimen/info_layout_margin_side"
+        android:layout_marginTop="@dimen/info_layout_margin_top"
+        android:layout_marginEnd="@dimen/info_layout_margin_side"
+        android:paddingStart="@dimen/info_layout_padding"
+        android:paddingEnd="@dimen/info_layout_padding" />
+
+    <Button
+        android:id="@+id/pause_update_button"
+        style="@style/PrimaryButtonStyle"
+        android:layout_marginEnd="@dimen/button_margin_end"
+        android:layout_marginTop="@dimen/button_margin_top"
+        android:layout_below="@id/update_progress_layout"
+        android:layout_toStartOf="@id/cancel_update_button"
+        android:text="@string/pause"
+        android:onClick="pauseUpdate" />
+
+    <Button
+        android:id="@+id/cancel_update_button"
+        style="@style/PrimaryButtonStyle"
+        android:layout_marginEnd="@dimen/button_margin_end"
+        android:layout_marginTop="@dimen/button_margin_top"
+        android:layout_below="@id/update_progress_layout"
+        android:layout_alignParentEnd="true"
+        android:text="@string/cancel"
+        android:onClick="cancelUpdate" />
+
+    <Button
+        android:id="@+id/reboot_button"
+        style="@style/PrimaryButtonStyle"
+        android:layout_marginEnd="@dimen/button_margin_end"
+        android:layout_marginBottom="@dimen/button_margin_bottom"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:text="@string/reboot"
+        android:onClick="rebootSystem" />
 
 </RelativeLayout>

@@ -14,6 +14,9 @@
     package="com.krypton.updater"
     android:sharedUserId="android.uid.system">
 
+    <uses-sdk android:minSdkVersion="30"
+        android:targetSdkVersion="30" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 

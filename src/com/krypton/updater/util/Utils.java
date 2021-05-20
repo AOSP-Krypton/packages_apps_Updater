@@ -14,28 +14,19 @@
  * limitations under the License.
  */
 
-package com.krypton.updater;
+package com.krypton.updater.util;
 
 import android.os.SystemProperties;
 import android.util.Log;
-
-import java.util.Date;
-import java.text.SimpleDateFormat;
 
 public final class Utils {
 
     private static final String TAG = "Utils";
 
-    public static final String SHARED_PREFS = "com.krypton.updater.shared_prefs";
-    public static final String THEME_KEY = "theme_settings_preference";
-    public static final String DOWNLOAD_LOCATION_KEY = "download_location_preference";
-    public static final int REQUEST_CODE = 1219;
-
     private static final String PROP_DEVICE = "ro.krypton.build.device";
     private static final String PROP_VERSION = "ro.krypton.build.version";
     private static final String PROP_TIMESTAMP = "ro.krypton.build.timestamp";
 
-    public static final String BUILD_INFO_SOURCE_URL = "https://raw.githubusercontent.com/AOSP-Krypton/official_devices_ota/A11/";
     public static final String BUILD_INFO = "build-info";
     public static final String BUILD_VERSION = "version";
     public static final String BUILD_TIMESTAMP = "timestamp";
@@ -43,12 +34,30 @@ public final class Utils {
     public static final String BUILD_SIZE = "filesize";
     public static final String BUILD_MD5SUM = "md5sum";
 
-    public static final String DOWNLOAD_SOURCE_URL = "https://sourceforge.net/projects/kosp/files/KOSP-A11-Releases/";
+    public static final String DOWNLOAD_LOCATION_KEY = "download_location_preference";
     public static final String DEFAULT_DOWNLOAD_LOC = "/sdcard/Download";
 
+    // Restore download progress
     public static final String DOWNLOADED_SIZE = "downloadedSize";
+    public static final String DOWNLOAD_STARTED = "downloadStarted";
     public static final String DOWNLOAD_PAUSED = "downloadPaused";
     public static final String DOWNLOAD_FINISHED = "downloadFinished";
+
+    // Restore update engine progress
+    public static final String LOCAL_UPGRADE_MODE = "localUpgradeMode";
+    public static final String UPDATE_STARTED = "updateStarted";
+    public static final String UPDATE_PAUSED = "updatePaused";
+    public static final String UPDATE_FINISHED = "updateFinished";
+    public static final String UPDATE_EXIT_CODE = "updateExitCode";
+    public static final String UPDATE_STATUS = "updateStatus";
+    public static final String UPDATE_PROGRESS = "updateProgress";
+
+    // Error codes for apply update failure
+    public static final int APPLY_PAYLOAD_FAILED = 101;
+    public static final int FILE_INVALID = 102;
+
+    // 1 MB in bytes
+    public static final int MB = 1048576;
 
     public static String getDevice() {
         return SystemProperties.get(PROP_DEVICE, "unavailable");
@@ -60,27 +69,6 @@ public final class Utils {
 
     public static String getTimestamp() {
         return SystemProperties.get(PROP_TIMESTAMP, "unavailable");
-    }
-
-    public static boolean checkBuildStatus(String version, String timestamp) {
-        float currVersion = Float.parseFloat(getVersion().substring(1));
-        float newVersion = Float.parseFloat(version.substring(1));
-        if (newVersion > currVersion) {
-            return true;
-        }
-        try {
-            Date currDate = parseDate(getTimestamp());
-            Date newDate = parseDate(timestamp);
-            if (newDate.after(currDate)) {
-                return true;
-            }
-        } catch (Exception e) {}
-        return false;
-    }
-
-    public static Date parseDate(String timestamp) throws Exception {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd/hh:mm");
-        return formatter.parse(timestamp);
     }
 
     public static void sleepThread(int duration) {
@@ -113,17 +101,5 @@ public final class Utils {
 
     public static void log(String str) {
         Log.d(TAG, str);
-    }
-
-    public static int convertToMB(long lenByte) {
-        return (int) (lenByte/1048576);
-    }
-
-    public static String parseProgressText(int val, int size) {
-        return String.format("%d/%d MB", val, size);
-    }
-
-    public static String parseProgressText(long val, long size) {
-        return parseProgressText(convertToMB(val), convertToMB(size));
     }
 }

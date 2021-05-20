@@ -29,10 +29,11 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import com.krypton.updater.R;
-import com.krypton.updater.Utils;
+import com.krypton.updater.util.Utils;
 
 public class SettingsFragment extends PreferenceFragmentCompat {
 
+    protected static final String THEME_KEY = "theme_settings_preference";
     private SharedPreferences sharedPrefs;
     private int currThemeMode;
 
@@ -40,13 +41,13 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     public void onCreatePreferences(Bundle bundle, String key) {
         setPreferencesFromResource(R.xml.settings_fragment, key);
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        currThemeMode = sharedPrefs.getInt(Utils.THEME_KEY, 2);
+        currThemeMode = sharedPrefs.getInt(THEME_KEY, 2);
     }
 
     @Override
     public boolean onPreferenceTreeClick(Preference preference) {
         String key = preference.getKey();
-        if (key.equals(Utils.THEME_KEY)) {
+        if (key.equals(THEME_KEY)) {
             AlertDialog themePickerDialog = new AlertDialog.Builder(getActivity(), R.style.AlertDialogTheme)
                 .setTitle(R.string.theme_chooser_dialog_title)
                 .setSingleChoiceItems(R.array.theme_modes,
@@ -54,7 +55,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                             dialog.dismiss();
                             currThemeMode = which;
                             sharedPrefs.edit()
-                                .putInt(Utils.THEME_KEY, currThemeMode)
+                                .putInt(THEME_KEY, currThemeMode)
                                 .apply();
                             UpdaterActivity.setAppTheme(currThemeMode);
                         })
@@ -63,8 +64,8 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             themePickerDialog.show();
             return true;
         } else if (key.equals(Utils.DOWNLOAD_LOCATION_KEY)) {
-            getActivity().startActivityForResult(
-                new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), Utils.REQUEST_CODE);
+            getActivity().startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE),
+                SettingsActivity.REQUEST_CODE_SELECT_LOCATION);
             return true;
         }
         return super.onPreferenceTreeClick(preference);

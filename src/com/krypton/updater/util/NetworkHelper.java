@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package com.krypton.updater;
+package com.krypton.updater.util;
 
 import android.net.Network;
 
-import com.krypton.updater.BuildInfo;
+import com.krypton.updater.callbacks.NetworkHelperCallbacks;
+import com.krypton.updater.build.BuildInfo;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,6 +33,9 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.net.URL;
+import java.util.Date;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -40,6 +44,9 @@ import org.json.JSONObject;
 
 public class NetworkHelper {
 
+    private static final String BUILD_INFO_SOURCE_URL = "https://raw.githubusercontent.com/AOSP-Krypton/official_devices_ota/A11/";
+    private static final String DOWNLOAD_SOURCE_URL = "https://sourceforge.net/projects/kosp/files/KOSP-A11-Releases/";
+    private static final String TIMESTAMP_FORMAT = "yyyy-MM-dd/hh:mm";
     private BuildInfo buildInfo;
     private URL downloadUrl;
     private boolean setUrl = false;
@@ -47,52 +54,37 @@ public class NetworkHelper {
     private FileOutputStream outStream;
     private FileChannel fileChannel;
     private ReadableByteChannel rByteChannel;
-    private Listener listener;
+    private NetworkHelperCallbacks callback;
 
-    public static interface Listener {
-        public void onStartedDownload();
-    }
-
-    public void setListener(Listener listener) {
-        this.listener = listener;
+    public void setListener(NetworkHelperCallbacks callback) {
+        this.callback = callback;
     }
 
     public void setDownloadUrl() {
-        StringBuilder urlBuilder = new StringBuilder(Utils.DOWNLOAD_SOURCE_URL);
-        urlBuilder.append(Utils.getDevice());
-        urlBuilder.append('/');
-        urlBuilder.append(buildInfo.getFileName());
         try {
-            downloadUrl = new URL(urlBuilder.toString());
+            downloadUrl = new URL(String.format("%s%s/%s",
+                DOWNLOAD_SOURCE_URL, Utils.getDevice(), buildInfo.getFileName()));
             setUrl = true;
         } catch(MalformedURLException e) {
             Utils.log(e);
         }
     }
 
-    private String parseJSONUrl() {
-        String device = Utils.getDevice();
-        StringBuilder urlBuilder = new StringBuilder(Utils.BUILD_INFO_SOURCE_URL);
-        urlBuilder.append(device + "/" + device + ".json");
-        return urlBuilder.toString();
-    }
-
     public BuildInfo fetchBuildInfo() throws IOException, JSONException {
         StringBuilder builder = new StringBuilder();
         InputStream rawStream;
-
+        String device = Utils.getDevice();
         try {
-            rawStream = new URL(parseJSONUrl()).openStream();
+            rawStream = new URL(String.format("%s%s/%s.json",
+                BUILD_INFO_SOURCE_URL, device, device)).openStream();
         } catch(MalformedURLException e) {
             return null;
         }
 
         BufferedReader buffReader = new BufferedReader(new InputStreamReader(rawStream));
-        String tmp = buffReader.readLine();
-
-        while (tmp != null) {
-            builder.append(tmp);
-            tmp = buffReader.readLine();
+        String line;
+        while ((line = buffReader.readLine()) != null) {
+            builder.append(line);
         }
         buffReader.close();
         rawStream.close();
@@ -100,16 +92,36 @@ public class NetworkHelper {
         JSONObject jsonObj = new JSONObject(builder.toString()).getJSONObject(Utils.BUILD_INFO);
         String version = jsonObj.getString(Utils.BUILD_VERSION);
         String timestamp = jsonObj.getString(Utils.BUILD_TIMESTAMP);
-        if (Utils.checkBuildStatus(version, timestamp)) {
+        if (checkBuildStatus(version, timestamp)) {
             setUrl = false;
-            buildInfo = new BuildInfo(version, timestamp,
-                jsonObj.getString(Utils.BUILD_NAME),
-                jsonObj.getLong(Utils.BUILD_SIZE),
-                jsonObj.getString(Utils.BUILD_MD5SUM));
+            buildInfo = new BuildInfo();
+            buildInfo.setVersion(version);
+            buildInfo.setTimestamp(timestamp);
+            buildInfo.setFileName(jsonObj.getString(Utils.BUILD_NAME));
+            buildInfo.setFileSize(jsonObj.getLong(Utils.BUILD_SIZE));
+            buildInfo.setMd5sum(jsonObj.getString(Utils.BUILD_MD5SUM));
             return buildInfo;
         }
-
         return null;
+    }
+
+    private boolean checkBuildStatus(String version, String timestamp) {
+        float currVersion = Float.parseFloat(Utils.getVersion().substring(1));
+        float newVersion = Float.parseFloat(version.substring(1));
+        if (newVersion > currVersion) {
+            return true;
+        }
+        try {
+            SimpleDateFormat formatter = new SimpleDateFormat(TIMESTAMP_FORMAT);
+            Date currDate = formatter.parse(Utils.getTimestamp());
+            Date newDate = formatter.parse(timestamp);
+            if (newDate.after(currDate)) {
+                return true;
+            }
+        } catch (ParseException e) {
+            // Do nothing
+        }
+        return false;
     }
 
     public void startDownload(File file, Network network, long startByte) {
@@ -119,6 +131,7 @@ public class NetworkHelper {
                 dlConnection = (HttpsURLConnection) network.openConnection(downloadUrl);
             }
         } catch (IOException e) {
+            Utils.log(e);
             return;
         }
 
@@ -129,6 +142,7 @@ public class NetworkHelper {
         try {
             rByteChannel = Channels.newChannel(dlConnection.getInputStream());
         } catch(IOException e) {
+            Utils.log(e);
             return;
         }
 
@@ -140,10 +154,13 @@ public class NetworkHelper {
         }
 
         fileChannel = outStream.getChannel();
-        listener.onStartedDownload();
+        if (callback != null) {
+            callback.onStartedDownload();
+        }
         try {
             fileChannel.transferFrom(rByteChannel, 0, Long.MAX_VALUE);
         } catch (IOException e) {
+            Utils.log(e);
             return;
         }
     }
@@ -169,11 +186,9 @@ public class NetworkHelper {
         try {
             if (fileChannel != null && fileChannel.isOpen()) {
                 return fileChannel.size();
-            } else {
-                return -1;
             }
         } catch(IOException e) {
-            // Do nothing
+            Utils.log(e);
         }
         return -1;
     }

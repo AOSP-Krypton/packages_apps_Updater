@@ -20,6 +20,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
+import android.net.ConnectivityManager.NetworkCallback;
 import android.net.Network;
 import android.os.Binder;
 import android.os.Bundle;
@@ -31,20 +32,25 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.Process;
 import android.os.RemoteException;
+import android.os.ServiceSpecificException;
+import android.os.UpdateEngine;
+import android.os.UpdateEngineCallback;
+import android.os.UpdateEngine.ErrorCodeConstants;
+import android.os.UpdateEngine.UpdateStatusConstants;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
 
+import com.krypton.updater.build.BuildInfo;
+import com.krypton.updater.build.PayloadInfo;
+import com.krypton.updater.callbacks.ActivityCallbacks;
+import com.krypton.updater.callbacks.NetworkHelperCallbacks;
+import com.krypton.updater.util.NetworkHelper;
+import com.krypton.updater.util.Utils;
 import com.krypton.updater.R;
-import com.krypton.updater.BuildInfo;
-import com.krypton.updater.NetworkHelper;
-import com.krypton.updater.Utils;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.Duration;
 import java.util.concurrent.Executors;
@@ -53,30 +59,107 @@ import java.util.concurrent.Future;
 
 import org.json.JSONException;
 
-public class UpdaterService extends Service implements NetworkHelper.Listener {
+public class UpdaterService extends Service implements NetworkHelperCallbacks {
 
     private Handler handler;
     private IBinder activityBinder = new ActivityBinder();
     private ActivityCallbacks callback;
     private NetworkHelper networkHelper;
     private ConnectivityManager connManager;
-    private NetCallback netCallback;
     private Network network;
     private ExecutorService executor;
     private Future future;
-    private Messenger uiMessenger;
     private BuildInfo buildInfo;
+    private UpdateEngine updateEngine;
     private File file;
-    private boolean downloadStarted = false;
-    private boolean downloadPaused = false;
-    private boolean downloadFinished = false;
+    private boolean bound = false;
+    private boolean downloadStarted, downloadPaused, downloadFinished;
+    private boolean updateStarted, updatePaused, updateFinished;
     private boolean isOnline = false;
-    private long totalSize = 0;
-    private long downloadedSize = 0;
-    private int downloadProgress = 0;
+    private boolean localUpgradeMode = false;
+    private long totalSize, downloadedSize;
+    private int downloadProgress;
+    public int updateStatus, updateProgress, updateExitCode;
+
+    private NetworkCallback netCallback = new NetworkCallback() {
+        @Override
+        public void onAvailable(Network network) {
+            isOnline = true;
+            UpdaterService.this.network = network;
+            if (downloadStarted && !downloadPaused) {
+                if (future != null) {
+                    future.cancel(true);
+                }
+                networkHelper.cleanup();
+                startDownload();
+            }
+        }
+
+        @Override
+        public void onLost(Network network) {
+            isOnline = false;
+            if (!downloadFinished) {
+                waitAndDispatchMessage();
+            }
+            UpdaterService.this.network = null;
+            if (future != null) {
+                future.cancel(true);
+            }
+            networkHelper.cleanup();
+        }
+    };
+
+    private UpdateEngineCallback updateEngineCallback = new UpdateEngineCallback() {
+        @Override
+        public void onStatusUpdate(int status, float percent) {
+            switch (status) {
+                case UpdateStatusConstants.IDLE:
+                case UpdateStatusConstants.CLEANUP_PREVIOUS_UPDATE:
+                    break;
+                case UpdateStatusConstants.UPDATE_AVAILABLE:
+                    updateStarted = true;
+                    if (bound) {
+                        callback.onStartingUpdate();
+                    }
+                    break;
+                case UpdateStatusConstants.DOWNLOADING:
+                case UpdateStatusConstants.FINALIZING:
+                    int tmpProgress = (int) (percent*100);
+                    if (status != updateStatus || tmpProgress > updateProgress) {
+                        updateStatus = status;
+                        updateProgress = tmpProgress;
+                        if (bound) {
+                            callback.onStatusUpdate(updateStatus, updateProgress);
+                        }
+                    }
+                    break;
+                case UpdateStatusConstants.UPDATED_NEED_REBOOT:
+                    break;
+                default:
+                    Utils.log("status", status);
+            }
+        }
+
+        @Override
+        public void onPayloadApplicationComplete(int errorCode) {
+            updateStarted = false;
+            if (errorCode != ErrorCodeConstants.USER_CANCELLED) {
+                updateExitCode = errorCode;
+                if (updateExitCode == ErrorCodeConstants.SUCCESS) {
+                    updateFinished = true;
+                }
+                if (bound) {
+                    callback.onFinishedUpdate(updateExitCode);
+                }
+            }
+            updateEngine.unbind();
+        }
+    };
 
     @Override
     public void onCreate() {
+        resetUpdateStatus();
+        resetDownloadStatus();
         final HandlerThread thread = new HandlerThread("UpdaterService",
             Process.THREAD_PRIORITY_BACKGROUND);
         thread.start();
@@ -84,7 +167,6 @@ public class UpdaterService extends Service implements NetworkHelper.Listener {
         networkHelper = new NetworkHelper();
         networkHelper.setListener(this);
         connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        netCallback = new NetCallback();
         connManager.registerDefaultNetworkCallback(netCallback);
         executor = Executors.newFixedThreadPool(4);
     }
@@ -101,23 +183,31 @@ public class UpdaterService extends Service implements NetworkHelper.Listener {
 
     @Override
     public void onDestroy() {
+        unregisterCallback();
         executor.shutdown();
         connManager.unregisterNetworkCallback(netCallback);
+        if (updateEngine != null) {
+            updateEngine.unbind();
+        }
     }
 
     public void registerCallback(ActivityCallbacks callback) {
         this.callback = callback;
+        bound = true;
+        if (updateStarted || updateFinished ||
+                downloadStarted || downloadFinished) {
+            restoreState();
+        }
     }
 
     public void unregisterCallback() {
         callback = null;
+        bound = false;
     }
 
     public void updateBuildInfo() {
         executor.execute(() -> {
-            if (downloadStarted || downloadFinished) {
-                restoreState();
-            } else {
+            if (!downloadStarted && !downloadFinished) {
                 boolean foundNew = false;
                 try {
                     BuildInfo tmp = networkHelper.fetchBuildInfo();
@@ -126,22 +216,23 @@ public class UpdaterService extends Service implements NetworkHelper.Listener {
                         foundNew = true;
                     }
                 } catch (JSONException|IOException e) {
-                    if (callback != null) {
+                    if (bound) {
                         callback.fetchBuildInfoFailed();
                     }
                     return;
                 }
 
                 if (foundNew) {
-                    totalSize = buildInfo.getFileSize();
-                    updateFile();
+                    if (!localUpgradeMode) {
+                        updateFile();
+                    }
                     if (!checkIfAlreadyDownloaded()) {
-                        if (callback != null) {
+                        if (bound) {
                             callback.onFetchedBuildInfo(buildInfo.getBundle());
                         }
                     }
                 } else {
-                    if (callback != null) {
+                    if (bound) {
                         callback.noUpdates();
                     }
                 }
@@ -157,14 +248,13 @@ public class UpdaterService extends Service implements NetworkHelper.Listener {
                 while (size != -1) {
                     if (size > downloadedSize) {
                         downloadedSize = size;
-                        if (callback != null) {
-                            callback.updateDownloadedSize(
-                                Utils.parseProgressText(downloadedSize, totalSize));
+                        if (bound) {
+                            callback.updateDownloadedSize(downloadedSize, totalSize);
                         }
                         int progress = (int) ((downloadedSize*100)/totalSize);
                         if (progress > downloadProgress) {
                             downloadProgress = progress;
-                            if (callback != null) {
+                            if (bound) {
                                 callback.updateDownloadProgress(downloadProgress);
                             }
                         }
@@ -187,7 +277,7 @@ public class UpdaterService extends Service implements NetworkHelper.Listener {
                 if (!networkHelper.hasSetUrl()) {
                     networkHelper.setDownloadUrl();
                 }
-                if (callback != null) {
+                if (bound) {
                     callback.setInitialProgress(downloadedSize, totalSize);
                 }
                 networkHelper.startDownload(file, network, downloadedSize);
@@ -197,25 +287,39 @@ public class UpdaterService extends Service implements NetworkHelper.Listener {
 
     private void restoreState() {
         Bundle bundle = new Bundle();
-        bundle.putBundle(Utils.BUILD_INFO, buildInfo.getBundle());
-        if (downloadStarted) {
-            bundle.putBoolean(Utils.DOWNLOAD_PAUSED, downloadPaused);
-        } else {
-            bundle.putBoolean(Utils.DOWNLOAD_FINISHED, downloadFinished);
+        if (buildInfo != null) {
+            bundle.putBundle(Utils.BUILD_INFO, buildInfo.getBundle());
         }
-        bundle.putLong(Utils.DOWNLOADED_SIZE, downloadedSize);
-        bundle.putLong(Utils.BUILD_SIZE, totalSize);
-        if (callback != null) {
+        if (downloadStarted || downloadFinished) {
+            bundle.putBoolean(Utils.DOWNLOAD_STARTED, downloadStarted);
+            bundle.putBoolean(Utils.DOWNLOAD_PAUSED, downloadPaused);
+            bundle.putBoolean(Utils.DOWNLOAD_FINISHED, downloadFinished);
+            bundle.putLong(Utils.DOWNLOADED_SIZE, downloadedSize);
+            bundle.putLong(Utils.BUILD_SIZE, totalSize);
+        }
+        bundle.putBoolean(Utils.LOCAL_UPGRADE_MODE, localUpgradeMode);
+        if (updateStarted || updateFinished) {
+            bundle.putBoolean(Utils.UPDATE_STARTED, updateStarted);
+            bundle.putBoolean(Utils.UPDATE_PAUSED, updatePaused);
+            bundle.putBoolean(Utils.UPDATE_FINISHED, updateFinished);
+            bundle.putInt(Utils.UPDATE_EXIT_CODE, updateExitCode);
+            bundle.putInt(Utils.UPDATE_STATUS, updateStatus);
+            bundle.putInt(Utils.UPDATE_PROGRESS, updateProgress);
+        }
+        if (bound) {
             callback.restoreActivityState(bundle);
         }
-        checkMd5sum();
     }
 
     private boolean checkIfAlreadyDownloaded() {
-        if (file.exists()) {
+        if (file != null && file.exists()) {
             downloadedSize = file.length();
+        } else {
+            return false;
         }
+        totalSize = buildInfo.getFileSize();
         if (downloadedSize == totalSize) {
+            checkMd5sum();
             downloadFinished = true;
             restoreState();
             return true;
@@ -226,34 +330,18 @@ public class UpdaterService extends Service implements NetworkHelper.Listener {
 
     private void checkMd5sum() {
         executor.execute(() -> {
-            try {
-                toast(R.string.checking_md5sum);
-                byte[] buffer = new byte[1048576];
-                int bytesRead = 0;
-                MessageDigest md5Digest = MessageDigest.getInstance("MD5");
-                FileInputStream inStream = new FileInputStream(file);
-                while ((bytesRead = inStream.read(buffer)) != -1) {
-                    md5Digest.update(buffer, 0, bytesRead);
-                }
-                inStream.close();
-
-                StringBuilder sb = new StringBuilder();
-                for (byte b: md5Digest.digest()) {
-                    sb.append(String.format("%02x", b));
-                }
-                boolean pass = sb.toString().equals(buildInfo.getMd5sum());
-                if (callback != null) {
-                    callback.md5sumCheckPassed(pass);
-                }
-                if (!pass) {
-                    deleteDownload();
-                }
-            } catch (NoSuchAlgorithmException e) {
-                // I am pretty sure MD5 exists
-            } catch (FileNotFoundException e) {
+            toast(R.string.checking_md5sum);
+            boolean pass = false;
+            if (file != null && file.exists()) {
+                pass = buildInfo.checkMd5sum(file);
+            } else {
                 toast(R.string.file_not_found);
-            } catch (IOException e) {
-                // Do nothing
+            }
+            if (bound) {
+                callback.md5sumCheckPassed(pass);
+            }
+            if (!pass) {
+                deleteDownload();
             }
         });
     }
@@ -279,15 +367,11 @@ public class UpdaterService extends Service implements NetworkHelper.Listener {
 
     public void cancelDownload() {
         toast(R.string.status_download_cancelled);
-        downloadStarted = false;
-        downloadPaused = false;
-        downloadFinished = false;
         if (future != null) {
             future.cancel(true);
         }
         networkHelper.cleanup();
-        downloadedSize = 0;
-        downloadProgress = 0;
+        resetDownloadStatus();
     }
 
     public void deleteDownload() {
@@ -301,10 +385,18 @@ public class UpdaterService extends Service implements NetworkHelper.Listener {
         }
     }
 
+    public void setFileForLocalUpgrade(String path) {
+        localUpgradeMode = true;
+        File tmp = new File(path);
+        if (tmp.exists() && !tmp.isDirectory()) {
+            file = tmp;
+        }
+    }
+
     private void setDownloadFinished() {
         downloadStarted = false;
         downloadFinished = true;
-        if (callback != null) {
+        if (bound) {
             callback.onFinishedDownload();
         }
         checkMd5sum();
@@ -318,7 +410,7 @@ public class UpdaterService extends Service implements NetworkHelper.Listener {
                 Utils.sleepThread(500);
                 end = Instant.now();
                 if (Duration.between(start, end).toMillis() >= 5000) {
-                    if (callback != null) {
+                    if (bound) {
                         callback.noInternet();
                     }
                     return;
@@ -332,53 +424,89 @@ public class UpdaterService extends Service implements NetworkHelper.Listener {
             Toast.makeText(this, getString(id), Toast.LENGTH_SHORT).show());
     }
 
-    public final class ActivityBinder extends Binder {
+    public void startUpdate() {
+        if (updateEngine == null) {
+            updateEngine = new UpdateEngine();
+            updateEngine.setPerformanceMode(true);
+        }
+        updateEngine.bind(updateEngineCallback);
+        if (file != null && file.exists()) {
+            PayloadInfo payloadInfo = new PayloadInfo(file);
+            if (!payloadInfo.validateData()) {
+                resetUpdateStatus();
+                updateExitCode = Utils.FILE_INVALID;
+                toast(R.string.invalid_zip_file);
+                if (bound) {
+                    callback.onFinishedUpdate(updateExitCode);
+                }
+                return;
+            }
+            try {
+                updateEngine.cleanupAppliedPayload();
+                updateEngine.applyPayload(payloadInfo.getFilePath(),
+                    payloadInfo.getOffset(), payloadInfo.getSize(), payloadInfo.getHeader());
+            } catch (ServiceSpecificException e) {
+                Utils.log(e);
+                updateExitCode = Utils.APPLY_PAYLOAD_FAILED;
+                if (bound) {
+                    callback.onFinishedUpdate(updateExitCode);
+                }
+                resetUpdateStatus();
+            }
+        } else {
+            Utils.log("update zip file is either null or does not exist");
+        }
+    }
 
+    public void pauseUpdate(boolean paused) {
+        updatePaused = paused;
+        try {
+            if (updatePaused) {
+                updateEngine.suspend();
+            } else {
+                updateEngine.resume();
+            }
+        } catch(ServiceSpecificException e) {
+            // Probably no on-going update
+            Utils.log(e);
+        }
+    }
+
+    public void cancelUpdate() {
+        try {
+            if (updateStarted) {
+                updateEngine.cancel();
+            }
+        } catch (ServiceSpecificException e) {
+            // Probably no update to cancel
+            Utils.log(e);
+        }
+        resetUpdateStatus();
+    }
+
+    private void resetUpdateStatus() {
+        updateStarted = updatePaused = updateFinished = false;
+        updateStatus = updateExitCode = -1;
+        updateProgress = 0;
+        if (updateEngine != null) {
+            updateEngine.resetStatus();
+            updateEngine.cleanupAppliedPayload();
+            updateEngine.unbind();
+        }
+        if (localUpgradeMode) {
+            localUpgradeMode = false;
+            file = null;
+        }
+    }
+
+    private void resetDownloadStatus() {
+        downloadStarted = downloadPaused = downloadFinished = false;
+        totalSize = downloadedSize = downloadProgress = 0;
+    }
+
+    public final class ActivityBinder extends Binder {
         public UpdaterService getService() {
             return UpdaterService.this;
-        }
-
-    }
-
-    public static interface ActivityCallbacks {
-        public void restoreActivityState(Bundle bundle);
-        public void onFetchedBuildInfo(Bundle bundle);
-        public void fetchBuildInfoFailed();
-        public void noUpdates();
-        public void noInternet();
-        public void setInitialProgress(long downloaded, long total);
-        public void updateDownloadedSize(String progressText);
-        public void updateDownloadProgress(int progress);
-        public void onFinishedDownload();
-        public void md5sumCheckPassed(boolean passed);
-    }
-
-    private final class NetCallback extends ConnectivityManager.NetworkCallback {
-
-        @Override
-        public void onAvailable(Network network) {
-            isOnline = true;
-            UpdaterService.this.network = network;
-            if (downloadStarted && !downloadPaused) {
-                if (future != null) {
-                    future.cancel(true);
-                }
-                networkHelper.cleanup();
-                startDownload();
-            }
-        }
-
-        @Override
-        public void onLost(Network network) {
-            isOnline = false;
-            if (!downloadFinished) {
-                waitAndDispatchMessage();
-            }
-            UpdaterService.this.network = null;
-            if (future != null) {
-                future.cancel(true);
-            }
-            networkHelper.cleanup();
         }
     }
 }

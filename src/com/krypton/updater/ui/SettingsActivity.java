@@ -16,7 +16,8 @@
 
 package com.krypton.updater.ui;
 
-import android.app.Activity;
+import static android.app.Activity.RESULT_OK;
+
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -27,9 +28,11 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.krypton.updater.R;
-import com.krypton.updater.Utils;
+import com.krypton.updater.util.Utils;
 
 public class SettingsActivity extends AppCompatActivity {
+
+    protected static final int REQUEST_CODE_SELECT_LOCATION = 1000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,8 +51,8 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode,
             Intent resultData) {
-        if (requestCode == Utils.REQUEST_CODE
-                && resultCode == Activity.RESULT_OK) {
+        if (requestCode == REQUEST_CODE_SELECT_LOCATION
+                && resultCode == RESULT_OK) {
             if (resultData != null) {
                 Uri uri = resultData.getData();
                 if (uri != null) {
