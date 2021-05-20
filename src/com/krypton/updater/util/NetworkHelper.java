@@ -48,7 +48,6 @@ public class NetworkHelper {
     private static final String DOWNLOAD_SOURCE_URL = "https://sourceforge.net/projects/kosp/files/KOSP-A11-Releases/";
     private BuildInfo buildInfo;
     private URL downloadUrl;
-    private boolean setUrl = false;
     private HttpsURLConnection dlConnection;
     private FileOutputStream outStream;
     private FileChannel fileChannel;
@@ -59,11 +58,10 @@ public class NetworkHelper {
         this.callback = callback;
     }
 
-    public void setDownloadUrl() {
+    private void updateDownloadUrl(String device, String fileName) {
         try {
             downloadUrl = new URL(String.format("%s%s/%s",
-                DOWNLOAD_SOURCE_URL, Utils.getDevice(), buildInfo.getFileName()));
-            setUrl = true;
+                DOWNLOAD_SOURCE_URL, device, fileName));
         } catch(MalformedURLException e) {
             Utils.log(e);
         }
@@ -91,16 +89,17 @@ public class NetworkHelper {
         JSONObject jsonObj = new JSONObject(builder.toString()).getJSONObject(Utils.BUILD_INFO);
         String version = jsonObj.getString(Utils.BUILD_VERSION);
         long date = jsonObj.getLong(Utils.BUILD_DATE);
+        String fileName = jsonObj.getString(Utils.BUILD_NAME);
         float currVersion = Float.parseFloat(Utils.getVersion().substring(1));
         float newVersion = Float.parseFloat(version.substring(1));
         if (newVersion > currVersion || date > Long.parseLong(Utils.getBuildDate())) {
-            setUrl = false;
             buildInfo = new BuildInfo();
             buildInfo.setVersion(version);
             buildInfo.setBuildDate(date);
-            buildInfo.setFileName(jsonObj.getString(Utils.BUILD_NAME));
+            buildInfo.setFileName(fileName);
             buildInfo.setFileSize(jsonObj.getLong(Utils.BUILD_SIZE));
             buildInfo.setMd5sum(jsonObj.getString(Utils.BUILD_MD5SUM));
+            updateDownloadUrl(device, fileName);
             return buildInfo;
         }
         return null;
@@ -173,9 +172,5 @@ public class NetworkHelper {
             Utils.log(e);
         }
         return -1;
-    }
-
-    public boolean hasSetUrl() {
-        return setUrl;
     }
 }

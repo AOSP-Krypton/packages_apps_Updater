@@ -274,9 +274,6 @@ public class UpdaterService extends Service implements NetworkHelperCallbacks {
             if (!checkIfAlreadyDownloaded()) {
                 downloadStarted = true;
                 toast(R.string.status_downloading);
-                if (!networkHelper.hasSetUrl()) {
-                    networkHelper.setDownloadUrl();
-                }
                 if (bound) {
                     callback.setInitialProgress(downloadedSize, totalSize);
                 }
