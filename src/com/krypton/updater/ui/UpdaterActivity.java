@@ -274,8 +274,8 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
     @Override
     public void noInternet() {
         downloadPaused = true;
+        toast(R.string.no_internet);
         runOnUiThread(() -> {
-            toast(R.string.no_internet);
             downloadStatus.setText(getString(R.string.status_no_internet));
             pauseButton.setText(getString(R.string.resume));
         });
@@ -355,8 +355,8 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
                 resetUpdateLayout();
                 break;
             case ErrorCodeConstants.DOWNLOAD_TRANSFER_ERROR:
+                toast(R.string.payload_transfer_error_retry);
                 runOnUiThread(() -> {
-                    toast(R.string.payload_transfer_error_retry);
                     updateStatus.setText(null);
                     setVisibile(false, updateProgressLayout, pauseUpdateButton, cancelUpdateButton);
                     updateButton.setVisibility(VISIBLE);
