@@ -157,8 +157,8 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
+    public void onPause() {
+        super.onPause();
         fileUri = null;
         if (bound) {
             updaterService.unregisterCallback();
