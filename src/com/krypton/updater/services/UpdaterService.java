@@ -216,6 +216,7 @@ public class UpdaterService extends Service implements NetworkHelperCallbacks {
                         foundNew = true;
                     }
                 } catch (JSONException|IOException e) {
+                    Utils.log(e);
                     if (bound) {
                         callback.fetchBuildInfoFailed();
                     }
