@@ -30,7 +30,7 @@ import java.security.NoSuchAlgorithmException;
 public final class BuildInfo {
 
     private Bundle bundle;
-    private String version, timestamp, fileName, md5sum;
+    private String fileName, md5sum;
     private long fileSize;
 
     public BuildInfo() {
@@ -40,13 +40,11 @@ public final class BuildInfo {
     }
 
     public void setVersion(String version) {
-        this.version = version;
         bundle.putString(Utils.BUILD_VERSION, version);
     }
 
-    public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
-        bundle.putString(Utils.BUILD_TIMESTAMP, timestamp);
+    public void setBuildDate(long date) {
+        bundle.putString(Utils.BUILD_DATE, String.valueOf(date));
     }
 
     public void setFileName(String fileName) {
@@ -68,24 +66,12 @@ public final class BuildInfo {
         return bundle;
     }
 
-    public String getVersion() {
-        return version;
-    }
-
-    public String getTimestamp() {
-        return timestamp;
-    }
-
     public String getFileName() {
         return fileName;
     }
 
     public long getFileSize() {
         return fileSize;
-    }
-
-    public String getMd5sum() {
-        return md5sum;
     }
 
     public boolean checkMd5sum(File file) {

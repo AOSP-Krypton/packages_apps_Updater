@@ -24,7 +24,7 @@
     <string name="build_info_title">Current Build Info:</string>
     <string name="device_name_text">Device:</string>
     <string name="version_text">Version:</string>
-    <string name="timestamp_text">Timestamp:</string>
+    <string name="date_text">Date:</string>
     <string name="filename_text">Filename:</string>
     <string name="md5sum_text">md5sum:</string>
     <string name="new_build_text">New Update:</string>

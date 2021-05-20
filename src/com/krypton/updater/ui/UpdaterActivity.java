@@ -409,7 +409,7 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
         ((TextView) findViewById(R.id.view_version))
             .setText(getString(R.string.version_text, Utils.getVersion()));
         ((TextView) findViewById(R.id.view_timestamp))
-            .setText(getString(R.string.timestamp_text, Utils.getTimestamp()));
+            .setText(getString(R.string.date_text, Utils.getBuildDate()));
     }
 
     private void setWidgets() {
@@ -478,8 +478,8 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
 
                 latestBuildVersion.setText(getString(R.string.version_text,
                     bundle.getString(Utils.BUILD_VERSION)));
-                latestBuildTimestamp.setText(getString(R.string.timestamp_text,
-                    bundle.getString(Utils.BUILD_TIMESTAMP)));
+                latestBuildTimestamp.setText(getString(R.string.date_text,
+                    bundle.getString(Utils.BUILD_DATE)));
                 latestBuildName.setText(getString(R.string.filename_text,
                     bundle.getString(Utils.BUILD_NAME)));
                 latestBuildMd5sum.setText(getString(R.string.md5sum_text,

@@ -46,7 +46,6 @@ public class NetworkHelper {
 
     private static final String BUILD_INFO_SOURCE_URL = "https://raw.githubusercontent.com/AOSP-Krypton/official_devices_ota/A11/";
     private static final String DOWNLOAD_SOURCE_URL = "https://sourceforge.net/projects/kosp/files/KOSP-A11-Releases/";
-    private static final String TIMESTAMP_FORMAT = "yyyy-MM-dd/hh:mm";
     private BuildInfo buildInfo;
     private URL downloadUrl;
     private boolean setUrl = false;
@@ -91,37 +90,20 @@ public class NetworkHelper {
 
         JSONObject jsonObj = new JSONObject(builder.toString()).getJSONObject(Utils.BUILD_INFO);
         String version = jsonObj.getString(Utils.BUILD_VERSION);
-        String timestamp = jsonObj.getString(Utils.BUILD_TIMESTAMP);
-        if (checkBuildStatus(version, timestamp)) {
+        long date = jsonObj.getLong(Utils.BUILD_DATE);
+        float currVersion = Float.parseFloat(Utils.getVersion().substring(1));
+        float newVersion = Float.parseFloat(version.substring(1));
+        if (newVersion > currVersion || date > Long.parseLong(Utils.getBuildDate())) {
             setUrl = false;
             buildInfo = new BuildInfo();
             buildInfo.setVersion(version);
-            buildInfo.setTimestamp(timestamp);
+            buildInfo.setBuildDate(date);
             buildInfo.setFileName(jsonObj.getString(Utils.BUILD_NAME));
             buildInfo.setFileSize(jsonObj.getLong(Utils.BUILD_SIZE));
             buildInfo.setMd5sum(jsonObj.getString(Utils.BUILD_MD5SUM));
             return buildInfo;
         }
         return null;
-    }
-
-    private boolean checkBuildStatus(String version, String timestamp) {
-        float currVersion = Float.parseFloat(Utils.getVersion().substring(1));
-        float newVersion = Float.parseFloat(version.substring(1));
-        if (newVersion > currVersion) {
-            return true;
-        }
-        try {
-            SimpleDateFormat formatter = new SimpleDateFormat(TIMESTAMP_FORMAT);
-            Date currDate = formatter.parse(Utils.getTimestamp());
-            Date newDate = formatter.parse(timestamp);
-            if (newDate.after(currDate)) {
-                return true;
-            }
-        } catch (ParseException e) {
-            // Do nothing
-        }
-        return false;
     }
 
     public void startDownload(File file, Network network, long startByte) {

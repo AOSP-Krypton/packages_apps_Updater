@@ -25,11 +25,11 @@ public final class Utils {
 
     private static final String PROP_DEVICE = "ro.krypton.build.device";
     private static final String PROP_VERSION = "ro.krypton.build.version";
-    private static final String PROP_TIMESTAMP = "ro.krypton.build.timestamp";
+    private static final String PROP_DATE = "ro.build.date.utc";
 
     public static final String BUILD_INFO = "build-info";
     public static final String BUILD_VERSION = "version";
-    public static final String BUILD_TIMESTAMP = "timestamp";
+    public static final String BUILD_DATE = "date";
     public static final String BUILD_NAME = "filename";
     public static final String BUILD_SIZE = "filesize";
     public static final String BUILD_MD5SUM = "md5sum";
@@ -67,8 +67,8 @@ public final class Utils {
         return SystemProperties.get(PROP_VERSION, "unavailable");
     }
 
-    public static String getTimestamp() {
-        return SystemProperties.get(PROP_TIMESTAMP, "unavailable");
+    public static String getBuildDate() {
+        return SystemProperties.get(PROP_DATE, "unavailable");
     }
 
     public static void sleepThread(int duration) {
