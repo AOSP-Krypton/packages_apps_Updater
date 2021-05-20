@@ -44,7 +44,7 @@ import org.json.JSONObject;
 
 public class NetworkHelper {
 
-    private static final String BUILD_INFO_SOURCE_URL = "https://raw.githubusercontent.com/AOSP-Krypton/official_devices_ota/A11/";
+    private static final String BUILD_INFO_SOURCE_URL = "https://raw.githubusercontent.com/AOSP-Krypton/ota/A11/";
     private static final String DOWNLOAD_SOURCE_URL = "https://sourceforge.net/projects/kosp/files/KOSP-A11-Releases/";
     private BuildInfo buildInfo;
     private URL downloadUrl;
