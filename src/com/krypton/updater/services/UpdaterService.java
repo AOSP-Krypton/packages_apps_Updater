@@ -16,36 +16,37 @@
 
 package com.krypton.updater.services;
 
+import static android.content.Context.CONNECTIVITY_SERVICE;
+import static android.os.FileUtils.S_IRWXU;
+import static android.os.FileUtils.S_IRWXG;
+import static android.os.PowerManager.REBOOT_REQUESTED_BY_DEVICE_OWNER;
+import static android.os.PowerManager.PARTIAL_WAKE_LOCK;
+import static android.os.Process.THREAD_PRIORITY_BACKGROUND;
+import static android.os.UpdateEngine.ErrorCodeConstants.*;
+import static android.os.UpdateEngine.UpdateStatusConstants.*;
+import static com.krypton.updater.util.Constants.*;
+import static java.io.File.pathSeparator;
+
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.ConnectivityManager.NetworkCallback;
 import android.net.Network;
 import android.os.Binder;
 import android.os.Bundle;
-import android.os.Handler;
+import android.os.Environment;
+import android.os.FileUtils;
 import android.os.HandlerThread;
 import android.os.IBinder;
-import android.os.Looper;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.Process;
-import android.os.RemoteException;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 import android.os.ServiceSpecificException;
 import android.os.UpdateEngine;
 import android.os.UpdateEngineCallback;
-import android.os.UpdateEngine.ErrorCodeConstants;
-import android.os.UpdateEngine.UpdateStatusConstants;
-import android.preference.PreferenceManager;
-import android.widget.Toast;
 
-import com.krypton.updater.build.BuildInfo;
-import com.krypton.updater.build.PayloadInfo;
-import com.krypton.updater.callbacks.ActivityCallbacks;
-import com.krypton.updater.callbacks.NetworkHelperCallbacks;
-import com.krypton.updater.util.NetworkHelper;
-import com.krypton.updater.util.Utils;
+import com.google.common.io.Files;
+import com.krypton.updater.callbacks.*;
+import com.krypton.updater.util.*;
 import com.krypton.updater.R;
 
 import java.io.File;
@@ -53,6 +54,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.Duration;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -61,16 +63,24 @@ import org.json.JSONException;
 
 public class UpdaterService extends Service implements NetworkHelperCallbacks {
 
-    private Handler handler;
-    private IBinder activityBinder = new ActivityBinder();
+    private static final String TAG = "UpdaterService";
+    private static final String WL_TAG ="UpdaterService.WakeLock";
+    private static final String OTA_DIR = "kosp_ota";
+    private static final String DOWNLOAD_DIR ="downloads";
+    private static final File EXTERNAL_SD = Environment.getExternalStorageDirectory();
+    private final IBinder activityBinder = new ActivityBinder();
+    private final NetworkHelper networkHelper = new NetworkHelper();
+    private final ExecutorService executor = Executors.newFixedThreadPool(8);
+    private final UpdateEngine updateEngine = new UpdateEngine();
+    private final File otaPackageDir = new File(Environment.getDataDirectory(), OTA_DIR);
+    private final File downloadDir = new File(otaPackageDir, DOWNLOAD_DIR);
     private ActivityCallbacks callback;
-    private NetworkHelper networkHelper;
     private ConnectivityManager connManager;
+    private PowerManager powerManager;
+    private WakeLock wakeLock;
     private Network network;
-    private ExecutorService executor;
     private Future future;
     private BuildInfo buildInfo;
-    private UpdateEngine updateEngine;
     private File file;
     private boolean bound = false;
     private boolean downloadStarted, downloadPaused, downloadFinished;
@@ -113,17 +123,21 @@ public class UpdaterService extends Service implements NetworkHelperCallbacks {
         @Override
         public void onStatusUpdate(int status, float percent) {
             switch (status) {
-                case UpdateStatusConstants.IDLE:
-                case UpdateStatusConstants.CLEANUP_PREVIOUS_UPDATE:
+                case IDLE:
+                case CLEANUP_PREVIOUS_UPDATE:
+                    // We don't have to update the ui for these
                     break;
-                case UpdateStatusConstants.UPDATE_AVAILABLE:
-                    updateStarted = true;
-                    if (bound) {
-                        callback.onStartingUpdate();
+                case UPDATE_AVAILABLE:
+                    if (!updateStarted) {
+                        updateStarted = true;
+                        if (bound) {
+                            callback.onStartingUpdate();
+                        }
+                        acquireWakeLock();
                     }
                     break;
-                case UpdateStatusConstants.DOWNLOADING:
-                case UpdateStatusConstants.FINALIZING:
+                case DOWNLOADING:
+                case FINALIZING:
                     int tmpProgress = (int) (percent*100);
                     if (status != updateStatus || tmpProgress > updateProgress) {
                         updateStatus = status;
@@ -133,7 +147,9 @@ public class UpdaterService extends Service implements NetworkHelperCallbacks {
                         }
                     }
                     break;
-                case UpdateStatusConstants.UPDATED_NEED_REBOOT:
+                case UPDATED_NEED_REBOOT:
+                    releaseWakeLock();
+                    // Ready for reboot, onFinishedUpdate will enable the reboot button
                     break;
                 default:
                     Utils.log("status", status);
@@ -143,9 +159,10 @@ public class UpdaterService extends Service implements NetworkHelperCallbacks {
         @Override
         public void onPayloadApplicationComplete(int errorCode) {
             updateStarted = false;
-            if (errorCode != ErrorCodeConstants.USER_CANCELLED) {
+            // Only update status if user didn't order update cancellation
+            if (errorCode != USER_CANCELLED) {
                 updateExitCode = errorCode;
-                if (updateExitCode == ErrorCodeConstants.SUCCESS) {
+                if (updateExitCode == SUCCESS) {
                     updateFinished = true;
                 }
                 if (bound) {
@@ -158,17 +175,17 @@ public class UpdaterService extends Service implements NetworkHelperCallbacks {
 
     @Override
     public void onCreate() {
+        updateEngine.setPerformanceMode(true);
+        powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        if (powerManager != null) {
+            wakeLock = powerManager.newWakeLock(PARTIAL_WAKE_LOCK, WL_TAG);
+        }
+        new HandlerThread(TAG, THREAD_PRIORITY_BACKGROUND).start();
+        networkHelper.setListener(this);
+        connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        connManager.registerDefaultNetworkCallback(netCallback);
         resetUpdateStatus();
         resetDownloadStatus();
-        final HandlerThread thread = new HandlerThread("UpdaterService",
-            Process.THREAD_PRIORITY_BACKGROUND);
-        thread.start();
-        handler = new Handler(thread.getLooper());
-        networkHelper = new NetworkHelper();
-        networkHelper.setListener(this);
-        connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        connManager.registerDefaultNetworkCallback(netCallback);
-        executor = Executors.newFixedThreadPool(4);
     }
 
     @Override
@@ -183,12 +200,11 @@ public class UpdaterService extends Service implements NetworkHelperCallbacks {
 
     @Override
     public void onDestroy() {
+        releaseWakeLock();
         unregisterCallback();
         executor.shutdown();
         connManager.unregisterNetworkCallback(netCallback);
-        if (updateEngine != null) {
-            updateEngine.unbind();
-        }
+        updateEngine.unbind();
     }
 
     public void registerCallback(ActivityCallbacks callback) {
@@ -225,7 +241,7 @@ public class UpdaterService extends Service implements NetworkHelperCallbacks {
 
                 if (foundNew) {
                     if (!localUpgradeMode) {
-                        updateFile();
+                        updateFile(true, buildInfo.getFileName());
                     }
                     if (!checkIfAlreadyDownloaded()) {
                         if (bound) {
@@ -270,11 +286,10 @@ public class UpdaterService extends Service implements NetworkHelperCallbacks {
     }
 
     public void startDownload() {
-        updateFile();
         executor.execute(() -> {
             if (!checkIfAlreadyDownloaded()) {
                 downloadStarted = true;
-                toast(R.string.status_downloading);
+                toast(R.string.downloading);
                 if (bound) {
                     callback.setInitialProgress(downloadedSize, totalSize);
                 }
@@ -286,23 +301,23 @@ public class UpdaterService extends Service implements NetworkHelperCallbacks {
     private void restoreState() {
         Bundle bundle = new Bundle();
         if (buildInfo != null) {
-            bundle.putBundle(Utils.BUILD_INFO, buildInfo.getBundle());
+            bundle.putBundle(BUILD_INFO, buildInfo.getBundle());
         }
         if (downloadStarted || downloadFinished) {
-            bundle.putBoolean(Utils.DOWNLOAD_STARTED, downloadStarted);
-            bundle.putBoolean(Utils.DOWNLOAD_PAUSED, downloadPaused);
-            bundle.putBoolean(Utils.DOWNLOAD_FINISHED, downloadFinished);
-            bundle.putLong(Utils.DOWNLOADED_SIZE, downloadedSize);
-            bundle.putLong(Utils.BUILD_SIZE, totalSize);
+            bundle.putBoolean(DOWNLOAD_STARTED, downloadStarted);
+            bundle.putBoolean(DOWNLOAD_PAUSED, downloadPaused);
+            bundle.putBoolean(DOWNLOAD_FINISHED, downloadFinished);
+            bundle.putLong(DOWNLOADED_SIZE, downloadedSize);
+            bundle.putLong(BUILD_SIZE, totalSize);
         }
-        bundle.putBoolean(Utils.LOCAL_UPGRADE_MODE, localUpgradeMode);
+        bundle.putBoolean(LOCAL_UPGRADE_MODE, localUpgradeMode);
         if (updateStarted || updateFinished) {
-            bundle.putBoolean(Utils.UPDATE_STARTED, updateStarted);
-            bundle.putBoolean(Utils.UPDATE_PAUSED, updatePaused);
-            bundle.putBoolean(Utils.UPDATE_FINISHED, updateFinished);
-            bundle.putInt(Utils.UPDATE_EXIT_CODE, updateExitCode);
-            bundle.putInt(Utils.UPDATE_STATUS, updateStatus);
-            bundle.putInt(Utils.UPDATE_PROGRESS, updateProgress);
+            bundle.putBoolean(UPDATE_STARTED, updateStarted);
+            bundle.putBoolean(UPDATE_PAUSED, updatePaused);
+            bundle.putBoolean(UPDATE_FINISHED, updateFinished);
+            bundle.putInt(UPDATE_EXIT_CODE, updateExitCode);
+            bundle.putInt(UPDATE_STATUS, updateStatus);
+            bundle.putInt(UPDATE_PROGRESS, updateProgress);
         }
         if (bound) {
             callback.restoreActivityState(bundle);
@@ -310,48 +325,72 @@ public class UpdaterService extends Service implements NetworkHelperCallbacks {
     }
 
     private boolean checkIfAlreadyDownloaded() {
+        totalSize = buildInfo.getFileSize();
         if (file != null && file.exists()) {
             downloadedSize = file.length();
-        } else {
-            return false;
         }
-        totalSize = buildInfo.getFileSize();
         if (downloadedSize == totalSize) {
-            checkMd5sum();
-            downloadFinished = true;
-            restoreState();
-            return true;
-        } else {
-            return false;
+            if (checkMd5()) {
+                downloadFinished = true;
+                restoreState();
+                return true;
+            } else {
+                downloadedSize = 0;
+                return false;
+            }
         }
+        return false;
     }
 
-    private void checkMd5sum() {
-        executor.execute(() -> {
-            toast(R.string.checking_md5sum);
+    private boolean checkMd5() {
+        Future<Boolean> checkMd5Future = executor.submit(() -> {
+            toast(R.string.checking_md5);
             boolean pass = false;
             if (file != null && file.exists()) {
-                pass = buildInfo.checkMd5sum(file);
+                pass = buildInfo.checkMd5(file);
             } else {
                 toast(R.string.file_not_found);
             }
-            if (bound) {
-                callback.md5sumCheckPassed(pass);
-            }
-            if (!pass) {
+            if (pass) {
+                if (bound) {
+                    callback.onPrepareForUpdate();
+                }
+            } else {
+                if (bound) {
+                    callback.md5CheckFailed();
+                }
                 deleteDownload();
             }
+            return new Boolean(pass);
         });
+        try {
+            return checkMd5Future.get().booleanValue();
+        } catch (InterruptedException|ExecutionException e) {
+            Utils.log(e);
+        }
+        return false;
     }
 
-    private void updateFile() {
-        File dir = new File(PreferenceManager
-            .getDefaultSharedPreferences(this)
-            .getString(Utils.DOWNLOAD_LOCATION_KEY, Utils.DEFAULT_DOWNLOAD_LOC));
-        if (!dir.exists() || (dir.exists() && !dir.isDirectory())) {
-            dir.mkdirs();
+    private void updateFile(boolean toDownload, String name) {
+        if (!otaPackageDir.isDirectory()) {
+            throw new RuntimeException("ota package dir " +
+                otaPackageDir.getAbsolutePath() + " does not exist");
         }
-        file = new File(dir, buildInfo.getFileName());
+        if (!(otaPackageDir.canRead() &&
+                otaPackageDir.canWrite() && otaPackageDir.canExecute())) {
+            throw new RuntimeException("no rwx permission for " +
+                otaPackageDir.getAbsolutePath());
+        }
+        if (!downloadDir.isDirectory()) {
+            downloadDir.mkdirs();
+            int errno = FileUtils.setPermissions(downloadDir,
+                    S_IRWXU | S_IRWXG, -1, -1);
+            if (errno != 0) {
+                Utils.log("setPermissions for " +
+                    downloadDir.getAbsolutePath() + " failed with errno ", errno);
+            }
+        }
+        file = new File(toDownload ? downloadDir : otaPackageDir, name);
     }
 
     public void pauseDownload(boolean pause) {
@@ -364,7 +403,7 @@ public class UpdaterService extends Service implements NetworkHelperCallbacks {
     }
 
     public void cancelDownload() {
-        toast(R.string.status_download_cancelled);
+        toast(R.string.download_cancelled);
         if (future != null) {
             future.cancel(true);
         }
@@ -373,21 +412,75 @@ public class UpdaterService extends Service implements NetworkHelperCallbacks {
     }
 
     public void deleteDownload() {
-        try {
-            if (!file.isDirectory() && file.exists()) {
-                file.delete();
+        if (file.isFile()) {
+            if (!file.delete()) {
+                toast(R.string.unable_to_delete);
             }
-        } catch (SecurityException e) {
-            toast(R.string.unable_to_delete);
-            Utils.log(e);
         }
     }
 
     public void setFileForLocalUpgrade(String path) {
         localUpgradeMode = true;
-        File tmp = new File(path);
-        if (tmp.exists() && !tmp.isDirectory()) {
-            file = tmp;
+        File localFile = new File(EXTERNAL_SD, path);
+        if (localFile.isFile()) {
+            executor.execute(() -> {
+                String fileName = path.substring(path.lastIndexOf(pathSeparator) + 1);
+                updateFile(false, fileName);
+                try {
+                    if (!file.exists() || file.delete()) {
+                        if (!file.createNewFile()) {
+                            Utils.log("createNewFile failed, aborting");
+                            if (bound) {
+                                callback.onFinishedUpdate(FILE_EXCEPTION);
+                            }
+                        }
+                        int errno = FileUtils.setPermissions(file,
+                                S_IRWXU | S_IRWXG, -1, -1);
+                        if (errno == 0) {
+                            toast(R.string.copying);
+                            Files.copy(localFile, file);
+                            if (bound) {
+                                callback.onPrepareForUpdate();
+                            }
+                        } else {
+                            Utils.log("setPermissions for " +
+                                file.getAbsolutePath() + "failed with errno ", errno);
+                            if (bound) {
+                                callback.onFinishedUpdate(FILE_EXCEPTION);
+                            }
+                        }
+                    }
+                } catch (IOException e) {
+                    Utils.log(e);
+                    if (bound) {
+                        callback.onFinishedUpdate(FILE_EXCEPTION);
+                    }
+                }
+            });
+        } else {
+            toast(R.string.file_not_found);
+            if (bound) {
+                callback.onFinishedUpdate(FILE_INVALID);
+            }
+        }
+    }
+
+    public void attemptExportToFolder(String path) {
+        if (buildInfo != null && file != null &&
+                downloadFinished && !updateStarted) {
+            File folder = new File(EXTERNAL_SD, path);
+            if (folder.isDirectory() && folder.canWrite()) {
+                try {
+                    toast(R.string.exporting);
+                    Files.copy(file, new File(folder, buildInfo.getFileName()));
+                    toast(R.string.export_finished);
+                } catch (IOException e) {
+                    Utils.log(e);
+                    toast(R.string.export_failed);
+                }
+            }
+        } else {
+            toast(R.string.export_not_possible);
         }
     }
 
@@ -397,7 +490,7 @@ public class UpdaterService extends Service implements NetworkHelperCallbacks {
         if (bound) {
             callback.onFinishedDownload();
         }
-        checkMd5sum();
+        checkMd5();
     }
 
     private void waitAndDispatchMessage() {
@@ -418,41 +511,40 @@ public class UpdaterService extends Service implements NetworkHelperCallbacks {
     }
 
     private void toast(int id) {
-        handler.post(() ->
-            Toast.makeText(this, getString(id), Toast.LENGTH_SHORT).show());
+        if (bound) {
+            callback.toastOnUiThread(id);
+        }
     }
 
     public void startUpdate() {
-        if (updateEngine == null) {
-            updateEngine = new UpdateEngine();
-            updateEngine.setPerformanceMode(true);
-        }
         updateEngine.bind(updateEngineCallback);
         if (file != null && file.exists()) {
             PayloadInfo payloadInfo = new PayloadInfo(file);
             if (!payloadInfo.validateData()) {
                 resetUpdateStatus();
-                updateExitCode = Utils.FILE_INVALID;
+                updateExitCode = FILE_INVALID;
                 toast(R.string.invalid_zip_file);
                 if (bound) {
                     callback.onFinishedUpdate(updateExitCode);
                 }
                 return;
             }
+            updateEngine.cleanupAppliedPayload();
             try {
-                updateEngine.cleanupAppliedPayload();
                 updateEngine.applyPayload(payloadInfo.getFilePath(),
                     payloadInfo.getOffset(), payloadInfo.getSize(), payloadInfo.getHeader());
             } catch (ServiceSpecificException e) {
                 Utils.log(e);
-                updateExitCode = Utils.APPLY_PAYLOAD_FAILED;
+                updateExitCode = APPLY_PAYLOAD_FAILED;
                 if (bound) {
                     callback.onFinishedUpdate(updateExitCode);
                 }
                 resetUpdateStatus();
             }
+        } else if (file == null) {
+            Utils.log("update zip file is null");
         } else {
-            Utils.log("update zip file is either null or does not exist");
+            Utils.log("update zip file does not exist");
         }
     }
 
@@ -460,24 +552,25 @@ public class UpdaterService extends Service implements NetworkHelperCallbacks {
         updatePaused = paused;
         try {
             if (updatePaused) {
+                releaseWakeLock();
                 updateEngine.suspend();
             } else {
+                acquireWakeLock();
                 updateEngine.resume();
             }
         } catch(ServiceSpecificException e) {
-            // Probably no on-going update
-            Utils.log(e);
+            // No ongoing update to pause or resume, there is no need to log this
         }
     }
 
     public void cancelUpdate() {
         try {
             if (updateStarted) {
+                releaseWakeLock();
                 updateEngine.cancel();
             }
         } catch (ServiceSpecificException e) {
-            // Probably no update to cancel
-            Utils.log(e);
+            // No ongoing update to cancel, there is no need to log this
         }
         resetUpdateStatus();
     }
@@ -486,20 +579,43 @@ public class UpdaterService extends Service implements NetworkHelperCallbacks {
         updateStarted = updatePaused = updateFinished = false;
         updateStatus = updateExitCode = -1;
         updateProgress = 0;
-        if (updateEngine != null) {
+        try {
+            // Cancel is attempted here to cancel any ongoing updates that the service is not aware of
+            updateEngine.cancel();
             updateEngine.resetStatus();
+        } catch (ServiceSpecificException e) {
+            // No ongoing update to cancel, there is no need to log this
+        } finally {
+            // Cleanup and unbind no matter what
             updateEngine.cleanupAppliedPayload();
             updateEngine.unbind();
         }
         if (localUpgradeMode) {
             localUpgradeMode = false;
-            file = null;
         }
     }
 
     private void resetDownloadStatus() {
         downloadStarted = downloadPaused = downloadFinished = false;
         totalSize = downloadedSize = downloadProgress = 0;
+    }
+
+    public void rebootSystem() {
+        if (powerManager != null) {
+            powerManager.reboot(REBOOT_REQUESTED_BY_DEVICE_OWNER);
+        }
+    }
+
+    private void releaseWakeLock() {
+        if (wakeLock != null && wakeLock.isHeld()) {
+            wakeLock.release();
+        }
+    }
+
+    private void acquireWakeLock() {
+        if (wakeLock != null && !wakeLock.isHeld()) {
+            wakeLock.acquire();
+        }
     }
 
     public final class ActivityBinder extends Binder {

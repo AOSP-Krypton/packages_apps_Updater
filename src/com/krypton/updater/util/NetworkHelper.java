@@ -16,10 +16,12 @@
 
 package com.krypton.updater.util;
 
+import static com.krypton.updater.util.Constants.*;
+
 import android.net.Network;
 
 import com.krypton.updater.callbacks.NetworkHelperCallbacks;
-import com.krypton.updater.build.BuildInfo;
+import com.krypton.updater.util.BuildInfo;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -86,10 +88,10 @@ public class NetworkHelper {
         buffReader.close();
         rawStream.close();
 
-        JSONObject jsonObj = new JSONObject(builder.toString()).getJSONObject(Utils.BUILD_INFO);
-        String version = jsonObj.getString(Utils.BUILD_VERSION);
-        long date = jsonObj.getLong(Utils.BUILD_DATE);
-        String fileName = jsonObj.getString(Utils.BUILD_NAME);
+        JSONObject jsonObj = new JSONObject(builder.toString()).getJSONObject(BUILD_INFO);
+        String version = jsonObj.getString(BUILD_VERSION);
+        long date = jsonObj.getLong(BUILD_DATE);
+        String fileName = jsonObj.getString(BUILD_NAME);
         float currVersion = Float.parseFloat(Utils.getVersion().substring(1));
         float newVersion = Float.parseFloat(version.substring(1));
         if (newVersion > currVersion || date > Long.parseLong(Utils.getBuildDate())) {
@@ -97,8 +99,8 @@ public class NetworkHelper {
             buildInfo.setVersion(version);
             buildInfo.setBuildDate(date);
             buildInfo.setFileName(fileName);
-            buildInfo.setFileSize(jsonObj.getLong(Utils.BUILD_SIZE));
-            buildInfo.setMd5sum(jsonObj.getString(Utils.BUILD_MD5SUM));
+            buildInfo.setFileSize(jsonObj.getLong(BUILD_SIZE));
+            buildInfo.setMd5(jsonObj.getString(BUILD_MD5SUM));
             updateDownloadUrl(device, fileName);
             return buildInfo;
         }

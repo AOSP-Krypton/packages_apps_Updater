@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.build;
+package com.krypton.updater.util;
+
+import static com.krypton.updater.util.Constants.*;
 
 import android.os.Bundle;
 
@@ -30,7 +32,7 @@ import java.security.NoSuchAlgorithmException;
 public final class BuildInfo {
 
     private Bundle bundle;
-    private String fileName, md5sum;
+    private String fileName, md5;
     private long fileSize;
 
     public BuildInfo() {
@@ -40,26 +42,26 @@ public final class BuildInfo {
     }
 
     public void setVersion(String version) {
-        bundle.putString(Utils.BUILD_VERSION, version);
+        bundle.putString(BUILD_VERSION, version);
     }
 
     public void setBuildDate(long date) {
-        bundle.putString(Utils.BUILD_DATE, String.valueOf(date));
+        bundle.putString(BUILD_DATE, String.valueOf(date));
     }
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
-        bundle.putString(Utils.BUILD_NAME, fileName);
+        bundle.putString(BUILD_NAME, fileName);
     }
 
     public void setFileSize(long fileSize) {
         this.fileSize = fileSize;
-        bundle.putLong(Utils.BUILD_SIZE, fileSize);
+        bundle.putLong(BUILD_SIZE, fileSize);
     }
 
-    public void setMd5sum(String md5sum) {
-        this.md5sum = md5sum;
-        bundle.putString(Utils.BUILD_MD5SUM, md5sum);
+    public void setMd5(String md5) {
+        this.md5 = md5;
+        bundle.putString(BUILD_MD5SUM, md5);
     }
 
     public Bundle getBundle() {
@@ -74,9 +76,9 @@ public final class BuildInfo {
         return fileSize;
     }
 
-    public boolean checkMd5sum(File file) {
+    public boolean checkMd5(File file) {
         try (FileInputStream inStream = new FileInputStream(file)) {
-            byte[] buffer = new byte[Utils.MB];
+            byte[] buffer = new byte[MB];
             int bytesRead = 0;
             MessageDigest md5Digest = MessageDigest.getInstance("MD5");
             while ((bytesRead = inStream.read(buffer)) != -1) {
@@ -86,7 +88,7 @@ public final class BuildInfo {
             for (byte b: md5Digest.digest()) {
                 builder.append(String.format("%02x", b));
             }
-            return builder.toString().equals(md5sum);
+            return builder.toString().equals(md5);
         } catch (IOException e) {
             Utils.log(e);
         } catch (NoSuchAlgorithmException e) {

@@ -20,15 +20,23 @@
     <!-- Menu -->
     <string name="option_settings_text">Settings</string>
 
+    <!-- Export file -->
+    <string name="export">Export</string>
+    <string name="exporting">Exporting</string>
+    <string name="export_finished">Export finished</string>
+    <string name="export_failed">Export failed</string>
+    <string name="export_not_possible">Export is not possible now, try again later</string>
+
     <!-- Build info -->
     <string name="build_info_title">Current Build Info:</string>
-    <string name="device_name_text">Device:</string>
-    <string name="version_text">Version:</string>
-    <string name="date_text">Date:</string>
-    <string name="filename_text">Filename:</string>
-    <string name="md5sum_text">md5sum:</string>
-    <string name="new_build_text">New Update:</string>
-    <string name="latest_build_text">Current build is the latest!</string>
+    <string name="device">Device:</string>
+    <string name="version">Version:</string>
+    <string name="date">Date:</string>
+    <string name="file">File:</string>
+    <string name="md5">MD5:</string>
+    <string name="swipe_down_to_update">Swipe down to check for update</string>
+    <string name="new_update">New Update:</string>
+    <string name="current_is_latest">Current build is the latest!</string>
     <string name="fetching_build_status_text">Fetching build info from github</string>
     <string name="unable_to_fetch_details">Unable to fetch details, swipe down to try again</string>
     <string name="no_internet">No internet connection</string>
@@ -38,17 +46,17 @@
     <string name="pause">Pause</string>
     <string name="cancel">Cancel</string>
     <string name="resume">Resume</string>
-    <string name="status_downloading">Downloading</string>
-    <string name="status_no_internet">No internet, download paused</string>
-    <string name="status_download_paused">Download paused</string>
-    <string name="status_download_finished">Download finished</string>
-    <string name="status_download_cancelled">Download cancelled</string>
+    <string name="downloading">Downloading</string>
+    <string name="no_internet_download_paused">No internet, download paused</string>
+    <string name="download_paused">Download paused</string>
+    <string name="download_finished">Download finished</string>
+    <string name="download_cancelled">Download cancelled</string>
     <string name="numeric_download_progress_text_default">0/0 MB</string>
     <string name="delete_file">Delete downloaded file?</string>
     <string name="unable_to_delete">Unable to delete downloaded file</string>
-    <string name="file_not_found">Downloaded zip file not found</string>
-    <string name="checking_md5sum">Checking md5sum of downloaded file</string>
-    <string name="md5sum_check_failed">md5sum check failed, redownload the file</string>
+    <string name="file_not_found">Zip file not found</string>
+    <string name="checking_md5">Checking md5 hash of downloaded file</string>
+    <string name="md5_check_failed">md5 check failed, redownload the file</string>
 
     <!-- Updater -->
     <string name="update">Update</string>
@@ -56,7 +64,7 @@
     <string name="update_downloading">Update engine is processing payload</string>
     <string name="update_paused">Update paused</string>
     <string name="update_finished">Update finished</string>
-    <string name="update_failed">Failed to update</string>
+    <string name="update_failed">Failed to apply update</string>
     <string name="local_upgrade">Local Upgrade</string>
     <string name="invalid_zip_file">Selected file is not a valid zip file</string>
     <string name="step">Step</string>
@@ -66,7 +74,10 @@
         Now is a really good time to go ahead and flash magisk to the new slot.
         If you don\'t have magisk installed or don\'t care about losing magisk after update then hit the reboot button
     </string>
+    <string name="metadata_verification_failed">Metadata verification failed</string>
     <string name="payload_transfer_error_retry">Payload transfer error, please retry</string>
+    <string name="attempting_downgrade">Attempt to downgrade system denied</string>
+    <string name="copying">Copying file</string>
 
     <!-- Updater Settings -->
     <string name="updater_settings_title">Updater Settings</string>

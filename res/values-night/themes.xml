@@ -16,10 +16,10 @@
         <item name="colorAccent">@color/colorAccentDark</item>
         <item name="android:windowBackground">@color/black</item>
         <item name="android:textColorPrimary">@color/white</item>
-        <item name="android:textColorSecondary">@color/dark_grey</item>
+        <item name="android:textColorSecondary">@color/grey</item>
     </style>
 
-    <style name="AlertDialogTheme" parent="AlertDialogTheme.Base">
+    <style name="AlertDialogTheme" parent="AlertDialogThemeBase">
         <item name="colorAccent">@color/colorAccentLight</item>
         <item name="android:windowBackground">@*android:color/background_device_default_dark</item>
     </style>

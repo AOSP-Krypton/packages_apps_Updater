@@ -27,38 +27,6 @@ public final class Utils {
     private static final String PROP_VERSION = "ro.krypton.build.version";
     private static final String PROP_DATE = "ro.build.date.utc";
 
-    public static final String BUILD_INFO = "build-info";
-    public static final String BUILD_VERSION = "version";
-    public static final String BUILD_DATE = "date";
-    public static final String BUILD_NAME = "filename";
-    public static final String BUILD_SIZE = "filesize";
-    public static final String BUILD_MD5SUM = "md5sum";
-
-    public static final String DOWNLOAD_LOCATION_KEY = "download_location_preference";
-    public static final String DEFAULT_DOWNLOAD_LOC = "/sdcard/Download";
-
-    // Restore download progress
-    public static final String DOWNLOADED_SIZE = "downloadedSize";
-    public static final String DOWNLOAD_STARTED = "downloadStarted";
-    public static final String DOWNLOAD_PAUSED = "downloadPaused";
-    public static final String DOWNLOAD_FINISHED = "downloadFinished";
-
-    // Restore update engine progress
-    public static final String LOCAL_UPGRADE_MODE = "localUpgradeMode";
-    public static final String UPDATE_STARTED = "updateStarted";
-    public static final String UPDATE_PAUSED = "updatePaused";
-    public static final String UPDATE_FINISHED = "updateFinished";
-    public static final String UPDATE_EXIT_CODE = "updateExitCode";
-    public static final String UPDATE_STATUS = "updateStatus";
-    public static final String UPDATE_PROGRESS = "updateProgress";
-
-    // Error codes for apply update failure
-    public static final int APPLY_PAYLOAD_FAILED = 101;
-    public static final int FILE_INVALID = 102;
-
-    // 1 MB in bytes
-    public static final int MB = 1048576;
-
     public static String getDevice() {
         return SystemProperties.get(PROP_DEVICE, "unavailable");
     }
@@ -74,7 +42,7 @@ public final class Utils {
     public static void sleepThread(int duration) {
         try {
             Thread.sleep(duration);
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
             log(e);
         }
     }

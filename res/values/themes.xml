@@ -17,16 +17,16 @@
         <item name="android:itemBackground">@color/white</item>
         <item name="android:windowBackground">@color/white</item>
         <item name="android:textColorPrimary">@color/black</item>
-        <item name="android:textColorSecondary">@color/light_grey</item>
+        <item name="android:textColorSecondary">@color/grey</item>
     </style>
 
-    <style name="AlertDialogTheme.Base" parent="Theme.AppCompat.DayNight.Dialog.Alert">
+    <style name="AlertDialogThemeBase" parent="Theme.AppCompat.DayNight.Dialog.Alert">
         <item name="android:background">@drawable/rounded_rectangle_noborder</item>
         <item name="android:windowMinWidthMinor">@dimen/alert_dialog_min_width_minor</item>
         <item name="android:windowMinWidthMajor">@dimen/alert_dialog_min_width_major</item>
     </style>
 
-    <style name="AlertDialogTheme" parent="AlertDialogTheme.Base">
+    <style name="AlertDialogTheme" parent="AlertDialogThemeBase">
         <item name="colorAccent">@color/colorAccentLight</item>
         <item name="android:windowBackground">@*android:color/background_device_default_light</item>
     </style>

@@ -28,8 +28,10 @@ public interface ActivityCallbacks {
     public void updateDownloadedSize(long downloaded, long total);
     public void updateDownloadProgress(int progress);
     public void onFinishedDownload();
-    public void md5sumCheckPassed(boolean passed);
+    public void md5CheckFailed();
+    public void onPrepareForUpdate();
     public void onStartingUpdate();
     public void onStatusUpdate(int status, int percent);
     public void onFinishedUpdate(int errorCode);
+    public void toastOnUiThread(int id);
 }

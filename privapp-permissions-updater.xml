@@ -10,10 +10,13 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<resources>
-    <color name="white">#FFFFFF</color>
-    <color name="black">#000000</color>
-    <color name="grey">#696969</color>
-    <color name="colorAccentLight">@*android:color/accent_device_default_light</color>
-    <color name="colorAccentDark">@*android:color/accent_device_default_dark</color>
-</resources>
+<permissions>
+    <privapp-permissions package="com.krypton.updater">
+        <permission name="android.permission.INTERNET"/>
+        <permission name="android.permission.ACCESS_NETWORK_STATE"/>
+        <permission name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+        <permission name="android.permission.WRITE_EXTERNAL_STORAGE" />
+        <permission name="android.permission.REBOOT" />
+        <permission name="android.permission.WAKE_LOCK" />
+    </privapp-permissions>
+</permissions>

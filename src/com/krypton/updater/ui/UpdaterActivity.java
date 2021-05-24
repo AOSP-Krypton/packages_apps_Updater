@@ -17,15 +17,22 @@
 package com.krypton.updater.ui;
 
 import static android.app.Activity.RESULT_OK;
+import static android.content.Context.BIND_AUTO_CREATE;
+import static android.content.Context.POWER_SERVICE;
+import static android.content.Intent.ACTION_OPEN_DOCUMENT;
+import static android.content.Intent.ACTION_OPEN_DOCUMENT_TREE;
+import static android.content.Intent.CATEGORY_OPENABLE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
 import static android.graphics.Color.TRANSPARENT;
+import static android.os.UpdateEngine.ErrorCodeConstants.*;
+import static android.os.UpdateEngine.UpdateStatusConstants.*;
 import static android.view.HapticFeedbackConstants.KEYBOARD_PRESS;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
+import static com.krypton.updater.util.Constants.*;
 
 import android.app.AlertDialog;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -36,9 +43,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.PowerManager;
-import android.os.UpdateEngine.ErrorCodeConstants;
-import android.os.UpdateEngine.UpdateStatusConstants;
 import android.preference.PreferenceManager;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.Menu;
@@ -58,7 +62,7 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.view.GestureDetectorCompat;
 
 import com.krypton.updater.callbacks.ActivityCallbacks;
-import com.krypton.updater.build.BuildInfo;
+import com.krypton.updater.util.BuildInfo;
 import com.krypton.updater.R;
 import com.krypton.updater.services.UpdaterService;
 import com.krypton.updater.services.UpdaterService.ActivityBinder;
@@ -66,7 +70,8 @@ import com.krypton.updater.util.Utils;
 
 public class UpdaterActivity extends AppCompatActivity implements ActivityCallbacks {
 
-    private static final int REQUEST_CODE_SELECT_FILE = 1001;
+    private static final int SELECT_FILE = 1001;
+    private static final int SELECT_EXPORT_FOLDER = 1002;
     private UpdaterService updaterService;
     private GestureDetectorCompat detector;
     private LinearLayout downloadProgressLayout, updateProgressLayout;
@@ -75,10 +80,11 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
     private TextView downloadProgressText, downloadStatus;
     private TextView updateStatus, updateStep;
     private TextView viewLatestBuild, latestBuildVersion,
-        latestBuildTimestamp, latestBuildName, latestBuildMd5sum;
+        latestBuildTimestamp, latestBuildName, latestBuildMd5;
     private TextView postUpdateInfo;
-    private ImageView refreshIcon;
-    private Button downloadButton, pauseButton, cancelButton;
+    private ImageView refreshIcon, infoIcon;
+    private Button downloadButton, pauseButton,
+        cancelButton, exportButton;
     private Button localUpgradeButton, updateButton,
         pauseUpdateButton, cancelUpdateButton, rebootButton;
     private SharedPreferences sharedPrefs;
@@ -92,7 +98,7 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
     private boolean updatePaused = false;
     private boolean localUpgradeMode = false;
     private int updateStepNum = 0;
-    private Uri fileUri;
+    private Uri fileUri, exportFolderUri;
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -103,14 +109,13 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
                 bound = true;
                 if (fileUri != null) {
                     localUpgradeMode = true;
-                    updaterService.setFileForLocalUpgrade(
-                        fileUri.getLastPathSegment().replace("primary:", "/sdcard/"));
-                    runOnUiThread(() -> {
-                        setVisibile(false, localUpgradeButton, downloadButton);
-                        updateButton.setVisibility(VISIBLE);
-                    });
+                    updaterService.setFileForLocalUpgrade(getPathFromUri(fileUri));
+                    runOnUiThread(() ->
+                        setVisibile(false, localUpgradeButton, downloadButton));
                 }
-                updateBuildInfo();
+                if (exportFolderUri != null) {
+                    updaterService.attemptExportToFolder(getPathFromUri(exportFolderUri));
+                }
             }
         }
 
@@ -127,6 +132,7 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
             float diffX = event2.getRawX() - event1.getRawX();
             float diffY = event2.getRawY() - event1.getRawY();
             if (Math.abs(diffX) < 100 && diffY > 300 && !downloadStarted && !downloadFinished) {
+                viewLatestBuild.setText(getString(R.string.fetching_build_status_text));
                 updateBuildInfo();
             }
             return true;
@@ -145,21 +151,21 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
         setRequestedOrientation(SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.updater_activity);
         detector = new GestureDetectorCompat(this, gestureListener);
-        setCurrentBuildInfo();
         setWidgets();
+        setCurrentBuildInfo();
     }
 
     @Override
     public void onStart() {
         super.onStart();
         bindService(new Intent(this, UpdaterService.class),
-            connection, Context.BIND_AUTO_CREATE);
+            connection, BIND_AUTO_CREATE);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        fileUri = null;
+        fileUri = exportFolderUri = null;
         if (bound) {
             updaterService.unregisterCallback();
             unbindService(connection);
@@ -170,10 +176,11 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
     @Override
     public void onActivityResult(int requestCode, int resultCode,
             Intent resultData) {
-        if (requestCode == REQUEST_CODE_SELECT_FILE
-                && resultCode == RESULT_OK) {
-            if (resultData != null) {
+        if (resultCode == RESULT_OK && resultData != null) {
+            if (requestCode == SELECT_FILE) {
                 fileUri = resultData.getData();
+            } else if (requestCode == SELECT_EXPORT_FOLDER) {
+                exportFolderUri = resultData.getData();
             }
         }
     }
@@ -204,45 +211,45 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
 
     @Override
     public void restoreActivityState(Bundle bundle) {
-        downloadStarted = bundle.getBoolean(Utils.DOWNLOAD_STARTED);
-        downloadFinished = bundle.getBoolean(Utils.DOWNLOAD_FINISHED);
-        downloadPaused = bundle.getBoolean(Utils.DOWNLOAD_PAUSED);
-        runOnUiThread(() -> setNewBuildInfo(bundle.getBundle(Utils.BUILD_INFO)));
+        downloadStarted = bundle.getBoolean(DOWNLOAD_STARTED);
+        downloadFinished = bundle.getBoolean(DOWNLOAD_FINISHED);
+        downloadPaused = bundle.getBoolean(DOWNLOAD_PAUSED);
+        runOnUiThread(() -> setNewBuildInfo(bundle.getBundle(BUILD_INFO)));
         if (downloadStarted || downloadFinished) {
             runOnUiThread(() -> {
-                setDownloadLayout(bundle.getLong(Utils.DOWNLOADED_SIZE),
-                    bundle.getLong(Utils.BUILD_SIZE));
+                setDownloadLayout(bundle.getLong(DOWNLOADED_SIZE),
+                    bundle.getLong(BUILD_SIZE));
                 localUpgradeButton.setVisibility(GONE);
             });
         }
-        localUpgradeMode = bundle.getBoolean(Utils.LOCAL_UPGRADE_MODE);
-        updateStarted = bundle.getBoolean(Utils.UPDATE_STARTED);
-        boolean updateFinished = bundle.getBoolean(Utils.UPDATE_FINISHED);
+        localUpgradeMode = bundle.getBoolean(LOCAL_UPGRADE_MODE);
+        if (localUpgradeMode) {
+            runOnUiThread(() -> setVisibile(false, localUpgradeButton, downloadButton));
+        }
+        updateStarted = bundle.getBoolean(UPDATE_STARTED);
+        boolean updateFinished = bundle.getBoolean(UPDATE_FINISHED);
         if (updateStarted || updateFinished) {
-            runOnUiThread(() -> {
-                updateProgressLayout.setVisibility(VISIBLE);
-                localUpgradeButton.setVisibility(GONE);
-            });
-            int updateStatusCode = bundle.getInt(Utils.UPDATE_STATUS);
+            runOnUiThread(() -> updateProgressLayout.setVisibility(VISIBLE));
+            int updateStatusCode = bundle.getInt(UPDATE_STATUS);
             onStatusUpdate(updateStatusCode,
-                bundle.getInt(Utils.UPDATE_PROGRESS));
-            if (updateStatusCode == UpdateStatusConstants.DOWNLOADING) {
+                bundle.getInt(UPDATE_PROGRESS));
+            if (updateStatusCode == DOWNLOADING) {
                 changeUpdateStatus(1);
-            } else if (updateStatusCode == UpdateStatusConstants.FINALIZING) {
+            } else if (updateStatusCode == FINALIZING) {
                 changeUpdateStatus(2);
             } else {
                 runOnUiThread(() -> updateStatus.setText(getString(R.string.update_failed)));
             }
         }
         if (updateStarted) {
-            updatePaused = bundle.getBoolean(Utils.UPDATE_PAUSED);
+            updatePaused = bundle.getBoolean(UPDATE_PAUSED);
             runOnUiThread(() -> {
                 pauseUpdateButton.setText(getString(updatePaused ? R.string.resume : R.string.pause));
                 setUpdateStatusText();
                 setVisibile(true, pauseUpdateButton, cancelUpdateButton);
             });
         } else if (updateFinished) {
-            onFinishedUpdate(bundle.getInt(Utils.UPDATE_EXIT_CODE));
+            onFinishedUpdate(bundle.getInt(UPDATE_EXIT_CODE));
         }
     }
 
@@ -266,17 +273,17 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
     public void noUpdates() {
         runOnUiThread(() -> {
             setVisibile(false, latestBuildVersion,
-                latestBuildTimestamp, latestBuildName, latestBuildMd5sum);
-            setBuildFetchResult(R.string.latest_build_text);
+                latestBuildTimestamp, latestBuildName, latestBuildMd5);
+            setBuildFetchResult(R.string.current_is_latest);
         });
     }
 
     @Override
     public void noInternet() {
         downloadPaused = true;
-        toast(R.string.no_internet);
+        toastOnUiThread(R.string.no_internet);
         runOnUiThread(() -> {
-            downloadStatus.setText(getString(R.string.status_no_internet));
+            downloadStatus.setText(getString(R.string.no_internet_download_paused));
             pauseButton.setText(getString(R.string.resume));
         });
     }
@@ -290,7 +297,7 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
     public void updateDownloadedSize(long downloaded, long total) {
         runOnUiThread(() ->
             downloadProgressText.setText(String.format("%d/%d MB",
-                (int) downloaded/Utils.MB, (int) total/Utils.MB)));
+                (int) downloaded/MB, (int) total/MB)));
     }
 
     @Override
@@ -303,36 +310,37 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
         downloadStarted = false;
         downloadFinished = true;
         runOnUiThread(() -> {
-            downloadStatus.setText(getString(R.string.status_download_finished));
+            downloadStatus.setText(getString(R.string.download_finished));
             setVisibile(false, downloadButton, pauseButton, cancelButton);
         });
     }
 
     @Override
-    public void md5sumCheckPassed(boolean passed) {
-        if (passed) {
-            runOnUiThread(() -> updateButton.setVisibility(VISIBLE));
-        } else {
-            downloadFinished = false;
-            toast(R.string.md5sum_check_failed);
-            resetDownloadLayout();
-        }
+    public void md5CheckFailed() {
+        downloadFinished = false;
+        toastOnUiThread(R.string.md5_check_failed);
+        resetDownloadLayout();
+    }
+
+    @Override
+    public void onPrepareForUpdate() {
+        runOnUiThread(() -> showUpdateAndExportButton());
     }
 
     @Override
     public void onStartingUpdate() {
-        runOnUiThread(() ->
-            setVisibile(true, updateProgressLayout, pauseUpdateButton, cancelUpdateButton));
+        runOnUiThread(() -> setVisibile(true,
+            updateProgressLayout, pauseUpdateButton, cancelUpdateButton));
     }
 
     @Override
     public void onStatusUpdate(int status, int percent) {
-        if (status == UpdateStatusConstants.DOWNLOADING) {
+        if (status == DOWNLOADING) {
             if (percent == 0) {
                 changeUpdateStatus(1);
             }
             runOnUiThread(() -> updateProgressBar.setProgress(percent));
-        } else if (status == UpdateStatusConstants.FINALIZING) {
+        } else if (status == FINALIZING) {
             if (percent == 0) {
                 changeUpdateStatus(2);
             }
@@ -343,23 +351,33 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
     @Override
     public void onFinishedUpdate(int errorCode) {
         switch (errorCode) {
-            case ErrorCodeConstants.SUCCESS:
+            case SUCCESS:
                 runOnUiThread(() -> {
                     updateStatus.setText(R.string.update_finished);
-                    setVisibile(true, postUpdateInfo, rebootButton);
+                    setVisibile(true, infoIcon, postUpdateInfo, rebootButton);
                     setVisibile(false, updateButton, pauseUpdateButton, cancelUpdateButton);
                 });
                 break;
-            case Utils.APPLY_PAYLOAD_FAILED:
-            case Utils.FILE_INVALID:
+            case APPLY_PAYLOAD_FAILED:
+            case FILE_INVALID:
+            case FILE_EXCEPTION:
+                toastOnUiThread(R.string.update_failed);
                 resetUpdateLayout();
                 break;
-            case ErrorCodeConstants.DOWNLOAD_TRANSFER_ERROR:
-                toast(R.string.payload_transfer_error_retry);
+            case DOWNLOAD_INVALID_METADATA_MAGIC_STRING:
+            case DOWNLOAD_METADATA_SIGNATURE_MISMATCH:
+                toastOnUiThread(R.string.metadata_verification_failed);
+                resetUpdateLayout();
+                break;
+            case PAYLOAD_TIMESTAMP_ERROR:
+                toastOnUiThread(R.string.attempting_downgrade);
+                resetUpdateLayout();
+                break;
+            case DOWNLOAD_TRANSFER_ERROR:
                 runOnUiThread(() -> {
-                    updateStatus.setText(null);
-                    setVisibile(false, updateProgressLayout, pauseUpdateButton, cancelUpdateButton);
-                    updateButton.setVisibility(VISIBLE);
+                    updateStatus.setText(R.string.payload_transfer_error_retry);
+                    setVisibile(false, pauseUpdateButton, cancelUpdateButton);
+                    showUpdateAndExportButton();
                 });
                 break;
             default:
@@ -367,9 +385,15 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
                 runOnUiThread(() -> {
                     updateStatus.setText(R.string.update_failed);
                     setVisibile(false, pauseUpdateButton, cancelUpdateButton);
-                    updateButton.setVisibility(VISIBLE);
+                    showUpdateAndExportButton();
                 });
         }
+    }
+
+    @Override
+    public void toastOnUiThread(int id) {
+        runOnUiThread(() ->
+            Toast.makeText(this, getString(id), Toast.LENGTH_SHORT).show());
     }
 
     private void setUpdateStatusText() {
@@ -405,16 +429,17 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
 
     private void setCurrentBuildInfo() {
         ((TextView) findViewById(R.id.view_device))
-            .setText(getString(R.string.device_name_text, Utils.getDevice()));
+            .setText(getString(R.string.device, Utils.getDevice()));
         ((TextView) findViewById(R.id.view_version))
-            .setText(getString(R.string.version_text, Utils.getVersion()));
+            .setText(getString(R.string.version, Utils.getVersion()));
         ((TextView) findViewById(R.id.view_timestamp))
-            .setText(getString(R.string.date_text, Utils.getBuildDate()));
+            .setText(getString(R.string.date, Utils.getBuildDate()));
+        viewLatestBuild.setText(getString(R.string.swipe_down_to_update));
     }
 
     private void setWidgets() {
         refreshIcon = (ImageView) findViewById(R.id.refresh_icon);
-        refreshIcon.setVisibility(VISIBLE);
+        infoIcon = (ImageView) findViewById(R.id.info_icon);
         animatedDrawable = (AnimatedVectorDrawable) refreshIcon.getDrawable();
         animatedDrawable.registerAnimationCallback(new AnimationCallback() {
             @Override
@@ -430,11 +455,12 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
         latestBuildVersion = (TextView) findViewById(R.id.view_latest_build_version);
         latestBuildTimestamp = (TextView) findViewById(R.id.view_latest_build_timestamp);
         latestBuildName = (TextView) findViewById(R.id.view_latest_build_filename);
-        latestBuildMd5sum = (TextView) findViewById(R.id.view_latest_build_md5sum);
+        latestBuildMd5 = (TextView) findViewById(R.id.view_latest_build_md5);
 
         downloadButton = (Button) findViewById(R.id.download_button);
         pauseButton = (Button) findViewById(R.id.pause_resume_button);
         cancelButton = (Button) findViewById(R.id.cancel_button);
+        exportButton = (Button) findViewById(R.id.export_button);
         downloadProgressLayout = (LinearLayout) findViewById(R.id.download_progress_layout);
         updateProgressLayout = (LinearLayout) findViewById(R.id.update_progress_layout);
         downloadStatus = (TextView) findViewById(R.id.download_status);
@@ -474,19 +500,19 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
     private void setNewBuildInfo(Bundle bundle) {
         if (bundle != null) {
             runOnUiThread(() -> {
-                setBuildFetchResult(R.string.new_build_text);
+                setBuildFetchResult(R.string.new_update);
 
-                latestBuildVersion.setText(getString(R.string.version_text,
-                    bundle.getString(Utils.BUILD_VERSION)));
-                latestBuildTimestamp.setText(getString(R.string.date_text,
-                    bundle.getString(Utils.BUILD_DATE)));
-                latestBuildName.setText(getString(R.string.filename_text,
-                    bundle.getString(Utils.BUILD_NAME)));
-                latestBuildMd5sum.setText(getString(R.string.md5sum_text,
-                    bundle.getString(Utils.BUILD_MD5SUM)));
+                latestBuildVersion.setText(getString(R.string.version,
+                    bundle.getString(BUILD_VERSION)));
+                latestBuildTimestamp.setText(getString(R.string.date,
+                    bundle.getString(BUILD_DATE)));
+                latestBuildName.setText(getString(R.string.file,
+                    bundle.getString(BUILD_NAME)));
+                latestBuildMd5.setText(getString(R.string.md5,
+                    bundle.getString(BUILD_MD5SUM)));
 
                 setVisibile(true, latestBuildVersion,
-                    latestBuildTimestamp, latestBuildName, latestBuildMd5sum);
+                    latestBuildTimestamp, latestBuildName, latestBuildMd5);
             });
         }
     }
@@ -501,9 +527,9 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
         updateDownloadProgress((int) ((downloaded*100)/total));
         if (downloadStarted) {
             downloadStatus.setText(getString(downloadPaused ?
-                R.string.status_download_paused : R.string.status_downloading));
+                R.string.download_paused : R.string.downloading));
         } else if (downloadFinished) {
-            downloadStatus.setText(getString(R.string.status_download_finished));
+            downloadStatus.setText(getString(R.string.download_finished));
         }
         downloadProgressLayout.setVisibility(VISIBLE);
         if (downloadStarted) {
@@ -581,7 +607,7 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
         v.performHapticFeedback(KEYBOARD_PRESS);
         downloadPaused = !downloadPaused;
         downloadStatus.setText(getString(downloadPaused ?
-            R.string.status_download_paused : R.string.status_downloading));
+            R.string.download_paused : R.string.downloading));
         pauseButton.setText(getString(downloadPaused ? R.string.resume : R.string.pause));
         if (bound) {
             updaterService.pauseDownload(downloadPaused);
@@ -601,19 +627,25 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
         showDeleteDialog();
     }
 
+    public void exportFile(View v) {
+        v.performHapticFeedback(KEYBOARD_PRESS);
+        startActivityForResult(new Intent(
+            ACTION_OPEN_DOCUMENT_TREE), SELECT_EXPORT_FOLDER);
+    }
+
     public void rebootSystem(View v) {
         v.performHapticFeedback(KEYBOARD_PRESS);
-        stopService(new Intent(this, UpdaterService.class));
-        ((PowerManager) getSystemService(Context.POWER_SERVICE))
-            .reboot(PowerManager.REBOOT_REQUESTED_BY_DEVICE_OWNER);
+        if (bound) {
+            updaterService.rebootSystem();
+        }
     }
 
     public void localUpgrade(View v) {
         v.performHapticFeedback(KEYBOARD_PRESS);
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        Intent intent = new Intent(ACTION_OPEN_DOCUMENT);
+        intent.addCategory(CATEGORY_OPENABLE);
         intent.setType("application/zip");
-        startActivityForResult(intent, REQUEST_CODE_SELECT_FILE);
+        startActivityForResult(intent, SELECT_FILE);
     }
 
     private void showDeleteDialog() {
@@ -633,8 +665,14 @@ public class UpdaterActivity extends AppCompatActivity implements ActivityCallba
         confirmDeleteDialog.show();
     }
 
-    private void toast(int id) {
-        runOnUiThread(() ->
-            Toast.makeText(this, getString(id), Toast.LENGTH_SHORT).show());
+    private String getPathFromUri(Uri uri) {
+        return uri.getLastPathSegment().replace("primary:", "");
+    }
+
+    private void showUpdateAndExportButton() {
+        updateButton.setVisibility(VISIBLE);
+        if (downloadFinished) {
+            exportButton.setVisibility(VISIBLE);
+        }
     }
 }

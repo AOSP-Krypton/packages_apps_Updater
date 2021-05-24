@@ -61,7 +61,7 @@
 
             <TextView
                 style="@style/PrimaryTextStyle"
-                android:id="@+id/view_latest_build_md5sum"
+                android:id="@+id/view_latest_build_md5"
                 android:visibility="gone" />
 
         </LinearLayout>
@@ -72,6 +72,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="50dp"
             android:layout_gravity="center_horizontal"
+            android:visibility="gone"
             android:src="@drawable/animated_refresh_icon" />
 
     </FrameLayout>
@@ -88,11 +89,7 @@
 
         <ProgressBar
             android:id="@+id/download_progress"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-            android:max="100"
-            android:min="0" />
+            style="@style/ProgressBarStyle" />
 
         <TextView
             style="@style/PrimaryTextStyle"
@@ -153,6 +150,16 @@
         android:text="@string/update"
         android:onClick="startUpdate" />
 
+    <Button
+        android:id="@+id/export_button"
+        style="@style/PrimaryButtonStyle"
+        android:layout_marginEnd="@dimen/button_margin_end"
+        android:layout_marginTop="@dimen/button_margin_top"
+        android:layout_alignTop="@id/update_button"
+        android:layout_toStartOf="@id/update_button"
+        android:text="@string/export"
+        android:onClick="exportFile" />
+
     <LinearLayout
         android:id="@+id/update_progress_layout"
         android:layout_below="@id/download_progress_layout"
@@ -165,11 +172,7 @@
 
         <ProgressBar
             android:id="@+id/update_progress"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-            android:max="100"
-            android:min="0" />
+            style="@style/ProgressBarStyle" />
 
         <TextView
             style="@style/PrimaryTextStyle"
@@ -178,16 +181,28 @@
 
     </LinearLayout>
 
+    <ImageView
+        android:id="@+id/info_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/update_progress_layout"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginStart="@dimen/info_layout_margin_side"
+        android:layout_marginTop="@dimen/info_layout_margin_top"
+        android:layout_marginEnd="@dimen/info_layout_margin_side"
+        android:paddingStart="@dimen/info_layout_padding"
+        android:visibility="gone"
+        android:src="@drawable/ic_info" />
+
     <TextView
         style="@style/PrimaryTextStyle"
         android:id="@+id/post_update_info"
         android:text="@string/post_update_tips"
         android:visibility="gone"
+        android:layout_toEndOf="@id/info_icon"
         android:layout_below="@id/update_progress_layout"
-        android:layout_marginStart="@dimen/info_layout_margin_side"
         android:layout_marginTop="@dimen/info_layout_margin_top"
         android:layout_marginEnd="@dimen/info_layout_margin_side"
-        android:paddingStart="@dimen/info_layout_padding"
         android:paddingEnd="@dimen/info_layout_padding" />
 
     <Button

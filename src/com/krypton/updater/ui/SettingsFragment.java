@@ -19,7 +19,6 @@ package com.krypton.updater.ui;
 import static android.graphics.Color.TRANSPARENT;
 
 import android.app.AlertDialog;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -29,7 +28,6 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import com.krypton.updater.R;
-import com.krypton.updater.util.Utils;
 
 public class SettingsFragment extends PreferenceFragmentCompat {
 
@@ -62,10 +60,6 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                 .create();
             themePickerDialog.getWindow().setBackgroundDrawable(new ColorDrawable(TRANSPARENT));
             themePickerDialog.show();
-            return true;
-        } else if (key.equals(Utils.DOWNLOAD_LOCATION_KEY)) {
-            getActivity().startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE),
-                SettingsActivity.REQUEST_CODE_SELECT_LOCATION);
             return true;
         }
         return super.onPreferenceTreeClick(preference);

@@ -55,4 +55,14 @@
         <item name="android:padding">@dimen/info_layout_padding</item>
         <item name="android:background">@drawable/rounded_rectangle</item>
     </style>
+
+    <style name="ProgressBarStyle" parent="Widget.AppCompat.ProgressBar.Horizontal">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/progress_bar_height</item>
+        <item name="android:layout_marginTop">@dimen/progress_bar_margin_top</item>
+        <item name="android:layout_marginBottom">@dimen/progress_bar_margin_top</item>
+        <item name="android:progressDrawable">@drawable/progress_bar</item>
+        <item name="android:min">0</item>
+        <item name="android:max">100</item>
+    </style>
 </resources>

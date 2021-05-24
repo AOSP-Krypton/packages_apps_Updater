@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.build;
+package com.krypton.updater.util;
 
 import com.krypton.updater.util.Utils;
 

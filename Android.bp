@@ -9,11 +9,22 @@ android_app {
     resource_dirs: [
         "res",
     ],
+    required: [
+        "privapp_whitelist_com.krypton.updater",
+    ],
     static_libs: [
         "androidx.appcompat_appcompat",
         "androidx.preference_preference",
+        "guava",
     ],
     optimize: {
         enabled: false,
     },
+}
+
+prebuilt_etc {
+    name: "privapp_whitelist_com.krypton.updater",
+    sub_dir: "permissions",
+    src: "privapp-permissions-updater.xml",
+    filename_from_src: true,
 }
