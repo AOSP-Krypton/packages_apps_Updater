@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2021 AOSP-Krypton Project
+<!--
+     Copyright (C) 2021 AOSP-Krypton Project
+
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
      You may obtain a copy of the License at
-         http://www.apache.org/licenses/LICENSE-2.0
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
      Unless required by applicable law or agreed to in writing, software
      distributed under the License is distributed on an "AS IS" BASIS,
      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +20,10 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textColor">@color/black</item>
         <item name="android:importantForAutofill">no</item>
+    </style>
+
+    <style name="SelectableTextStyle" parent="PrimaryTextStyle">
+        <item name="android:textIsSelectable">true</item>
     </style>
 
     <style name="BigText" parent="PrimaryTextStyle">
@@ -44,6 +52,13 @@
         <item name="android:backgroundTint">@color/colorAccentLight</item>
     </style>
 
+    <style name="CornerButtonStyle" parent="PrimaryButtonStyle">
+        <item name="android:layout_marginEnd">@dimen/button_margin_end</item>
+        <item name="android:layout_marginBottom">@dimen/button_margin_bottom</item>
+        <item name="android:layout_alignParentEnd">true</item>
+        <item name="android:layout_alignParentBottom">true</item>
+    </style>
+
     <style name="SectionLayoutStyle">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
@@ -54,15 +69,5 @@
         <item name="android:layout_gravity">center_horizontal</item>
         <item name="android:padding">@dimen/info_layout_padding</item>
         <item name="android:background">@drawable/rounded_rectangle</item>
-    </style>
-
-    <style name="ProgressBarStyle" parent="Widget.AppCompat.ProgressBar.Horizontal">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">@dimen/progress_bar_height</item>
-        <item name="android:layout_marginTop">@dimen/progress_bar_margin_top</item>
-        <item name="android:layout_marginBottom">@dimen/progress_bar_margin_top</item>
-        <item name="android:progressDrawable">@drawable/progress_bar</item>
-        <item name="android:min">0</item>
-        <item name="android:max">100</item>
     </style>
 </resources>

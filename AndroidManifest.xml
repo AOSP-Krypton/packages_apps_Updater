@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2021 AOSP-Krypton Project
+<!--
+     Copyright (C) 2021 AOSP-Krypton Project
+
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
      You may obtain a copy of the License at
-         http://www.apache.org/licenses/LICENSE-2.0
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
      Unless required by applicable law or agreed to in writing, software
      distributed under the License is distributed on an "AS IS" BASIS,
      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -11,6 +15,7 @@
      limitations under the License.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.krypton.updater"
     coreApp="true"
     android:sharedUserId="android.uid.system">
@@ -19,21 +24,28 @@
         android:targetSdkVersion="30" />
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.REBOOT" />
-    <uses-permission android:name="android.permission.WAKE_LOCk" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
-        android:icon="@drawable/ic_launcher_updater"
+        android:name=".UpdaterApplication"
+        android:icon="@drawable/ic_launcher_icon"
         android:label="@string/app_name"
         android:theme="@style/BaseAppTheme"
-        android:requiredForAllUsers="true"
-        android:resizeableActivity="false">
+        android:requiredForAllUsers="true">
+
+        <provider
+            android:name="androidx.work.impl.WorkManagerInitializer"
+            android:authorities="${applicationId}.workmanager-init"
+            tools:node="remove" />
 
         <activity
-            android:name=".ui.UpdaterActivity"
+            android:name=".ui.activity.UpdaterActivity"
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -42,11 +54,22 @@
         </activity>
 
         <activity
-            android:name=".ui.SettingsActivity"
-            android:parentActivityName=".ui.UpdaterActivity" />
+            android:name=".ui.activity.SettingsActivity"
+            android:parentActivityName=".ui.activity.UpdaterActivity" />
+
+        <receiver
+            android:name=".BootCompletedReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
 
         <service
-            android:name=".services.UpdaterService"
+            android:name=".services.UpdateCheckerService"
+            android:exported="false" />
+
+        <service
+            android:name=".services.UpdateInstallerService"
             android:exported="false" />
     </application>
 </manifest>
