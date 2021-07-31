@@ -51,7 +51,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     private int currThemeMode;
 
     @Inject
-    public void inject(SharedPreferences prefs) {
+    public void setDependencies(SharedPreferences prefs) {
         sharedPrefs = prefs;
     }
 
