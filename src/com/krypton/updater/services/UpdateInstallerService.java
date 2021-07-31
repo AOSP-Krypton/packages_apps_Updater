@@ -29,7 +29,7 @@ import android.os.PowerManager.WakeLock;
 
 import com.krypton.updater.model.repos.UpdateRepository;
 import com.krypton.updater.R;
-import com.krypton.updater.util.*;
+import com.krypton.updater.util.NotificationHelper;
 import com.krypton.updater.UpdaterApplication;
 
 import javax.inject.Inject;
@@ -54,7 +54,6 @@ public class UpdateInstallerService extends Service {
 
     @Override
     public void onCreate() {
-        Utils.log("onCreate, updateStarted", updateStarted);
         ((UpdaterApplication) getApplication()).getComponent().inject(this);
         binder = new ServiceBinder();
         powerManager = getSystemService(PowerManager.class);
@@ -65,7 +64,6 @@ public class UpdateInstallerService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Utils.log("onStartCommand, updateStarted", updateStarted);
         if (intent != null && intent.getAction().equals(ACION_START_UPDATE)) {
             startUpdate();
         }
@@ -79,30 +77,24 @@ public class UpdateInstallerService extends Service {
 
     @Override
     public void onDestroy() {
-        Utils.log("onDestroy");
         stopForeground(true);
         releaseWakeLock();
     }
 
     private void startUpdate() {
-        Utils.log("startUpdate");
         updateStarted = true;
-        Utils.log("updateStarted", updateStarted);
         startForeground();
         acquireWakeLock();
         repository.startUpdate();
     }
 
     public void pauseUpdate() {
-        Utils.log("pauseUpdate");
         if (updateStarted) {
             updatePaused = !updatePaused;
             if (updatePaused) {
-                Utils.log("pausing");
                 releaseWakeLock();
                 stopForeground(true);
             } else {
-                Utils.log("resuming");
                 acquireWakeLock();
                 startForeground();
             }
@@ -111,10 +103,7 @@ public class UpdateInstallerService extends Service {
     }
 
     public void cancelUpdate() {
-        Utils.log("cancelUpdate");
-        Utils.log("updateStarted", updateStarted);
         if (updateStarted) {
-            Utils.log("updateStarted, cancelling");
             stopForeground(true);
             releaseWakeLock();
             repository.cancelUpdate();
