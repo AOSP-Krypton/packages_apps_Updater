@@ -22,10 +22,9 @@ import androidx.work.ListenableWorker;
 import androidx.work.WorkerFactory;
 import androidx.work.WorkerParameters;
 
+import com.krypton.updater.model.data.OTAFileManager;
 import com.krypton.updater.model.room.AppDatabase;
 import com.krypton.updater.util.NotificationHelper;
-import com.krypton.updater.model.data.OTAFileManager;
-import com.krypton.updater.util.Utils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

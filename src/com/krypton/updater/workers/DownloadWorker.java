@@ -38,12 +38,12 @@ import androidx.work.ListenableWorker.Result;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.krypton.updater.model.data.OTAFileManager;
+import com.krypton.updater.model.room.AppDatabase;
 import com.krypton.updater.model.room.DownloadStatusDao;
 import com.krypton.updater.model.room.DownloadStatusEntity;
-import com.krypton.updater.model.room.AppDatabase;
 import com.krypton.updater.R;
 import com.krypton.updater.util.NotificationHelper;
-import com.krypton.updater.model.data.OTAFileManager;
 import com.krypton.updater.util.Utils;
 
 import java.io.File;
@@ -54,7 +54,8 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
+
+import javax.net.ssl.HttpsURLConnection;
 
 public class DownloadWorker extends Worker {
     private static final String TAG = "DownloadWorker";
@@ -68,10 +69,8 @@ public class DownloadWorker extends Worker {
     private final NotificationHelper helper;
     private final AppDatabase database;
     private final NotificationCompat.Builder notificationBuilder;
-    private final ProgressRunnable progressRunnable;
-    private int currPercent = 0;
-    private long currSize = 0;
-    private long totalSize = 0;
+    private int currPercent;
+    private long currSize, totalSize;
 
     public DownloadWorker(Context context, WorkerParameters parameters,
             AppDatabase database, NotificationHelper helper, OTAFileManager ofm) {
@@ -88,7 +87,6 @@ public class DownloadWorker extends Worker {
             .setNotificationSilent()
             .setOngoing(true)
             .setContentTitle(context.getString(R.string.downloading));
-        progressRunnable = new ProgressRunnable();
     }
 
     @Override
@@ -135,7 +133,7 @@ public class DownloadWorker extends Worker {
         }
         notificationBuilder.setContentText(fileName);
         setForegroundAsync(getForegroundInfo(0, true));
-        File file = new File(context.getExternalCacheDir(), fileName);
+        final File file = new File(context.getExternalCacheDir(), fileName);
         long startByte = 0;
         boolean append = file.isFile();
         if (append) {
@@ -156,9 +154,9 @@ public class DownloadWorker extends Worker {
                 R.string.invalid_url, handler);
             return -1;
         }
-        URLConnection connection;
+        HttpsURLConnection connection;
         try {
-            connection = url.openConnection();
+            connection = (HttpsURLConnection) url.openConnection();
         } catch (IOException e) {
             Utils.log(e);
             return 0;
@@ -225,7 +223,7 @@ public class DownloadWorker extends Worker {
     }
 
     private void updateProgressAsync(long size, int percent) {
-        handler.post(progressRunnable.setProgress(size, percent));
+        handler.post(() -> dao.updateProgress(size, percent));
     }
 
     private ForegroundInfo getForegroundInfo(int progress, boolean indeterminate) {
@@ -244,22 +242,5 @@ public class DownloadWorker extends Worker {
             Utils.log(e);
         }
         return false;
-    }
-
-    // Custom runnable to update progress in database
-    private final class ProgressRunnable implements Runnable {
-        private int percent;
-        private long size;
-
-        public ProgressRunnable setProgress(long size, int percent) {
-            this.size = size;
-            this.percent = percent;
-            return this;
-        }
-
-        @Override
-        public void run() {
-            dao.updateProgress(size, percent);
-        }
     }
 }
