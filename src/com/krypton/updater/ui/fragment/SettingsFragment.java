@@ -71,7 +71,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             if (vibrator != null && vibrator.hasVibrator()) {
                 vibrator.vibrate(click);
             }
-            updateSharedPrefs(REFRESH_INTERVAL_KEY, ((Integer) newValue).intValue());
+            updateSharedPrefs(REFRESH_INTERVAL_KEY, ((Integer) newValue));
             return true;
         });
     }

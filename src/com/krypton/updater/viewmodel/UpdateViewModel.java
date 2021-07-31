@@ -48,9 +48,9 @@ public class UpdateViewModel extends AndroidViewModel {
         repository = ((UpdaterApplication) application)
             .getComponent().getUpdateRepository();
         progressInfo = new MediatorLiveData<>();
-        viewVisibility = new MutableLiveData<>(new Boolean(false));
-        controlVisibility = new MutableLiveData<>(new Boolean(true));
-        pauseStatus = new MutableLiveData<>(new Boolean(false));
+        viewVisibility = new MutableLiveData<>(false);
+        controlVisibility = new MutableLiveData<>(true);
+        pauseStatus = new MutableLiveData<>(false);
         observeProgress();
     }
 
@@ -80,23 +80,23 @@ public class UpdateViewModel extends AndroidViewModel {
                 .filter(updateStatus -> updateStatus.getStatusCode() != 0));
         progressInfo.addSource(updateStatusLiveData, updateStatus -> {
             final int statusCode = updateStatus.getStatusCode();
-            pauseStatus.setValue(new Boolean(statusCode == PAUSED));
+            pauseStatus.setValue(statusCode == PAUSED);
             if (viewVisibility.getValue()) {
                 if (statusCode == CANCELLED) {
-                    viewVisibility.postValue(new Boolean(false));
+                    viewVisibility.postValue(false);
                 }
             } else {
                 if (statusCode >= INDETERMINATE) {
-                    viewVisibility.postValue(new Boolean(true));
+                    viewVisibility.postValue(true);
                 }
             }
             if (controlVisibility.getValue()) {
                 if (statusCode == FINISHED || statusCode == FAILED) {
-                    controlVisibility.postValue(new Boolean(false));
+                    controlVisibility.postValue(false);
                 }
             } else {
                 if (statusCode != FINISHED && statusCode != FAILED) {
-                    controlVisibility.postValue(new Boolean(true));
+                    controlVisibility.postValue(true);
                 }
             }
             progressInfo.postValue(repository.getProgressInfo(updateStatus));

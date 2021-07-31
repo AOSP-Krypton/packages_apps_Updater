@@ -36,7 +36,6 @@ import com.krypton.updater.model.data.ProgressInfo;
 import com.krypton.updater.model.repos.DownloadRepository;
 import com.krypton.updater.model.room.DownloadStatusEntity;
 import com.krypton.updater.R;
-import com.krypton.updater.util.Utils;
 import com.krypton.updater.UpdaterApplication;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
@@ -48,16 +47,16 @@ public class DownloadViewModel extends AndroidViewModel {
     private final MediatorLiveData<ProgressInfo> progressInfo;
     private final MutableLiveData<Boolean> viewVisibility, controlVisibility, pauseStatus;
     private Disposable disposable;
-    private boolean paused = false;
+    private boolean paused;
 
     public DownloadViewModel(Application application) {
         super(application);
         repository = ((UpdaterApplication) application)
             .getComponent().getDownloadRepository();
         progressInfo = new MediatorLiveData<>();
-        viewVisibility = new MutableLiveData<>(new Boolean(false));
-        controlVisibility = new MutableLiveData<>(new Boolean(true));
-        pauseStatus = new MutableLiveData<>(new Boolean(false));
+        viewVisibility = new MutableLiveData<>(false);
+        controlVisibility = new MutableLiveData<>(true);
+        pauseStatus = new MutableLiveData<>(false);
         observeProgress();
     }
 
@@ -90,7 +89,7 @@ public class DownloadViewModel extends AndroidViewModel {
 
     public void pauseDownload() {
         paused = !paused;
-        pauseStatus.setValue(new Boolean(paused));
+        pauseStatus.setValue(paused);
         repository.pauseDownload();
     }
 
@@ -111,7 +110,7 @@ public class DownloadViewModel extends AndroidViewModel {
                         }
                         final State state = workInfo.getState();
                         if (state == State.CANCELLED && !paused) {
-                            viewVisibility.postValue(new Boolean(false));
+                            viewVisibility.postValue(false);
                         }
                         ProgressInfo info = repository.getProgressInfo(state);
                         if (info != null) {
@@ -123,20 +122,19 @@ public class DownloadViewModel extends AndroidViewModel {
         progressInfo.addSource(LiveDataReactiveStreams.fromPublisher(
             repository.getDatabaseFlowable().filter(entity -> entity != null)),
                 entity -> {
-                    paused = entity.status == PAUSED;
-                    pauseStatus.setValue(new Boolean(paused));
+                    pauseStatus.setValue(entity.status == PAUSED);
                     if (viewVisibility.getValue()) {
                         if (entity.status == CANCELLED) {
-                            viewVisibility.postValue(new Boolean(false));
+                            viewVisibility.postValue(false);
                         }
                     } else {
                         if (entity.status >= INDETERMINATE) {
-                            viewVisibility.postValue(new Boolean(true));
+                            viewVisibility.postValue(true);
                         }
                     }
                     if (controlVisibility.getValue()) {
                         if (entity.status == FINISHED || entity.status == FAILED) {
-                            controlVisibility.postValue(new Boolean(false));
+                            controlVisibility.postValue(false);
                         }
                     }
                     progressInfo.postValue(repository.getProgressInfo(entity));

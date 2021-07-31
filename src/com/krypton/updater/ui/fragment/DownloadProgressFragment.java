@@ -87,16 +87,15 @@ public class DownloadProgressFragment extends Fragment {
             progressInfo -> updateProgress(progressInfo));
 
         viewModel.pauseButtonStatus().observe(owner,
-            status -> pauseButton.setText(status.booleanValue()
-                ? R.string.resume : R.string.pause));
+            status -> pauseButton.setText(
+                status ? R.string.resume : R.string.pause));
 
         viewModel.getViewVisibility().observe(owner,
-            visible -> hideSelf(!visible.booleanValue()));
+            visible -> hideSelf(!visible));
 
         viewModel.getControlVisibility().observe(owner,
             visible -> {
-                Utils.setVisibile(visible.booleanValue(),
-                    pauseButton, cancelButton);
+                Utils.setVisibile(visible, pauseButton, cancelButton);
                 rootView.invalidate();
             });
     }
