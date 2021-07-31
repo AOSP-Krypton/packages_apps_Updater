@@ -16,7 +16,7 @@
 
 package com.krypton.updater.workers;
 
-import static android.os.Process.THREAD_PRIORITY_FOREGROUND;
+import static android.os.Process.THREAD_PRIORITY_BACKGROUND;
 import static com.krypton.updater.util.Constants.UPDATE_PENDING;
 import static com.krypton.updater.util.Constants.BUILD_SIZE;
 import static com.krypton.updater.util.Constants.BUILD_MD5;
@@ -81,7 +81,7 @@ public class DownloadWorker extends Worker {
         this.helper = helper;
         this.ofm = ofm;
         dao = database.getDownloadStatusDao();
-        thread = new HandlerThread(TAG, THREAD_PRIORITY_FOREGROUND);
+        thread = new HandlerThread(TAG, THREAD_PRIORITY_BACKGROUND);
         thread.start();
         handler = new Handler(thread.getLooper());
         notificationBuilder = helper.getDefaultBuilder()
