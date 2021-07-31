@@ -16,35 +16,22 @@
 
 package com.krypton.updater;
 
-import static com.krypton.updater.util.Constants.REBOOT_PENDING;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
 import androidx.annotation.Keep;
 
-import com.krypton.updater.model.room.AppDatabase;
-import com.krypton.updater.model.room.GlobalStatusDao;
-import com.krypton.updater.model.room.GlobalStatusEntity;
+import com.krypton.updater.model.repos.AppRepository;
 import com.krypton.updater.util.Utils;
-
-import java.util.concurrent.ExecutorService;
 
 import javax.inject.Inject;
 
 @Keep
 public class BootCompletedReceiver extends BroadcastReceiver {
     @Inject
-    public void inject(ExecutorService executor, AppDatabase database) {
-        executor.execute(() -> {
-            final GlobalStatusDao dao = database.getGlobalStatusDao();
-            final GlobalStatusEntity entity = dao.getCurrentStatus();
-            if (entity != null && entity.status == REBOOT_PENDING) {
-                dao.insert(new GlobalStatusEntity());
-                database.getDownloadStatusDao().deleteTable();
-            }
-        });
+    public void inject(AppRepository repo) {
+        repo.resetStatusIfNotDone();
     }
 
     @Override
