@@ -34,6 +34,7 @@
 
     <application
         android:name=".UpdaterApplication"
+        android:label="@string/app_name"
         android:theme="@style/BaseAppTheme"
         android:requiredForAllUsers="true">
 
