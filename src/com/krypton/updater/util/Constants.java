@@ -16,7 +16,7 @@
 
 package com.krypton.updater.util;
 
-// Constants needed application-wide
+// Constants needed application wide
 public class Constants {
     // For build info
     public static final String BUILD_VERSION = "version";
@@ -37,7 +37,6 @@ public class Constants {
     public static final String TABLE_BUILD_INFO = "table_build_info";
     public static final String TABLE_GLOBAL_STATUS = "table_global_status";
     public static final String TABLE_DOWNLOAD_INFO = "table_download_info";
-    public static final String TABLE_UPDATE_INFO = "table_update_info";
 
     // Download / Update status
     public static final int DOWNLOAD_PENDING = 300;
@@ -53,16 +52,6 @@ public class Constants {
 
     // Update intent actions
     public static final String ACION_START_UPDATE = "com.krypton.updater.START_UPDATE";
-    public static final String ACION_PAUSE_UPDATE = "com.krypton.updater.PAUSE_UPDATE";
-    public static final String ACION_CANCEL_UPDATE = "com.krypton.updater.CANCEL_UPDATE";
-
-    // Restore update engine progress
-    public static final String LOCAL_UPGRADE_MODE = "localUpgradeMode";
-
-    // Error codes for apply update failure
-    public static final int APPLY_PAYLOAD_FAILED = 101;
-    public static final int FILE_INVALID = 102;
-    public static final int FILE_EXCEPTION = 103;
 
     // 1 MB in bytes
     public static final int MB = 1048576;
