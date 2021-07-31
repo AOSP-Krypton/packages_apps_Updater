@@ -34,8 +34,6 @@
 
     <application
         android:name=".UpdaterApplication"
-        android:icon="@drawable/ic_launcher_icon"
-        android:label="@string/app_name"
         android:theme="@style/BaseAppTheme"
         android:requiredForAllUsers="true">
 
@@ -46,12 +44,7 @@
 
         <activity
             android:name=".ui.activity.UpdaterActivity"
-            android:label="@string/app_name">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:label="@string/app_name" />
 
         <activity
             android:name=".ui.activity.SettingsActivity"
