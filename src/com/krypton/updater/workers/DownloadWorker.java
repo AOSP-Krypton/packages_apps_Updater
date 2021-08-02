@@ -189,28 +189,21 @@ public class DownloadWorker extends Worker {
         }
         // Check if download is actually over
         if (currSize == totalSize) {
-            try (FileInputStream inStream = new FileInputStream(file)) {
-                if (Utils.computeMd5(inStream).equals(md5)) {
-                    if (copyFile(inStream, fileName)) {
-                        file.delete();
-                        helper.onlyNotify(R.string.download_finished, R.string.click_to_update);
-                        // Mark as download finished and an update installation is pending
-                        database.getGlobalStatusDao().updateCurrentStatus(UPDATE_PENDING);
-                        return 1;
-                    } else {
-                        helper.notifyOrToast(R.string.download_failed,
-                            R.string.copy_failed, handler);
-                        return -1;
-                    }
+            if (Utils.computeMd5(file).equals(md5)) {
+                if (copyFile(file, fileName)) {
+                    file.delete();
+                    helper.onlyNotify(R.string.download_finished, R.string.click_to_update);
+                    // Mark as download finished and an update installation is pending
+                    database.getGlobalStatusDao().updateCurrentStatus(UPDATE_PENDING);
+                    return 1;
                 } else {
                     helper.notifyOrToast(R.string.download_failed,
-                        R.string.md5_check_failed, handler);
+                        R.string.copy_failed, handler);
                     return -1;
                 }
-            } catch(IOException e) {
-                Utils.log(e);
+            } else {
                 helper.notifyOrToast(R.string.download_failed,
-                    R.string.check_logs, handler);
+                    R.string.md5_check_failed, handler);
                 return -1;
             }
         } else {
@@ -233,10 +226,9 @@ public class DownloadWorker extends Worker {
     }
 
     // Copy downloaded file to Downloads folder and then to ota dir (/data/kosp_ota)
-    private boolean copyFile(FileInputStream inStream, String fileName) {
-        try (FileOutputStream outStream = new FileOutputStream(
-                Utils.getDownloadFile(fileName))) {
-            FileUtils.copy(inStream, outStream);
+    private boolean copyFile(File file, String fileName) {
+        try (FileInputStream inStream = new FileInputStream(file)) {
+            FileUtils.copy(file, Utils.getDownloadFile(fileName));
             return ofm.copyToOTAPackageDir(inStream);
         } catch (IOException e) {
             Utils.log(e);

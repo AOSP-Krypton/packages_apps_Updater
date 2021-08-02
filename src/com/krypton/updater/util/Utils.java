@@ -119,8 +119,8 @@ public final class Utils {
             DIRECTORY_DOWNLOADS), fileName);
     }
 
-    public static String computeMd5(@NonNull FileInputStream inStream) {
-        try {
+    public static String computeMd5(@NonNull File file) {
+        try (FileInputStream inStream = new FileInputStream(file)) {
             final MessageDigest md5Digest = MessageDigest.getInstance("MD5");
             final byte[] buffer = new byte[MB]; // Files processed will be of GB order usually, so 1MB buffer will speed up the process
             int bytesRead = 0;
