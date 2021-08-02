@@ -40,4 +40,7 @@ public interface BuildInfoDao {
 
     @Insert(onConflict = REPLACE)
     void insert(BuildInfoEntity entity);
+
+    @Query("DELETE FROM " + TABLE_BUILD_INFO + " WHERE tag LIKE :tag")
+    void deleteByTag(UUID tag);
 }

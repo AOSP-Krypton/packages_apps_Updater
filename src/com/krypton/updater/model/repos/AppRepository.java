@@ -153,6 +153,9 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
             final int status = entity.status;
             // Only delete data if no ongoing downloads or updates are there
             if (status == DOWNLOAD_PENDING || status == UPDATE_PENDING) {
+                if (entity.tag != null) {
+                    buildInfoDao.deleteByTag(entity.tag);
+                }
                 responsePublisher.onNext(new Response(0));
                 globalStatusDao.delete(entity.rowId);
                 database.getDownloadStatusDao().deleteTable();
