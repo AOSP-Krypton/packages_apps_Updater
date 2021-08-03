@@ -17,8 +17,7 @@
 package com.krypton.updater.model.data;;
 
 import android.net.Uri;
-
-import com.krypton.updater.util.Utils;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -27,7 +26,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public final class PayloadInfo {
-
+    private static final String TAG = "PayloadInfo";
     // Payload info
     private static final String METADATA_FILE = "META-INF/com/android/metadata";
     private static final String PAYLOAD_FILE = "payload.bin";
@@ -49,7 +48,7 @@ public final class PayloadInfo {
             // Set headerKeyValuePairs
             setHeader(zip);
 		} catch (IOException e) {
-            Utils.log(e);
+            Log.e(TAG, "IOException when extracting payload info", e);
         }
     }
 
@@ -102,7 +101,7 @@ public final class PayloadInfo {
                     }
                 }
             } catch (IOException e) {
-                Utils.log(e);
+                Log.e(TAG, "IOException when extracting payload offset and size from zip " + zip.getName(), e);
             }
         }
     }
@@ -117,7 +116,7 @@ public final class PayloadInfo {
                     headerKeyValuePairs[i] = line;
                 }
             } catch (IOException e) {
-                Utils.log(e);
+                Log.e(TAG, "IOException when extracting payload header info from zip " + zip.getName(), e);
             }
         }
     }

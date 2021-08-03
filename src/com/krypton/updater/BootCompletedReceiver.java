@@ -22,21 +22,11 @@ import android.content.Intent;
 
 import androidx.annotation.Keep;
 
-import com.krypton.updater.model.repos.AppRepository;
-import com.krypton.updater.util.Utils;
-
-import javax.inject.Inject;
-
 @Keep
 public class BootCompletedReceiver extends BroadcastReceiver {
-    @Inject
-    public void inject(AppRepository repo) {
-        repo.resetStatusIfNotDone();
-    }
-
     @Override
     public void onReceive(Context context, Intent intent) {
         ((UpdaterApplication) context.getApplicationContext())
-            .getComponent().inject(this);
+            .getComponent().getAppRepository().resetStatusIfNotDone();
     }
 }

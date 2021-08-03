@@ -27,6 +27,7 @@ import static com.krypton.updater.util.Constants.UPDATING;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -40,7 +41,6 @@ import com.krypton.updater.model.room.GlobalStatusDao;
 import com.krypton.updater.model.room.GlobalStatusEntity;
 import com.krypton.updater.R;
 import com.krypton.updater.services.UpdateInstallerService;
-import com.krypton.updater.util.Utils;
 
 import io.reactivex.rxjava3.processors.BehaviorProcessor;
 
@@ -53,7 +53,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class UpdateRepository {
-
+    private static final String TAG = "UpdateRepository";
     private final Context context;
     private final GlobalStatusDao globalStatusDao;
     private final ExecutorService executor;
@@ -107,7 +107,7 @@ public class UpdateRepository {
                     globalStatusDao.setLocalUpgradeFileName(fileName);
                 }
             } catch (IOException e) {
-                Utils.log(e);
+                Log.e(TAG, "IOException when copying file from uri " + uri.toString(), e);
             }
         });
     }

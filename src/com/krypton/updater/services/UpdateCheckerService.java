@@ -25,7 +25,6 @@ import android.content.Intent;
 import android.os.IBinder;
 
 import com.krypton.updater.model.repos.AppRepository;
-import com.krypton.updater.model.data.JSONParser;
 import com.krypton.updater.model.data.Response;
 import com.krypton.updater.R;
 import com.krypton.updater.util.NotificationHelper;

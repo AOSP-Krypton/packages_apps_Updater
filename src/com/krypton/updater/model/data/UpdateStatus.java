@@ -16,6 +16,8 @@
 
 package com.krypton.updater.model.data;
 
+import static com.krypton.updater.util.Constants.UPDATING;
+
 public final class UpdateStatus {
     private int step;
     private int statusCode;
@@ -46,5 +48,9 @@ public final class UpdateStatus {
 
     public int getProgress() {
         return progress;
+    }
+
+    public boolean isUpdating() {
+        return statusCode == UPDATING;
     }
 }

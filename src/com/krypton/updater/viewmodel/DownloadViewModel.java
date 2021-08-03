@@ -34,8 +34,6 @@ import androidx.work.WorkInfo.State;
 
 import com.krypton.updater.model.data.ProgressInfo;
 import com.krypton.updater.model.repos.DownloadRepository;
-import com.krypton.updater.model.room.DownloadStatusEntity;
-import com.krypton.updater.R;
 import com.krypton.updater.UpdaterApplication;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;

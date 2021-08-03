@@ -16,18 +16,15 @@
 
 package com.krypton.updater.model.data;;
 
-import static android.os.Environment.DIRECTORY_DOWNLOADS;
 import static android.os.FileUtils.S_IRWXU;
 import static android.os.FileUtils.S_IRWXG;
-import static java.io.File.pathSeparator;
 
 import android.net.Uri;
 import android.os.Environment;
 import android.os.FileUtils;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
-
-import com.krypton.updater.util.Utils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -39,7 +36,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class OTAFileManager {
-
+    private static final String TAG = "OTAFileManager";
     private static final String OTA_DIR = "kosp_ota";
     private static final String UPDATE_FILE = "update.zip";
     private final File otaPackageDir;
@@ -79,11 +76,11 @@ public class OTAFileManager {
             if (errno == 0) {
                 return true;
             } else {
-                Utils.log("setPermissions for " +
-                    otaFile.getAbsolutePath() + " failed with errno ", errno);
+                Log.e(TAG, "setPermissions for " + otaFile.getAbsolutePath() +
+                    " failed with errno = " + errno);
             }
         } catch (IOException e) {
-            Utils.log(e);
+            Log.e(TAG, "IOException when copying to ota dir", e);
         }
         return false;
     }
@@ -94,7 +91,7 @@ public class OTAFileManager {
         }
         for (File file: otaPackageDir.listFiles()) {
             if (!file.delete()) {
-                Utils.log("cleanup of " + file.getAbsolutePath() + " failed");
+                Log.e(TAG, "deleting " + file.getAbsolutePath() + " failed");
                 return false;
             }
         }

@@ -44,11 +44,11 @@ import android.database.Cursor;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewGroup.MarginLayoutParams;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -59,11 +59,9 @@ import android.widget.Toast;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.preference.PreferenceManager;
 
 import com.krypton.updater.model.data.BuildInfo;
 import com.krypton.updater.model.data.Response;
-import com.krypton.updater.model.repos.AppRepository;
 import com.krypton.updater.R;
 import com.krypton.updater.services.UpdateInstallerService;
 import com.krypton.updater.ui.fragment.*;
@@ -88,14 +86,12 @@ public class UpdaterActivity extends AppCompatActivity {
     private AppViewModel viewModel;
     private SharedPreferences sharedPrefs;
     private NotificationHelper notificationHelper;
-    private AppRepository repository;
     private ViewModelProvider provider;
     private AlertDialog copyingDialog;
 
     @Inject
-    void setDependencies(AppRepository repo, SharedPreferences prefs,
+    void setDependencies(SharedPreferences prefs,
             NotificationHelper helper) {
-        repository = repo;
         sharedPrefs = prefs;
         notificationHelper = helper;
     }
@@ -111,7 +107,7 @@ public class UpdaterActivity extends AppCompatActivity {
         actionBar.setTitle(R.string.app_name);
         provider = new ViewModelProvider(this);
         viewModel = provider.get(AppViewModel.class);
-        repository.resetStatusIfNotDone();
+        viewModel.resetStatusIfNotDone();
         setContentView(R.layout.updater_activity);
         getSupportFragmentManager().beginTransaction()
             .setReorderingAllowed(true)
@@ -199,18 +195,12 @@ public class UpdaterActivity extends AppCompatActivity {
     }
 
     private void showCopyingDialog() {
-        MarginLayoutParams params = new MarginLayoutParams(MATCH_PARENT, WRAP_CONTENT);
-        final int margin = getResources().getDimensionPixelSize(R.dimen.copying_progress_margin);
-        params.setMarginStart(margin);
-        params.setMarginEnd(margin);
-        ProgressBar bar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        bar.setIndeterminate(true);
-        bar.setLayoutParams(params);
         copyingDialog = new Builder(this, R.style.WideAlertDialogTheme)
             .setTitle(R.string.copying)
             .setMessage(R.string.do_not_close)
             .setCancelable(false)
-            .setView(bar)
+            .setView(LayoutInflater.from(this).inflate(
+                R.layout.copy_progress_bar, null, false))
             .create();
         copyingDialog.getWindow().setBackgroundDrawable(new ColorDrawable(TRANSPARENT));
         copyingDialog.show();

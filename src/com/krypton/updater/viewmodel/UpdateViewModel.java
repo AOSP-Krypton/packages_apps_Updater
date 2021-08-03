@@ -33,8 +33,7 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.krypton.updater.model.data.ProgressInfo;
 import com.krypton.updater.model.data.UpdateStatus;
-import com.krypton.updater.model.repos.UpdateRepository;
-import com.krypton.updater.R;
+import com.krypton.updater.model.repos.UpdateRepository;;
 import com.krypton.updater.UpdaterApplication;
 
 public class UpdateViewModel extends AndroidViewModel {

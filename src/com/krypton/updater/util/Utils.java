@@ -40,8 +40,7 @@ import java.util.Date;
 import java.util.Scanner;
 
 public final class Utils {
-
-    private static final String TAG = "Utils";
+    private static final String TAG = "UpdaterUtils";
     private static final String PROP_DEVICE = "ro.krypton.build.device";
     private static final String PROP_VERSION = "ro.krypton.build.version";
     private static final String PROP_DATE = "ro.build.date.utc";
@@ -63,32 +62,8 @@ public final class Utils {
         try {
             Thread.sleep(duration);
         } catch (InterruptedException e) {
-            log(e);
+            Log.e(TAG, "thread interrupted while sleeping", e);
         }
-    }
-
-    public static void log(String text) {
-        Log.d(TAG, text);
-    }
-
-    public static void log(String text, boolean val) {
-        log(String.format("%s: %b", text, val));
-    }
-
-    public static void log(String text, int val) {
-        log(String.format("%s: %d", text, val));
-    }
-
-    public static void log(String text, float val) {
-        log(String.format("%s: %f", text, val));
-    }
-
-    public static void log(String text, long val) {
-        Log.d(TAG, String.format("%s: %d", text, val));
-    }
-
-    public static void log(Exception e) {
-        Log.d(TAG, "caught exception", e);
     }
 
     public static String formatDate(long date) {
@@ -133,7 +108,7 @@ public final class Utils {
             }
             return builder.toString();
         } catch (NoSuchAlgorithmException|IOException e) {
-            log(e);
+            Log.e(TAG, "Error when computing md5 of file " + file.getAbsolutePath(), e);
         }
         return null;
     }
@@ -146,7 +121,7 @@ public final class Utils {
             }
             return builder.toString();
         } catch(IOException e) {
-            log(e);
+            Log.e(TAG, "IOException when parsing content from url " + url.toString(), e);
         }
         return null;
     }

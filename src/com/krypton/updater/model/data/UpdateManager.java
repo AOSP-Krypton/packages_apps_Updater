@@ -34,13 +34,14 @@ import android.os.HandlerThread;
 import android.os.ServiceSpecificException;
 import android.os.UpdateEngine;
 import android.os.UpdateEngineCallback;
+import android.util.Log;
 
 import androidx.annotation.WorkerThread;
 
 import com.krypton.updater.model.room.AppDatabase;
 import com.krypton.updater.model.room.GlobalStatusDao;
 import com.krypton.updater.R;
-import com.krypton.updater.util.*;
+import com.krypton.updater.util.NotificationHelper;
 
 import io.reactivex.rxjava3.processors.BehaviorProcessor;
 
@@ -64,9 +65,11 @@ public class UpdateManager {
         @Override
         public void onStatusUpdate(int status, float percent) {
             if (status == DOWNLOADING || status == FINALIZING) {
-                updateStatusProcessor.onNext(updateStatus
-                    .setStatusCode(UPDATING)
-                    .setStep(status == DOWNLOADING ? 1 : 2));
+                if (!updateStatus.isUpdating()) {
+                    updateStatus.setStatusCode(UPDATING);
+                }
+                updateStatusProcessor.onNext(updateStatus.setStep(
+                    status == DOWNLOADING ? 1 : 2));
             }
             switch (status) {
                 case IDLE:
@@ -86,7 +89,7 @@ public class UpdateManager {
                     break;
                 default:
                     // Log unhandled cases
-                    Utils.log("status", status);
+                    Log.e(TAG, "onStatusUpdate: unknown status code " + status);
             }
         }
 
@@ -113,7 +116,7 @@ public class UpdateManager {
                     break;
                 default:
                     // Log unhandled cases
-                    Utils.log("errorCode", errorCode);
+                    Log.e(TAG, "onPayloadApplicationComplete: unknown errorCode " + errorCode);
             }
             reset();
         }
@@ -155,7 +158,7 @@ public class UpdateManager {
             updateEngine.applyPayload(payloadInfo.getFilePath(),
                 payloadInfo.getOffset(), payloadInfo.getSize(), payloadInfo.getHeader());
         } catch (ServiceSpecificException e) {
-            Utils.log(e);
+            Log.e(TAG, "ServiceSpecificException when applying payload", e);
             resetAndNotify(R.string.update_failed);
         }
     }
@@ -183,6 +186,10 @@ public class UpdateManager {
 
     public BehaviorProcessor<UpdateStatus> getUpdateStatusProcessor() {
         return updateStatusProcessor;
+    }
+
+    public int getCurrentStatusCode() {
+        return updateStatus.getStatusCode();
     }
 
     private void setGlobalStatus(int status) {

@@ -28,6 +28,7 @@ import static com.krypton.updater.util.Constants.NEW_UPDATE;
 import static com.krypton.updater.util.Constants.REFRESHING;
 import static com.krypton.updater.util.Constants.REFRESH_INTERVAL_KEY;
 import static com.krypton.updater.util.Constants.REBOOT_PENDING;
+import static com.krypton.updater.util.Constants.FINISHED;
 import static java.util.concurrent.TimeUnit.DAYS;
 
 import android.app.AlarmManager;
@@ -49,6 +50,7 @@ import com.krypton.updater.model.room.GlobalStatusDao;
 import com.krypton.updater.model.room.GlobalStatusEntity;
 import com.krypton.updater.model.data.BuildInfo;
 import com.krypton.updater.model.data.Response;
+import com.krypton.updater.model.data.UpdateManager;
 import com.krypton.updater.services.UpdateCheckerService;
 import com.krypton.updater.model.data.JSONParser;
 import com.krypton.updater.util.Utils;
@@ -69,24 +71,23 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
     private final AlarmManager alarmManager;
     private final Context context;
     private final ExecutorService executor;
-    private final JSONParser parser;
     private final AppDatabase database;
     private final BuildInfoDao buildInfoDao;
     private final GlobalStatusDao globalStatusDao;
     private final BehaviorProcessor<Response> responsePublisher;
     private final SharedPreferences sharedPrefs;
-    private UUID tag;
+    private final UpdateManager updateManager;
     private Future fetching;
 
     @Inject
     public AppRepository(Context context, AppDatabase database,
-            ExecutorService executor, JSONParser parser,
-            SharedPreferences sharedPrefs) {
+            ExecutorService executor, SharedPreferences sharedPrefs,
+            UpdateManager updateManager) {
         this.context = context;
         this.database = database;
         this.executor = executor;
-        this.parser = parser;
         this.sharedPrefs = sharedPrefs;
+        this.updateManager = updateManager;
         globalStatusDao = database.getGlobalStatusDao();
         buildInfoDao = database.getBuildInfoDao();
         alarmManager = context.getSystemService(AlarmManager.class);
@@ -116,7 +117,7 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
         }
         responsePublisher.onNext(new Response(REFRESHING));
         fetching = executor.submit(() -> {
-            final Response response = parser.parse();
+            final Response response = JSONParser.parse();
             responsePublisher.onNext(response);
             final BuildInfo buildInfo = response.getBuildInfo();
             if (buildInfo != null) {
@@ -177,6 +178,9 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
     }
 
     public void resetStatusIfNotDone() {
+        if (updateManager.getCurrentStatusCode() == FINISHED) {
+            return;
+        }
         executor.execute(() -> {
             final GlobalStatusEntity entity = globalStatusDao.getCurrentStatus();
             if (entity != null && entity.status == REBOOT_PENDING) {

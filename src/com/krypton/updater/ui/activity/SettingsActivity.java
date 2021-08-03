@@ -31,7 +31,6 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ActionBar actionBar = getSupportActionBar();
-        //actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setTitle(R.string.updater_settings_title);
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()

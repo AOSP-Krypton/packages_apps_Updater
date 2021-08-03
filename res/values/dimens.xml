@@ -42,5 +42,5 @@
 
     <dimen name="circular_refresh_progress_bar_width">24dp</dimen>
 
-    <dimen name="copying_progress_margin">16dp</dimen>
+    <dimen name="copy_progress_margin">24dp</dimen>
 </resources>

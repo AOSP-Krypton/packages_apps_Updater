@@ -23,7 +23,6 @@ import static com.krypton.updater.util.Constants.THEME_KEY;
 
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.drawable.ColorDrawable;
@@ -33,7 +32,6 @@ import android.os.Vibrator;
 
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.PreferenceManager;
 import androidx.preference.SeekBarPreference;
 
 import com.krypton.updater.R;
@@ -60,8 +58,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         setPreferencesFromResource(R.xml.settings_fragment, key);
         ((UpdaterApplication) getActivity().getApplication())
             .getComponent().inject(this);
-        final Context context = getContext();
-        vibrator = context.getSystemService(Vibrator.class);
+        vibrator = getContext().getSystemService(Vibrator.class);
         editor = sharedPrefs.edit();
         currThemeMode = sharedPrefs.getInt(THEME_KEY, 2);
         seekBar = getPreferenceScreen().findPreference(REFRESH_INTERVAL_KEY);
@@ -71,20 +68,18 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             if (vibrator != null && vibrator.hasVibrator()) {
                 vibrator.vibrate(click);
             }
-            updateSharedPrefs(REFRESH_INTERVAL_KEY, ((Integer) newValue));
+            updateSharedPrefs(REFRESH_INTERVAL_KEY, (Integer) newValue);
             return true;
         });
     }
 
     @Override
     public boolean onPreferenceTreeClick(Preference preference) {
-        switch (preference.getKey()) {
-            case THEME_KEY:
-                showPickerDialog();
-                return true;
-            default:
-                return super.onPreferenceTreeClick(preference);
+        if (preference.getKey().equals(THEME_KEY)) {
+            showPickerDialog();
+            return true;
         }
+        return super.onPreferenceTreeClick(preference);
     }
 
     private void showPickerDialog() {

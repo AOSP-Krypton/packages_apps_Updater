@@ -16,7 +16,6 @@
 
 package com.krypton.updater.viewmodel;
 
-import static com.krypton.updater.util.Constants.NEW_UPDATE;
 import static com.krypton.updater.util.Constants.DOWNLOAD_PENDING;
 import static com.krypton.updater.util.Constants.UPDATE_PENDING;
 import static com.krypton.updater.util.Constants.REBOOT_PENDING;
@@ -27,12 +26,9 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.LiveDataReactiveStreams;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Transformations;
 
-import com.krypton.updater.model.repos.AppRepository;
 import com.krypton.updater.model.data.Response;
-import com.krypton.updater.model.room.GlobalStatusEntity;
-import com.krypton.updater.util.Utils;
+import com.krypton.updater.model.repos.AppRepository;
 import com.krypton.updater.UpdaterApplication;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
@@ -108,6 +104,10 @@ public class AppViewModel extends AndroidViewModel {
 
     public void reset() {
         repository.resetStatus();
+    }
+
+    public void resetStatusIfNotDone() {
+        repository.resetStatusIfNotDone();
     }
 
     private void observe() {

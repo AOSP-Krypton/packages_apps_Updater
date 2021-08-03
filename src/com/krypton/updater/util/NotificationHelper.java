@@ -41,13 +41,12 @@ import javax.inject.Singleton;
 
 @Singleton
 public class NotificationHelper {
-
-    private static String TAG;
     private static final int UPDATER_CANCELLABLE_NOTIF_ID = 1001;
     private static final int ACTIVITY_REQUEST_CODE = 1002;
+    private final String TAG;
     private final Context context;
     private final NotificationManager manager;
-    private PendingIntent activityIntent;
+    private final PendingIntent activityIntent;
 
     @Inject
     public NotificationHelper(Context context) {

@@ -30,6 +30,7 @@ import android.content.Context;
 import android.os.FileUtils;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 import androidx.work.Data;
@@ -149,7 +150,7 @@ public class DownloadWorker extends Worker {
         try {
             url = new URL(urlString);
         } catch (MalformedURLException e) {
-            Utils.log(e);
+            Log.e(TAG, "Malformed url", e);
             helper.notifyOrToast(R.string.download_failed,
                 R.string.invalid_url, handler);
             return -1;
@@ -158,7 +159,7 @@ public class DownloadWorker extends Worker {
         try {
             connection = (HttpsURLConnection) url.openConnection();
         } catch (IOException e) {
-            Utils.log(e);
+            Log.d(TAG, "IOException when opening connection from url", e);
             return 0;
         }
         if (append) {
@@ -184,7 +185,7 @@ public class DownloadWorker extends Worker {
                 return 2;
             }
         } catch (IOException e) {
-            Utils.log(e);
+            Log.d(TAG, "IOException when downloading content", e);
             return 0;
         }
         // Check if download is actually over
@@ -231,7 +232,7 @@ public class DownloadWorker extends Worker {
             FileUtils.copy(file, Utils.getDownloadFile(fileName));
             return ofm.copyToOTAPackageDir(inStream);
         } catch (IOException e) {
-            Utils.log(e);
+            Log.e(TAG, "IOException when copying file " + file.getAbsolutePath(), e);
         }
         return false;
     }

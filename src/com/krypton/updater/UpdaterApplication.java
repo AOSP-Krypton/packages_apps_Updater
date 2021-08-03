@@ -27,7 +27,6 @@ import androidx.work.Configuration.Provider;
 import com.krypton.updater.di.DaggerUpdaterComponent;
 import com.krypton.updater.di.UpdaterComponent;
 import com.krypton.updater.di.UpdaterModule;
-import com.krypton.updater.util.Utils;
 
 public class UpdaterApplication extends Application implements Provider {
 

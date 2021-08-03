@@ -27,28 +27,22 @@ import static com.krypton.updater.util.Constants.REFRESH_FAILED;
 import static com.krypton.updater.util.Constants.REFRESHING;
 import static com.krypton.updater.util.Constants.UP_TO_DATE;
 
+import android.util.Log;
+
 import com.krypton.updater.util.Utils;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Scanner;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-@Singleton
 public class JSONParser {
-
+    private static final String TAG = "JSONParser";
     private static final String OTA_INFO_BASE_URL = "https://raw.githubusercontent.com/AOSP-Krypton/ota/A11/";
 
-    @Inject
-    public JSONParser() {}
-
-    public Response parse() {
+    public static Response parse() {
         final URL url = getContentURL();
         if (url != null) {
             String json = Utils.parseRawContent(url);
@@ -70,20 +64,20 @@ public class JSONParser {
                         return new Response(UP_TO_DATE);
                     }
                 } catch(NumberFormatException|JSONException e) {
-                    Utils.log(e);
+                    Log.e(TAG, "Exception when parsing json", e);
                 }
             }
         }
         return new Response(REFRESH_FAILED);
     }
 
-    private URL getContentURL() {
+    private static URL getContentURL() {
         String device = Utils.getDevice();
         try {
             return new URL(String.format("%s%s/%s.json",
                 OTA_INFO_BASE_URL, device, device));
         } catch(MalformedURLException e) {
-            Utils.log(e);
+            Log.e(TAG, "Malformed url", e);
         }
         return null;
     }

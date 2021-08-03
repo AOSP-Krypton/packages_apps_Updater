@@ -26,6 +26,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -45,7 +46,7 @@ import com.krypton.updater.util.Utils;
 import com.krypton.updater.viewmodel.UpdateViewModel;
 
 public class UpdateProgressFragment extends Fragment {
-
+    private static final String TAG = "UpdateProgressFragment";
     private Context context;
     private UpdateInstallerService service;
     private UpdateViewModel viewModel;
@@ -66,7 +67,7 @@ public class UpdateProgressFragment extends Fragment {
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
-            Utils.log("service connection lost");
+            Log.d(TAG, "binder died");
             bound = false;
         }
     };
