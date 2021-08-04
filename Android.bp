@@ -29,6 +29,8 @@ android_app {
     static_libs: [
         "androidx.annotation_annotation",
         "androidx.appcompat_appcompat",
+        "androidx-constraintlayout_constraintlayout",
+        "androidx-constraintlayout_constraintlayout-solver",
         "androidx.core_core",
         "androidx.lifecycle_lifecycle-livedata",
         "androidx.lifecycle_lifecycle-reactivestreams",

@@ -15,149 +15,232 @@
      limitations under the License.
 -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_marginStart="@dimen/info_layout_margin_side"
+    android:layout_marginEnd="@dimen/info_layout_margin_side"
     android:fillViewport="true">
 
-    <RelativeLayout
-        android:id="@+id/main_layout"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:padding="@dimen/info_layout_padding">
 
-        <LinearLayout
-            android:id="@+id/build_info_layout"
-            style="@style/SectionLayoutStyle">
+        <TextView
+            style="@style/HeadlineTextStyle"
+            android:id="@+id/current_build_info_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/build_info_title"
+            android:gravity="start"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                style="@style/PrimaryTextStyle"
-                android:text="@string/build_info_title" />
+        <TextView
+            style="@style/SelectableTextStyle"
+            android:id="@+id/device"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/current_build_info_title" />
 
-            <TextView
-                android:id="@+id/view_device"
-                style="@style/SelectableTextStyle" />
+        <TextView
+            style="@style/SelectableTextStyle"
+            android:id="@+id/current_version"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/device" />
 
-            <TextView
-                android:id="@+id/view_version"
-                style="@style/SelectableTextStyle" />
+        <TextView
+            style="@style/SelectableTextStyle"
+            android:id="@+id/current_timestamp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/current_version" />
 
-            <TextView
-                android:id="@+id/view_timestamp"
-                style="@style/SelectableTextStyle" />
+        <TextView
+            style="@style/HeadlineTextStyle"
+            android:id="@+id/current_status"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/hit_refresh"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/current_timestamp" />
 
-            <TextView
-                android:id="@+id/view_latest_build"
-                android:layout_marginTop="10dp"
-                style="@style/PrimaryTextStyle"
-                android:text="@string/hit_refresh" />
+        <TextView
+            style="@style/PrimaryTextStyle"
+            android:id="@+id/local_upgrade_file_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/current_timestamp" />
 
-            <TextView
-                android:id="@+id/local_upgrade_file_name"
-                android:layout_marginTop="10dp"
-                style="@style/PrimaryTextStyle"
-                android:visibility="gone" />
+        <TextView
+            style="@style/SelectableTextStyle"
+            android:id="@+id/latest_build_version"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/current_status" />
 
-            <TextView
-                style="@style/SelectableTextStyle"
-                android:id="@+id/view_latest_build_version"
-                android:visibility="gone" />
+        <TextView
+            style="@style/SelectableTextStyle"
+            android:id="@+id/latest_build_timestamp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/latest_build_version" />
 
-            <TextView
-                style="@style/SelectableTextStyle"
-                android:id="@+id/view_latest_build_timestamp"
-                android:visibility="gone" />
+        <TextView
+            style="@style/SelectableTextStyle"
+            android:id="@+id/latest_build_filename"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/latest_build_timestamp" />
 
-            <TextView
-                style="@style/SelectableTextStyle"
-                android:id="@+id/view_latest_build_filename"
-                android:visibility="gone" />
+        <TextView
+            style="@style/SelectableTextStyle"
+            android:id="@+id/latest_build_md5"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/latest_build_filename" />
 
-            <TextView
-                style="@style/SelectableTextStyle"
-                android:id="@+id/view_latest_build_md5"
-                android:visibility="gone" />
-        </LinearLayout>
+        <androidx.constraintlayout.widget.Barrier
+            android:id="@+id/barrier"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:barrierDirection="bottom"
+            app:constraint_referenced_ids="current_status, local_upgrade_file_name, latest_build_md5" />
 
         <ProgressBar
             android:id="@+id/refresh_progress"
-            android:backgroundTint="@color/grey"
-            android:indeterminateOnly="true"
             android:layout_width="@dimen/circular_refresh_progress_bar_width"
             android:layout_height="@dimen/circular_refresh_progress_bar_width"
-            android:layout_marginTop="50dp"
-            android:layout_centerInParent="true"
-            android:layout_alignParentTop="true" />
+            android:layout_marginTop="@dimen/circular_refresh_progress_margin"
+            android:indeterminateOnly="true"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/download_progress_container"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_below="@id/build_info_layout" />
+            android:layout_marginTop="20dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/barrier" />
 
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/update_progress_container"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_below="@id/download_progress_container" />
+            android:layout_marginTop="20dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/download_progress_container" />
 
         <ImageView
             android:id="@+id/info_icon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/update_progress_container"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginStart="@dimen/info_layout_margin_side"
-            android:layout_marginTop="@dimen/info_layout_margin_top"
-            android:layout_marginEnd="@dimen/info_layout_margin_side"
+            android:gravity="center_horizontal"
             android:paddingStart="@dimen/info_layout_padding"
+            android:paddingEnd="@dimen/info_layout_padding"
             android:visibility="gone"
-            android:src="@drawable/ic_info" />
+            android:src="@drawable/ic_info"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/post_update_info" />
 
         <TextView
             style="@style/PrimaryTextStyle"
             android:id="@+id/post_update_info"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:text="@string/post_update_tips"
+            android:singleLine="false"
             android:visibility="gone"
-            android:layout_toEndOf="@id/info_icon"
-            android:layout_below="@id/update_progress_container"
             android:layout_marginTop="@dimen/info_layout_margin_top"
-            android:layout_marginEnd="@dimen/info_layout_margin_side"
-            android:paddingEnd="@dimen/info_layout_padding" />
+            android:paddingEnd="@dimen/info_layout_padding"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/info_icon"
+            app:layout_constraintTop_toBottomOf="@id/update_progress_container" />
 
         <Button
-            android:id="@+id/local_upgrade_button"
             style="@style/PrimaryButtonStyle"
-            android:layout_marginStart="@dimen/button_margin_end"
-            android:layout_marginBottom="@dimen/button_margin_bottom"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentBottom="true"
+            android:id="@+id/local_upgrade_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/button_margin_end"
             android:text="@string/local_upgrade"
-            android:visibility="visible"
-            android:onClick="localUpgrade" />
+            android:onClick="localUpgrade"
+            app:layout_constraintEnd_toStartOf="@id/refresh_button"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
         <Button
+            style="@style/PrimaryButtonStyle"
             android:id="@+id/download_button"
-            style="@style/CornerButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
             android:text="@string/download"
-            android:onClick="startDownload" />
+            android:onClick="startDownload"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <Button
+            style="@style/PrimaryButtonStyle"
             android:id="@+id/refresh_button"
-            style="@style/CornerButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="@string/refresh"
-            android:visibility="visible"
-            android:onClick="refreshStatus" />
+            android:onClick="refreshStatus"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <Button
+            style="@style/PrimaryButtonStyle"
             android:id="@+id/update_button"
-            style="@style/CornerButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
             android:text="@string/update"
-            android:onClick="startUpdate" />
+            android:onClick="startUpdate"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <Button
+            style="@style/PrimaryButtonStyle"
             android:id="@+id/reboot_button"
-            style="@style/CornerButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
             android:text="@string/reboot"
-            android:onClick="rebootSystem" />
-
-    </RelativeLayout>
+            android:onClick="rebootSystem"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

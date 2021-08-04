@@ -52,7 +52,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -75,14 +74,13 @@ import javax.inject.Inject;
 public class UpdaterActivity extends AppCompatActivity {
     private static final String MIME_TYPE_ZIP = "application/zip";
     private static final int SELECT_FILE = 1001;
-    private TextView viewLatestBuild, latestBuildVersion,
+    private TextView currentStatus, latestBuildVersion,
         latestBuildTimestamp, latestBuildName, latestBuildMd5;
     private TextView localUpgradeFileName, postUpdateMessage;
     private ImageView infoIcon;
     private Button refreshButton, downloadButton,
         localUpgradeButton, updateButton, rebootButton;
     private ProgressBar refreshProgress;
-    private RelativeLayout mainLayout;
     private AppViewModel viewModel;
     private SharedPreferences sharedPrefs;
     private NotificationHelper notificationHelper;
@@ -142,13 +140,13 @@ public class UpdaterActivity extends AppCompatActivity {
                 if (cursor != null && cursor.moveToFirst()) {
                     String fileName = cursor.getString(cursor.getColumnIndex(DISPLAY_NAME));
                     if (fileName != null) {
-                        final OnClickListener listener = (dialog, which) -> {
-                            if (which == BUTTON_POSITIVE) {
-                                showCopyingDialog();
-                                provider.get(UpdateViewModel.class).setupLocalUpgrade(fileName, fileUri);
-                            }
-                        };
-                        showConfirmDialog(R.style.WideAlertDialogTheme, R.string.confirm_selection, fileName, listener);
+                        showConfirmDialog(R.style.WideAlertDialogTheme, R.string.confirm_selection,
+                            fileName, (dialog, which) -> {
+                                if (which == BUTTON_POSITIVE) {
+                                    showCopyingDialog();
+                                    provider.get(UpdateViewModel.class).setupLocalUpgrade(fileName, fileUri);
+                                }
+                            });
                     }
                 }
             }
@@ -185,7 +183,6 @@ public class UpdaterActivity extends AppCompatActivity {
     private void showConfirmDialog(int themeId, int titleId, String msg, OnClickListener listener) {
         AlertDialog dialog = new Builder(this, themeId)
             .setTitle(titleId)
-            .setCancelable(false)
             .setMessage(msg)
             .setPositiveButton(android.R.string.yes, listener)
             .setNegativeButton(android.R.string.no, listener)
@@ -207,15 +204,13 @@ public class UpdaterActivity extends AppCompatActivity {
     }
 
     private void setWidgets() {
-        mainLayout = findViewById(R.id.main_layout);
         refreshProgress = findViewById(R.id.refresh_progress);
-        removeAnimation();
 
-        viewLatestBuild = findViewById(R.id.view_latest_build);
-        latestBuildVersion = findViewById(R.id.view_latest_build_version);
-        latestBuildTimestamp = findViewById(R.id.view_latest_build_timestamp);
-        latestBuildName = findViewById(R.id.view_latest_build_filename);
-        latestBuildMd5 = findViewById(R.id.view_latest_build_md5);
+        currentStatus = findViewById(R.id.current_status);
+        latestBuildVersion = findViewById(R.id.latest_build_version);
+        latestBuildTimestamp = findViewById(R.id.latest_build_timestamp);
+        latestBuildName = findViewById(R.id.latest_build_filename);
+        latestBuildMd5 = findViewById(R.id.latest_build_md5);
 
         localUpgradeFileName = findViewById(R.id.local_upgrade_file_name);
 
@@ -230,11 +225,11 @@ public class UpdaterActivity extends AppCompatActivity {
     }
 
     private void setCurrentBuildInfo() {
-        ((TextView) findViewById(R.id.view_device))
+        ((TextView) findViewById(R.id.device))
             .setText(getString(R.string.device, Utils.getDevice()));
-        ((TextView) findViewById(R.id.view_version))
+        ((TextView) findViewById(R.id.current_version))
             .setText(getString(R.string.version, Utils.getVersion()));
-        ((TextView) findViewById(R.id.view_timestamp))
+        ((TextView) findViewById(R.id.current_timestamp))
             .setText(getString(R.string.date, Utils.formatDate(Utils.getBuildDate())));
     }
 
@@ -256,7 +251,7 @@ public class UpdaterActivity extends AppCompatActivity {
     }
 
     public void setBuildFetchResult(int textId) {
-        viewLatestBuild.setText(getString(textId));
+        currentStatus.setText(getString(textId));
     }
 
     private void registerObservers() {
@@ -287,7 +282,7 @@ public class UpdaterActivity extends AppCompatActivity {
             fileName -> {
                 Utils.setVisibile(fileName != null, localUpgradeFileName);
                 localUpgradeFileName.setText(fileName);
-                Utils.setVisibile(fileName == null, viewLatestBuild);
+                Utils.setVisibile(fileName == null, currentStatus);
             });
     }
 
@@ -302,30 +297,22 @@ public class UpdaterActivity extends AppCompatActivity {
                 break;
             case REFRESHING:
                 setBuildFetchResult(R.string.fetching_build_status_text);
-                addAnimation();
+                Utils.setVisibile(true, refreshProgress);
                 break;
             case REFRESH_FAILED:
                 setBuildFetchResult(R.string.unable_to_fetch_details);
-                removeAnimation();
+                Utils.setVisibile(false, refreshProgress);
                 break;
             case UP_TO_DATE:
                 setBuildFetchResult(R.string.current_is_latest);
-                removeAnimation();
+                Utils.setVisibile(false, refreshProgress);
                 break;
             case NEW_UPDATE:
                 setBuildFetchResult(R.string.new_update);
-                removeAnimation();
+                Utils.setVisibile(false, refreshProgress);
                 setNewBuildInfo(response.getBuildInfo());
                 break;
         }
-    }
-
-    private void addAnimation() {
-        mainLayout.addView(refreshProgress);
-    }
-
-    private void removeAnimation() {
-        mainLayout.removeView(refreshProgress);
     }
 
     public void refreshStatus(View v) {
@@ -355,12 +342,12 @@ public class UpdaterActivity extends AppCompatActivity {
 
     public void rebootSystem(View v) {
         v.performHapticFeedback(KEYBOARD_PRESS);
-        final OnClickListener listener = (dialog, which) -> {
-            if (which == BUTTON_POSITIVE) {
-                Utils.setVisibile(false, v);
-                viewModel.initiateReboot();
-            }
-        };
-        showConfirmDialog(R.style.AlertDialogTheme, R.string.sure_to_reboot, null, listener);
+        showConfirmDialog(R.style.AlertDialogTheme, R.string.sure_to_reboot,
+            null, (dialog, which) -> {
+                if (which == BUTTON_POSITIVE) {
+                    Utils.setVisibile(false, v);
+                    viewModel.initiateReboot();
+                }
+            });
     }
 }

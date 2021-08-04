@@ -14,52 +14,64 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <LinearLayout
-        android:id="@+id/progress_layout"
-        style="@style/SectionLayoutStyle">
+    <TextView
+        style="@style/PrimaryTextStyle"
+        android:id="@+id/status"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/progress" />
 
-        <TextView
-            style="@style/PrimaryTextStyle"
-            android:id="@+id/status" />
+    <ProgressBar
+        style="?android:attr/progressBarStyleHorizontal"
+        android:id="@+id/progress"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/progress_bar_height"
+        android:layout_marginTop="@dimen/progress_bar_margin_top"
+        android:layout_marginBottom="@dimen/progress_bar_margin_top"
+        android:indeterminate="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/status"
+        app:layout_constraintBottom_toTopOf="@id/extra_data" />
 
-        <ProgressBar
-            android:id="@+id/progress"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/progress_bar_height"
-            android:layout_marginTop="@dimen/progress_bar_margin_top"
-            android:layout_marginBottom="@dimen/progress_bar_margin_top"
-            android:indeterminate="true"
-            android:min="0"
-            android:max="100" />
-
-        <TextView
-            style="@style/PrimaryTextStyle"
-            android:id="@+id/extra_data"
-            android:layout_gravity="end" />
-    </LinearLayout>
+    <TextView
+        style="@style/PrimaryTextStyle"
+        android:id="@+id/extra_data"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/progress"
+        app:layout_constraintBottom_toTopOf="@id/cancel" />
 
     <Button
+        style="@style/PrimaryButtonStyle"
         android:id="@+id/pause"
-        style="@style/PrimaryButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
         android:layout_marginEnd="@dimen/button_margin_end"
-        android:layout_marginTop="@dimen/button_margin_top"
-        android:layout_below="@id/progress_layout"
-        android:layout_toStartOf="@id/cancel"
-        android:visibility="visible"
-        android:text="@string/pause" />
+        android:text="@string/pause"
+        app:layout_constraintEnd_toStartOf="@id/cancel"
+        app:layout_constraintTop_toTopOf="@id/cancel"
+        app:layout_constraintBottom_toBottomOf="@id/cancel" />
 
     <Button
-        android:id="@+id/cancel"
         style="@style/PrimaryButtonStyle"
-        android:layout_marginEnd="@dimen/button_margin_end"
+        android:id="@+id/cancel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/button_margin_top"
-        android:layout_below="@id/progress_layout"
-        android:layout_alignParentEnd="true"
-        android:visibility="visible"
-        android:text="@string/cancel" />
-</RelativeLayout>
+        android:text="@string/cancel"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/extra_data"
+        app:layout_constraintBottom_toBottomOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

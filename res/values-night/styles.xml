@@ -15,11 +15,8 @@
      limitations under the License.
 -->
 <resources>
-    <style name="PrimaryTextStyle" parent="TextAppearance.AppCompat">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
+    <style name="PrimaryTextStyle" parent="BaseTextStyle">
         <item name="android:textColor">@color/white</item>
-        <item name="android:importantForAutofill">no</item>
     </style>
 
     <style name="PrimaryButtonStyle" parent="BaseButtonStyle">

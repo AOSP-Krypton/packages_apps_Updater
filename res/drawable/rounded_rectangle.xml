@@ -21,7 +21,4 @@
 
     <corners android:radius="@dimen/rounded_corner_radius" />
 
-    <stroke android:width="@dimen/stroke_width"
-        android:color="?android:attr/textColorPrimary" />
-
 </shape>
