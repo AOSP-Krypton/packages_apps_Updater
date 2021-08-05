@@ -161,7 +161,6 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
                 globalStatusDao.delete(entity.rowId);
                 database.getDownloadStatusDao().deleteTable();
                 globalStatusDao.insert(new GlobalStatusEntity());
-                globalStatusDao.setLocalUpgradeFileName(null);
             }
         });
     }
