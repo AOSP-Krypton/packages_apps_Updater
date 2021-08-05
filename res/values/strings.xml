@@ -24,18 +24,17 @@
 
     <!-- Build info -->
     <string name="refresh">Refresh</string>
-    <string name="build_info_title">Current Build Info:</string>
+    <string name="build_info_title">Current Build Info</string>
     <string name="device">Device</string>
     <string name="version">Version</string>
     <string name="date">Date</string>
     <string name="file">File</string>
     <string name="md5">MD5</string>
     <string name="hit_refresh">Hit the Refresh button!</string>
-    <string name="new_update">New Update:</string>
+    <string name="new_update">New Update</string>
     <string name="current_is_latest">Current build is the latest!</string>
     <string name="fetching_build_status_text">Fetching build info from github</string>
-    <string name="unable_to_fetch_details">Unable to fetch details, swipe down to try again</string>
-    <string name="no_internet">No internet connection</string>
+    <string name="unable_to_fetch_details">Unable to fetch details, try again later</string>
     <string name="notify_refresh_failed">Automatic update check failed</string>
     <string name="notify_refresh_failed_desc">Please check for updates manually</string>
     <string name="notify_new_update">New system update detected</string>
@@ -57,14 +56,8 @@
     <string name="download_failed">Download failed</string>
     <string name="download_finished">Download finished</string>
     <string name="download_cancelled">Download cancelled</string>
-    <string name="numeric_download_progress_text_default">0/0 MB</string>
-    <string name="delete_file">Delete downloaded file?</string>
-    <string name="unable_to_delete">Unable to delete downloaded file</string>
-    <string name="file_not_found">Zip file not found</string>
-    <string name="checking_md5">Verifying md5</string>
     <string name="invalid_url">URL parsed from json is invalid</string>
     <string name="database_corrupt">Application database is corrupt</string>
-    <string name="check_logs">Check logs for error details</string>
     <string name="click_to_update">Click here to proceed with update installation</string>
     <string name="copy_failed">Copy to Downloads failed</string>
     <string name="md5_check_failed">Md5 verification failed, file is corrupt</string>
@@ -99,8 +92,5 @@
     <string name="theme_settings_title">Theme</string>
     <string name="theme_settings_summary">Select theme for the app</string>
     <string name="theme_chooser_dialog_title">Select theme</string>
-    <string name="download_location_preference_title">Select download location</string>
-    <string name="download_location_preference_summary">Choose a different location (default /sdcard/Download) to store downloaded zips</string>
     <string name="refresh_interval_settings_title">Update check interval (days)</string>
-
 </resources>

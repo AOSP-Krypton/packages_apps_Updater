@@ -21,6 +21,7 @@
         <item name="android:fontFamily">@*android:string/config_headlineFontFamily</item>
         <item name="android:importantForAutofill">no</item>
         <item name="android:gravity">start</item>
+        <item name="android:textSize">15sp</item>
     </style>
 
     <style name="PrimaryTextStyle" parent="BaseTextStyle">
@@ -32,7 +33,8 @@
     </style>
 
     <style name="HeadlineTextStyle" parent="PrimaryTextStyle">
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <style name="BaseButtonStyle" parent="Widget.AppCompat.Button">
