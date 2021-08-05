@@ -117,10 +117,9 @@ public class AppViewModel extends AndroidViewModel {
             .subscribe(entity -> {
                 final int status = entity.status;
                 final boolean statusUnknown = status == 0;
-                final boolean downloadPending = status == DOWNLOAD_PENDING;
                 refreshButtonVisibility.setValue(statusUnknown);
-                localUpgradeButtonVisibility.setValue(statusUnknown || downloadPending);
-                downloadButtonVisibility.setValue(downloadPending);
+                localUpgradeButtonVisibility.setValue(statusUnknown);
+                downloadButtonVisibility.setValue(status == DOWNLOAD_PENDING);
                 updateButtonVisibility.setValue(status == UPDATE_PENDING);
                 rebootButtonVisibility.setValue(status == REBOOT_PENDING);
                 localUpgradeFileName.setValue(entity.localUpgradeFile);
