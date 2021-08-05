@@ -16,7 +16,6 @@
 
 package com.krypton.updater.di;
 
-import com.krypton.updater.BootCompletedReceiver;
 import com.krypton.updater.model.repos.*;
 import com.krypton.updater.model.room.AppDatabase;
 import com.krypton.updater.services.*;
@@ -36,7 +35,6 @@ public interface UpdaterComponent {
     UpdateRepository getUpdateRepository();
     DownloadWorkerFactory getDownloadWorkerFactory();
     AppDatabase getAppDatabase();
-    void inject(BootCompletedReceiver receiver);
     void inject(UpdateCheckerService service);
     void inject(UpdateInstallerService service);
     void inject(UpdaterActivity activity);

@@ -30,7 +30,6 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS"/>
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".UpdaterApplication"
@@ -50,13 +49,6 @@
         <activity
             android:name=".ui.activity.SettingsActivity"
             android:parentActivityName=".ui.activity.UpdaterActivity" />
-
-        <receiver
-            android:name=".BootCompletedReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-            </intent-filter>
-        </receiver>
 
         <service
             android:name=".services.UpdateCheckerService"
