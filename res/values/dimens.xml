@@ -46,4 +46,6 @@
     <dimen name="copy_progress_margin">24dp</dimen>
 
     <dimen name="section_margin">20dp</dimen>
+
+    <dimen name="scrollbar_size">6dp</dimen>
 </resources>

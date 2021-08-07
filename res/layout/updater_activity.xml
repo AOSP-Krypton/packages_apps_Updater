@@ -155,7 +155,6 @@
             android:layout_height="0dp"
             android:layout_marginTop="@dimen/section_margin"
             android:layout_marginBottom="@dimen/section_margin"
-            android:scrollbars="vertical"
             android:visibility="gone"
             app:layout_constraintBottom_toTopOf="@id/download_button"
             app:layout_constraintEnd_toEndOf="parent"
