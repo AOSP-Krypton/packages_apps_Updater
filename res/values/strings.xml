@@ -76,6 +76,7 @@
     <string name="invalid_zip_file">Not a valid zip file</string>
     <string name="step">Step</string>
     <string name="reboot">Reboot</string>
+    <string name="magisk">Magisk</string>
     <string name="sure_to_reboot">Are you sure you want to reboot?</string>
     <string name="post_update_tips">
         Update is now complete, next reboot will be to the updated slot.
@@ -90,6 +91,7 @@
     <string name="copying">Copying file to internal directory</string>
     <string name="do_not_close">Please do not close the app until this is over</string>
     <string name="update_in_progress">OTA update is running</string>
+    <string name="magisk_not_installed">Magisk is not installed or is hidden</string>
 
     <!-- Updater Settings -->
     <string name="updater_settings_title">Updater Settings</string>

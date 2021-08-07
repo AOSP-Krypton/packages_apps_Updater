@@ -63,6 +63,7 @@ import androidx.constraintlayout.widget.Group;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.core.widget.NestedScrollView;
 
+import com.android.internal.util.krypton.KryptonUtils;
 import com.krypton.updater.model.data.BuildInfo;
 import com.krypton.updater.model.data.Response;
 import com.krypton.updater.R;
@@ -76,6 +77,7 @@ import com.krypton.updater.viewmodel.*;
 import javax.inject.Inject;
 
 public class UpdaterActivity extends AppCompatActivity {
+    private static final String MAGISK_PACKAGE = "com.topjohnwu.magisk";
     private static final String MIME_TYPE_ZIP = "application/zip";
     private static final int SELECT_FILE = 1001;
     private Group latestBuildGroup, rebootButtonGroup;
@@ -85,7 +87,8 @@ public class UpdaterActivity extends AppCompatActivity {
     private NestedScrollView changelogView;
     private TextView localUpgradeFileName;
     private Button refreshButton, downloadButton,
-        localUpgradeButton, updateButton, rebootButton;
+        localUpgradeButton, updateButton,
+        magiskButton, rebootButton;
     private ProgressBar refreshProgress;
     private AppViewModel viewModel;
     private SharedPreferences sharedPrefs;
@@ -229,6 +232,7 @@ public class UpdaterActivity extends AppCompatActivity {
         updateButton = findViewById(R.id.update_button);
 
         rebootButtonGroup = findViewById(R.id.reboot_button_group);
+        magiskButton = findViewById(R.id.magisk_button);
         rebootButton = findViewById(R.id.reboot_button);
     }
 
@@ -285,6 +289,8 @@ public class UpdaterActivity extends AppCompatActivity {
                 Utils.setVisibile(visibility, rebootButtonGroup);
                 if (visibility) {
                     stopServiceAsUser(new Intent(this, UpdateInstallerService.class), SYSTEM);
+                    Utils.setVisibile(KryptonUtils.isPackageInstalled(this,
+                        MAGISK_PACKAGE), magiskButton);
                 }
             });
         viewModel.getLocalUpgradeFileName().observe(this,
@@ -373,6 +379,16 @@ public class UpdaterActivity extends AppCompatActivity {
         final Intent intent = new Intent(this, UpdateInstallerService.class);
         intent.setAction(ACION_START_UPDATE);
         startServiceAsUser(intent, SYSTEM);
+    }
+
+    public void openMagisk(View v) {
+        v.performHapticFeedback(KEYBOARD_PRESS);
+        final Intent intent = getPackageManager().getLaunchIntentForPackage(MAGISK_PACKAGE);
+        if (intent != null) {
+            startActivity(intent);
+        } else {
+            Toast.makeText(this, R.string.magisk_not_installed, LENGTH_SHORT).show();
+        }
     }
 
     public void rebootSystem(View v) {

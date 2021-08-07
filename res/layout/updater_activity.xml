@@ -255,6 +255,17 @@
 
         <Button
             style="@style/PrimaryButtonStyle"
+            android:id="@+id/magisk_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/button_margin_end"
+            android:text="@string/magisk"
+            android:onClick="openMagisk"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/reboot_button" />
+
+        <Button
+            style="@style/PrimaryButtonStyle"
             android:id="@+id/reboot_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -268,6 +279,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="gone"
-            app:constraint_referenced_ids="info_icon, post_update_info, reboot_button" />
+            app:constraint_referenced_ids="info_icon, post_update_info,
+                reboot_button, magisk_button" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>
