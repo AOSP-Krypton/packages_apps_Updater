@@ -103,7 +103,6 @@
             android:id="@+id/latest_build_version"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/current_status" />
@@ -113,7 +112,6 @@
             android:id="@+id/latest_build_timestamp"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/latest_build_version" />
@@ -123,7 +121,6 @@
             android:id="@+id/latest_build_filename"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/latest_build_timestamp" />
@@ -133,7 +130,6 @@
             android:id="@+id/latest_build_md5"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/latest_build_filename" />
@@ -142,6 +138,7 @@
             android:id="@+id/latest_build_group"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:visibility="gone"
             app:constraint_referenced_ids="latest_build_version, latest_build_timestamp,
                 latest_build_filename, latest_build_md5" />
 
@@ -240,7 +237,6 @@
             android:gravity="center_horizontal"
             android:paddingStart="@dimen/info_layout_padding"
             android:paddingEnd="@dimen/info_layout_padding"
-            android:visibility="gone"
             android:src="@drawable/ic_info"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@id/post_update_info" />
@@ -252,7 +248,6 @@
             android:layout_height="wrap_content"
             android:text="@string/post_update_tips"
             android:singleLine="false"
-            android:visibility="gone"
             android:layout_marginTop="@dimen/info_layout_margin_top"
             android:paddingEnd="@dimen/info_layout_padding"
             app:layout_constraintEnd_toEndOf="parent"
@@ -264,7 +259,6 @@
             android:id="@+id/reboot_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="gone"
             android:text="@string/reboot"
             android:onClick="rebootSystem"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -274,6 +268,7 @@
             android:id="@+id/reboot_button_group"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:visibility="gone"
             app:constraint_referenced_ids="info_icon, post_update_info, reboot_button" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>
