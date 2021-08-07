@@ -65,7 +65,7 @@ public class UpdateManager {
         @Override
         public void onStatusUpdate(int status, float percent) {
             if (status == DOWNLOADING || status == FINALIZING) {
-                if (!updateStatus.isUpdating()) {
+                if (getCurrentStatusCode() != UPDATING) {
                     updateStatus.setStatusCode(UPDATING);
                 }
                 updateStatusProcessor.onNext(updateStatus.setStep(
@@ -190,6 +190,11 @@ public class UpdateManager {
 
     public int getCurrentStatusCode() {
         return updateStatus.getStatusCode();
+    }
+
+    public boolean isUpdating() {
+        final int statusCode = getCurrentStatusCode();
+        return statusCode >= INDETERMINATE && statusCode <= PAUSED;
     }
 
     private void setGlobalStatus(int status) {

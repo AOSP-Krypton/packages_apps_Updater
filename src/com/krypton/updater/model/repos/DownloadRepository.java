@@ -46,7 +46,10 @@ import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
 
 import com.krypton.updater.model.data.ProgressInfo;
-import com.krypton.updater.model.room.*;
+import com.krypton.updater.model.room.AppDatabase;
+import com.krypton.updater.model.room.DownloadStatusDao;
+import com.krypton.updater.model.room.DownloadStatusEntity;
+import com.krypton.updater.model.room.GlobalStatusDao;
 import com.krypton.updater.R;
 import com.krypton.updater.model.data.DownloadManager;
 import com.krypton.updater.util.Utils;
@@ -67,7 +70,6 @@ public class DownloadRepository {
 
     private final Context context;
     private final DownloadStatusDao downloadStatusDao;
-    private final BuildInfoDao buildInfoDao;
     private final GlobalStatusDao globalStatusDao;
     private final ExecutorService executor;
     private final AppDatabase database;
@@ -76,16 +78,15 @@ public class DownloadRepository {
 
     @Inject
     public DownloadRepository(Context context,
+            DownloadManager downloadManager, WorkManager workManager,
             ExecutorService executor, AppDatabase database) {
         this.context = context;
+        this.downloadManager = downloadManager;
         this.database = database;
         this.executor = executor;
-        workManager = WorkManager.getInstance(context);
-        buildInfoDao = database.getBuildInfoDao();
+        this.workManager = workManager;
         downloadStatusDao = database.getDownloadStatusDao();
         globalStatusDao = database.getGlobalStatusDao();
-        downloadManager = new DownloadManager(workManager,
-            buildInfoDao, downloadStatusDao);
     }
 
     public void startDownload() {

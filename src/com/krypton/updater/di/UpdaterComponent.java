@@ -21,6 +21,7 @@ import com.krypton.updater.model.room.AppDatabase;
 import com.krypton.updater.services.*;
 import com.krypton.updater.ui.activity.UpdaterActivity;
 import com.krypton.updater.ui.fragment.SettingsFragment;
+import com.krypton.updater.viewmodel.DownloadViewModel;
 import com.krypton.updater.workers.DownloadWorkerFactory;
 
 import dagger.Component;
@@ -31,12 +32,11 @@ import javax.inject.Singleton;
 @Component(modules = {UpdaterModule.class})
 public interface UpdaterComponent {
     AppRepository getAppRepository();
-    DownloadRepository getDownloadRepository();
     UpdateRepository getUpdateRepository();
     DownloadWorkerFactory getDownloadWorkerFactory();
-    AppDatabase getAppDatabase();
     void inject(UpdateCheckerService service);
     void inject(UpdateInstallerService service);
     void inject(UpdaterActivity activity);
     void inject(SettingsFragment fragment);
+    void inject(DownloadViewModel viewModel);
 }

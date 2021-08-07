@@ -23,6 +23,7 @@ import static com.krypton.updater.util.Constants.BUILD_MD5;
 import static com.krypton.updater.util.Constants.BUILD_NAME;
 import static com.krypton.updater.util.Constants.BUILD_SIZE;
 import static com.krypton.updater.util.Constants.BUILD_URL;
+import static com.krypton.updater.util.Constants.DOWNLOADING;
 import static com.krypton.updater.util.Constants.INDETERMINATE;
 import static com.krypton.updater.util.Constants.PAUSED;
 import static com.krypton.updater.util.Constants.CANCELLED;
@@ -36,6 +37,7 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
+import com.krypton.updater.model.room.AppDatabase;
 import com.krypton.updater.model.room.BuildInfoDao;
 import com.krypton.updater.model.room.BuildInfoEntity;
 import com.krypton.updater.model.room.DownloadStatusDao;
@@ -46,6 +48,10 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
 
 import java.util.UUID;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+@Singleton
 public class DownloadManager {
 
     private final Constraints constraints;
@@ -55,11 +61,11 @@ public class DownloadManager {
     private final PublishSubject<UUID> uuidSubject;
     private UUID id;
 
-    public DownloadManager(WorkManager workManager,
-            BuildInfoDao buildInfoDao, DownloadStatusDao downloadStatusDao) {
+    @Inject
+    public DownloadManager(WorkManager workManager, AppDatabase database) {
         this.workManager = workManager;
-        this.buildInfoDao = buildInfoDao;
-        this.downloadStatusDao = downloadStatusDao;
+        buildInfoDao = database.getBuildInfoDao();
+        downloadStatusDao = database.getDownloadStatusDao();
         constraints = new Constraints.Builder()
             .setRequiredNetworkType(CONNECTED)
             .setRequiresStorageNotLow(true)
@@ -100,6 +106,12 @@ public class DownloadManager {
     }
 
     @WorkerThread
+    public boolean isDownloading() {
+        final int status = downloadStatusDao.getStatus();
+        return status >= INDETERMINATE && status <= PAUSED;
+    }
+
+    @WorkerThread
     public boolean isPaused() {
         return downloadStatusDao.getStatus() == PAUSED;
     }
@@ -112,9 +124,6 @@ public class DownloadManager {
     private void resetTable(long size) {
         final DownloadStatusEntity entity = new DownloadStatusEntity();
         entity.id = id;
-        entity.status = INDETERMINATE;
-        entity.progress = 0;
-        entity.downloadedSize = 0;
         entity.fileSize = size;
         downloadStatusDao.insert(entity);
     }

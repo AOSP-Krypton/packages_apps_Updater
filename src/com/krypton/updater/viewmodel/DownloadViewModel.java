@@ -31,6 +31,7 @@ import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.work.WorkInfo;
 import androidx.work.WorkInfo.State;
+import androidx.work.WorkManager;
 
 import com.krypton.updater.model.data.ProgressInfo;
 import com.krypton.updater.model.repos.DownloadRepository;
@@ -39,18 +40,25 @@ import com.krypton.updater.UpdaterApplication;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.Disposable;
 
-public class DownloadViewModel extends AndroidViewModel {
+import javax.inject.Inject;
 
-    private final DownloadRepository repository;
+public class DownloadViewModel extends AndroidViewModel {
     private final MediatorLiveData<ProgressInfo> progressInfo;
     private final MutableLiveData<Boolean> viewVisibility, controlVisibility, pauseStatus;
+    private DownloadRepository repository;
+    private WorkManager workManager;
     private Disposable disposable;
     private boolean paused;
 
+    @Inject
+    public void setDependencies(DownloadRepository repository, WorkManager workManager) {
+        this.repository = repository;
+        this.workManager = workManager;
+    }
+
     public DownloadViewModel(Application application) {
         super(application);
-        repository = ((UpdaterApplication) application)
-            .getComponent().getDownloadRepository();
+        ((UpdaterApplication) application).getComponent().inject(this);
         progressInfo = new MediatorLiveData<>();
         viewVisibility = new MutableLiveData<>(false);
         controlVisibility = new MutableLiveData<>(true);
@@ -100,22 +108,21 @@ public class DownloadViewModel extends AndroidViewModel {
             .distinctUntilChanged()
             .filter(id -> id != null)
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(id ->
-                progressInfo.addSource(repository.getWorkManager()
-                    .getWorkInfoByIdLiveData(id), workInfo -> {
-                        if (workInfo == null) {
-                            return;
-                        }
-                        final State state = workInfo.getState();
-                        if (state == State.CANCELLED && !paused) {
-                            viewVisibility.postValue(false);
-                        }
-                        ProgressInfo info = repository.getProgressInfo(state);
-                        if (info != null) {
-                            progressInfo.postValue(info);
-                        }
-                    })
-                );
+            .subscribe(id -> progressInfo.addSource(
+                workManager.getWorkInfoByIdLiveData(id), workInfo -> {
+                    if (workInfo == null) {
+                        return;
+                    }
+                    final State state = workInfo.getState();
+                    if (state == State.CANCELLED && !paused) {
+                        viewVisibility.postValue(false);
+                    }
+                    ProgressInfo info = repository.getProgressInfo(state);
+                    if (info != null) {
+                        progressInfo.postValue(info);
+                    }
+                })
+            );
 
         progressInfo.addSource(LiveDataReactiveStreams.fromPublisher(
             repository.getDatabaseFlowable().filter(entity -> entity != null)),

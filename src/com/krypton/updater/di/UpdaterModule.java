@@ -25,6 +25,7 @@ import android.os.UpdateEngine;
 import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
 import androidx.room.Room;
+import androidx.work.WorkManager;
 
 import com.krypton.updater.model.room.AppDatabase;
 
@@ -74,5 +75,11 @@ public class UpdaterModule {
     @Provides
     public ExecutorService provideExecutorService() {
         return Executors.newCachedThreadPool();
+    }
+
+    @Singleton
+    @Provides
+    public WorkManager provideWorkManager() {
+        return WorkManager.getInstance(context);
     }
 }

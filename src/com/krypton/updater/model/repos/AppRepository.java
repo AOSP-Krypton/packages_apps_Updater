@@ -58,6 +58,7 @@ import com.krypton.updater.model.room.ChangelogDao;
 import com.krypton.updater.model.room.ChangelogEntity;
 import com.krypton.updater.model.data.BuildInfo;
 import com.krypton.updater.model.data.Changelog;
+import com.krypton.updater.model.data.DownloadManager;
 import com.krypton.updater.model.data.GithubApiHelper;
 import com.krypton.updater.model.data.Response;
 import com.krypton.updater.model.data.UpdateManager;
@@ -97,6 +98,7 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
     private final BehaviorProcessor<Response> otaResponsePublisher,
         changelogResponsePublisher;
     private final SharedPreferences sharedPrefs;
+    private final DownloadManager downloadManager;
     private final UpdateManager updateManager;
     private final GithubApiHelper githubApiHelper;
     private final String changelogPrefix;
@@ -106,11 +108,13 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
     @Inject
     public AppRepository(Context context, AppDatabase database,
             ExecutorService executor, SharedPreferences sharedPrefs,
-            UpdateManager updateManager, GithubApiHelper githubApiHelper) {
+            DownloadManager downloadManager, UpdateManager updateManager,
+            GithubApiHelper githubApiHelper) {
         this.context = context;
         this.database = database;
         this.executor = executor;
         this.sharedPrefs = sharedPrefs;
+        this.downloadManager = downloadManager;
         this.updateManager = updateManager;
         this.githubApiHelper = githubApiHelper;
         globalStatusDao = database.getGlobalStatusDao();
@@ -219,22 +223,20 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
 
     public void resetStatus() {
         executor.execute(() -> {
-            final GlobalStatusEntity entity = globalStatusDao.getCurrentStatus();
-            if (entity == null) {
-                return;
-            }
-            final int status = entity.status;
             // Only delete data if no ongoing downloads or updates are there
-            if (status == DOWNLOAD_PENDING || status == UPDATE_PENDING) {
-                if (entity.tag != null) {
-                    buildInfoDao.deleteByTag(entity.tag);
-                }
+            if (!downloadManager.isDownloading() && !updateManager.isUpdating()) {
                 final Response empty = new Response(0);
                 otaResponsePublisher.onNext(empty);
                 changelogResponsePublisher.onNext(empty);
-                globalStatusDao.delete(entity.rowId);
                 changelogDao.clear();
                 database.getDownloadStatusDao().deleteTable();
+                final GlobalStatusEntity entity = globalStatusDao.getCurrentStatus();
+                if (entity != null) {
+                    if (entity.tag != null) {
+                        buildInfoDao.deleteByTag(entity.tag);
+                    }
+                    globalStatusDao.delete(entity.rowId);
+                }
                 globalStatusDao.insert(new GlobalStatusEntity());
             }
         });
