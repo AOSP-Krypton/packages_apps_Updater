@@ -44,6 +44,7 @@
         <item name="android:hapticFeedbackEnabled">true</item>
         <item name="android:padding">@dimen/button_padding</item>
         <item name="android:background">@drawable/rounded_rectangle_small_radius</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <style name="PrimaryButtonStyle" parent="BaseButtonStyle">
