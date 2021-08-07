@@ -17,24 +17,24 @@
 package com.krypton.updater.model.data;
 
 public class Response {
-    private BuildInfo buildInfo;
+    private Object body;
     private int status;
 
     public Response(int status) {
         this.status = status;
     }
 
-    public Response(BuildInfo buildInfo) {
-        this.buildInfo = buildInfo;
+    public Response(Object body) {
+        this.body = body;
     }
 
-    public Response(BuildInfo buildInfo, int status) {
-        this.buildInfo = buildInfo;
+    public Response(Object body, int status) {
+        this.body = body;
         this.status = status;
     }
 
-    public BuildInfo getBuildInfo() {
-        return buildInfo;
+    public Object getResponseBody() {
+        return body;
     }
 
     public int getStatus() {

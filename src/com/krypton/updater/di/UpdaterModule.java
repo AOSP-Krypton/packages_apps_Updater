@@ -53,7 +53,9 @@ public class UpdaterModule {
     @Singleton
     @Provides
     public AppDatabase provideAppDatabase() {
-        return Room.databaseBuilder(context, AppDatabase.class, DATABASE).build();
+        return Room.databaseBuilder(context, AppDatabase.class, DATABASE)
+            .fallbackToDestructiveMigration()
+            .build();
     }
 
     @Singleton

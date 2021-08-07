@@ -16,29 +16,27 @@
 
 package com.krypton.updater.model.room;
 
-import androidx.room.TypeConverter;
+import static androidx.room.OnConflictStrategy.REPLACE;
+import static com.krypton.updater.util.Constants.TABLE_CHANGELOG;
 
-import java.util.Date;
-import java.util.UUID;
+import androidx.room.Dao;
+import androidx.room.Insert;
+import androidx.room.Query;
 
-public class Converters {
-    @TypeConverter
-    public static UUID fromId(String id) {
-        return id == null || id.equals("") ? null : UUID.fromString(id);
-    }
+import java.util.List;
 
-    @TypeConverter
-    public static String uuidToString(UUID id) {
-        return id == null ? "" : id.toString();
-    }
+@Dao
+public interface ChangelogDao {
 
-    @TypeConverter
-    public static Date fromTimeToDate(long time) {
-        return new Date(time);
-    }
+    @Query("SELECT * FROM " + TABLE_CHANGELOG + " WHERE date LIKE :date LIMIT 1")
+    ChangelogEntity findByDate(long date);
 
-    @TypeConverter
-    public static long dateToTime(Date date) {
-        return date == null ? 0 : date.getTime();
-    }
+    @Query("SELECT * FROM " + TABLE_CHANGELOG)
+    List<ChangelogEntity> getChangelogList();
+
+    @Insert(onConflict = REPLACE)
+    void insert(List<ChangelogEntity> list);
+
+    @Query("DELETE FROM " + TABLE_CHANGELOG)
+    void clear();
 }

@@ -18,6 +18,10 @@ package com.krypton.updater.util;
 
 // Constants needed application wide
 public class Constants {
+    // Github branch we are using for the ota
+    public static final String GIT_BRANCH = "A11";
+    public static final String OTA_JSON_FILE_NAME = "ota.json";
+
     // For build info
     public static final String BUILD_VERSION = "version";
     public static final String BUILD_DATE = "date";
@@ -26,15 +30,21 @@ public class Constants {
     public static final String BUILD_SIZE = "filesize";
     public static final String BUILD_MD5 = "md5";
 
-    // JSONResponse status codes
+    // GithubApiHelper status codes
     public static final int UP_TO_DATE = 200;
     public static final int NEW_UPDATE = 201;
     public static final int REFRESH_FAILED = 202;
     public static final int REFRESHING = 203;
+    public static final int FETCH_CHANGELOG_FAILED = 204;
+    public static final int FETCHING_CHANGELOG = 205;
+    public static final int CHANGELOG_UNAVAILABLE = 206;
+    public static final int CHANGELOG_UP_TO_DATE = 207;
+    public static final int NEW_CHANGELOG = 208;
 
     // Database
     public static final String DATABASE = "updater_database";
     public static final String TABLE_BUILD_INFO = "table_build_info";
+    public static final String TABLE_CHANGELOG = "table_changelog";
     public static final String TABLE_GLOBAL_STATUS = "table_global_status";
     public static final String TABLE_DOWNLOAD_INFO = "table_download_info";
 

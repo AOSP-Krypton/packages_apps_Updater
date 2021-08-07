@@ -25,7 +25,6 @@ import android.content.Intent;
 import android.os.IBinder;
 
 import com.krypton.updater.model.repos.AppRepository;
-import com.krypton.updater.model.data.Response;
 import com.krypton.updater.R;
 import com.krypton.updater.util.NotificationHelper;
 import com.krypton.updater.UpdaterApplication;
@@ -49,7 +48,7 @@ public class UpdateCheckerService extends Service {
     @Override
     public void onCreate() {
         ((UpdaterApplication) getApplication()).getComponent().inject(this);
-        disposable = repository.getResponsePublisher()
+        disposable = repository.getOTAResponsePublisher()
             .map(response -> response.getStatus())
             .filter(status -> status != 0 && status != REFRESHING)
             .subscribe(status -> {
@@ -67,6 +66,7 @@ public class UpdateCheckerService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         repository.fetchBuildInfo();
+        repository.fetchChangelog();
         return START_NOT_STICKY;
     }
 

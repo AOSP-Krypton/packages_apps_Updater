@@ -39,9 +39,13 @@
     <string name="notify_refresh_failed_desc">Please check for updates manually</string>
     <string name="notify_new_update">New system update detected</string>
     <string name="notify_new_update_desc">Install the update for a better experience</string>
+    <string name="changelog">Changelog</string>
+    <string name="fetching_changelog">Fetching changelog...</string>
+    <string name="changelog_unavailable">Changelog is unavailable at the moment</string>
+    <string name="unable_to_fetch_changelog">Unable to fetch changelog</string>
 
     <!-- Local Upgrade -->
-    <string name="local_upgrade">Local Upgrade</string>
+    <string name="local">Local</string>
     <string name="confirm_selection">Confirm selection</string>
 
     <!-- Download -->

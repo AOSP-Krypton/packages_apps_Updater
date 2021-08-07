@@ -16,29 +16,33 @@
 
 package com.krypton.updater.model.room;
 
-import androidx.room.TypeConverter;
+import static com.krypton.updater.util.Constants.TABLE_CHANGELOG;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.Fts4;
+import androidx.room.Ignore;
+import androidx.room.PrimaryKey;
 
 import java.util.Date;
-import java.util.UUID;
 
-public class Converters {
-    @TypeConverter
-    public static UUID fromId(String id) {
-        return id == null || id.equals("") ? null : UUID.fromString(id);
-    }
+@Fts4
+@Entity(tableName = TABLE_CHANGELOG)
+public class ChangelogEntity {
 
-    @TypeConverter
-    public static String uuidToString(UUID id) {
-        return id == null ? "" : id.toString();
-    }
+    @PrimaryKey(autoGenerate = true)
+    @ColumnInfo(name = "rowid")
+    @Ignore
+    public int rowId;
 
-    @TypeConverter
-    public static Date fromTimeToDate(long time) {
-        return new Date(time);
-    }
+    @NonNull
+    public Date date;
 
-    @TypeConverter
-    public static long dateToTime(Date date) {
-        return date == null ? 0 : date.getTime();
-    }
+    @NonNull
+    public String sha;
+
+    @Nullable
+    public String changelog;
 }

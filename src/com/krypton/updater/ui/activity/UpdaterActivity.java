@@ -19,21 +19,22 @@ package com.krypton.updater.ui.activity;
 import static android.app.Activity.RESULT_OK;
 import static android.content.DialogInterface.BUTTON_POSITIVE;
 import static android.content.Intent.ACTION_OPEN_DOCUMENT;
-import static android.content.Intent.ACTION_OPEN_DOCUMENT_TREE;
 import static android.content.Intent.CATEGORY_OPENABLE;
 import static android.graphics.Color.TRANSPARENT;
 import static android.os.UserHandle.SYSTEM;
 import static android.provider.OpenableColumns.DISPLAY_NAME;
 import static android.view.HapticFeedbackConstants.KEYBOARD_PRESS;
-import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static android.widget.Toast.LENGTH_SHORT;
-import static com.krypton.updater.util.Constants.REFRESHING;
+import static com.krypton.updater.util.Constants.ACION_START_UPDATE;
+import static com.krypton.updater.util.Constants.CHANGELOG_UNAVAILABLE;
+import static com.krypton.updater.util.Constants.FETCH_CHANGELOG_FAILED;
+import static com.krypton.updater.util.Constants.FETCHING_CHANGELOG;
 import static com.krypton.updater.util.Constants.REFRESH_FAILED;
-import static com.krypton.updater.util.Constants.UP_TO_DATE;
+import static com.krypton.updater.util.Constants.REFRESHING;
+import static com.krypton.updater.util.Constants.NEW_CHANGELOG;
 import static com.krypton.updater.util.Constants.NEW_UPDATE;
 import static com.krypton.updater.util.Constants.THEME_KEY;
-import static com.krypton.updater.util.Constants.ACION_START_UPDATE;
+import static com.krypton.updater.util.Constants.UP_TO_DATE;
 
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
@@ -44,6 +45,7 @@ import android.database.Cursor;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -57,7 +59,9 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.Group;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.core.widget.NestedScrollView;
 
 import com.krypton.updater.model.data.BuildInfo;
 import com.krypton.updater.model.data.Response;
@@ -74,10 +78,12 @@ import javax.inject.Inject;
 public class UpdaterActivity extends AppCompatActivity {
     private static final String MIME_TYPE_ZIP = "application/zip";
     private static final int SELECT_FILE = 1001;
+    private Group latestBuildGroup, rebootButtonGroup;
     private TextView currentStatus, latestBuildVersion,
-        latestBuildTimestamp, latestBuildName, latestBuildMd5;
-    private TextView localUpgradeFileName, postUpdateMessage;
-    private ImageView infoIcon;
+        latestBuildTimestamp, latestBuildName,
+        latestBuildMd5, changelogText;
+    private NestedScrollView changelogView;
+    private TextView localUpgradeFileName;
     private Button refreshButton, downloadButton,
         localUpgradeButton, updateButton, rebootButton;
     private ProgressBar refreshProgress;
@@ -205,23 +211,25 @@ public class UpdaterActivity extends AppCompatActivity {
 
     private void setWidgets() {
         refreshProgress = findViewById(R.id.refresh_progress);
-
         currentStatus = findViewById(R.id.current_status);
+
+        latestBuildGroup = findViewById(R.id.latest_build_group);
         latestBuildVersion = findViewById(R.id.latest_build_version);
         latestBuildTimestamp = findViewById(R.id.latest_build_timestamp);
         latestBuildName = findViewById(R.id.latest_build_filename);
         latestBuildMd5 = findViewById(R.id.latest_build_md5);
 
+        changelogView = findViewById(R.id.changelog);
+        changelogText = findViewById(R.id.changelog_text);
         localUpgradeFileName = findViewById(R.id.local_upgrade_file_name);
 
         refreshButton = findViewById(R.id.refresh_button);
         downloadButton = findViewById(R.id.download_button);
         localUpgradeButton = findViewById(R.id.local_upgrade_button);
         updateButton = findViewById(R.id.update_button);
-        rebootButton = findViewById(R.id.reboot_button);
 
-        postUpdateMessage = findViewById(R.id.post_update_info);
-        infoIcon = findViewById(R.id.info_icon);
+        rebootButtonGroup = findViewById(R.id.reboot_button_group);
+        rebootButton = findViewById(R.id.reboot_button);
     }
 
     private void setCurrentBuildInfo() {
@@ -242,8 +250,7 @@ public class UpdaterActivity extends AppCompatActivity {
             buildInfo.getFileName()));
         latestBuildMd5.setText(getString(R.string.md5,
             buildInfo.getMd5()));
-        Utils.setVisibile(true, latestBuildVersion,
-            latestBuildTimestamp, latestBuildName, latestBuildMd5);
+        Utils.setVisibile(true, latestBuildGroup);
     }
 
     private String getString(int id, String str) {
@@ -255,14 +262,16 @@ public class UpdaterActivity extends AppCompatActivity {
     }
 
     private void registerObservers() {
-        viewModel.getResponse().observe(this,
-            response -> handleResponse(response));
+        viewModel.getOTAResponse().observe(this,
+            response -> handleOTAResponse(response));
+        viewModel.getChangelogResponse().observe(this,
+            response -> handleChaneglogResponse(response));
         viewModel.getRefreshButtonVisibility().observe(this,
             visibility -> Utils.setVisibile(visibility, refreshButton));
         viewModel.getLocalUpgradeButtonVisibility().observe(this,
             visibility -> Utils.setVisibile(visibility, localUpgradeButton));
         viewModel.getDownloadButtonVisibility().observe(this,
-            visibility -> Utils.setVisibile(visibility, downloadButton));
+            visibility -> Utils.setVisibile(visibility, changelogView, downloadButton));
         viewModel.getUpdateButtonVisibility().observe(this,
             visibility -> {
                 Utils.setVisibile(visibility, updateButton);
@@ -273,7 +282,7 @@ public class UpdaterActivity extends AppCompatActivity {
             });
         viewModel.getRebootButtonVisibility().observe(this,
             visibility -> {
-                Utils.setVisibile(visibility, rebootButton, infoIcon, postUpdateMessage);
+                Utils.setVisibile(visibility, rebootButtonGroup);
                 if (visibility) {
                     stopServiceAsUser(new Intent(this, UpdateInstallerService.class), SYSTEM);
                 }
@@ -286,14 +295,13 @@ public class UpdaterActivity extends AppCompatActivity {
             });
     }
 
-    private void handleResponse(Response response) {
+    private void handleOTAResponse(Response response) {
         int status = response.getStatus();
         refreshButton.setClickable(status != REFRESHING);
         switch (status) {
             case 0:
                 setBuildFetchResult(R.string.hit_refresh);
-                Utils.setVisibile(false, latestBuildVersion,
-                    latestBuildTimestamp, latestBuildName, latestBuildMd5);
+                Utils.setVisibile(false, latestBuildGroup);
                 break;
             case REFRESHING:
                 setBuildFetchResult(R.string.fetching_build_status_text);
@@ -310,7 +318,33 @@ public class UpdaterActivity extends AppCompatActivity {
             case NEW_UPDATE:
                 setBuildFetchResult(R.string.new_update);
                 Utils.setVisibile(false, refreshProgress);
-                setNewBuildInfo(response.getBuildInfo());
+                setNewBuildInfo((BuildInfo) response.getResponseBody());
+                break;
+        }
+    }
+
+    private void handleChaneglogResponse(Response response) {
+        switch (response.getStatus()) {
+            case 0:
+                Utils.setVisibile(false, changelogView);
+                changelogText.setText(null);
+                break;
+            case FETCHING_CHANGELOG:
+                Utils.setVisibile(true, changelogView, refreshProgress);
+                changelogText.setText(R.string.fetching_changelog);
+                break;
+            case FETCH_CHANGELOG_FAILED:
+                Utils.setVisibile(false, refreshProgress);
+                changelogText.setText(R.string.unable_to_fetch_changelog);
+                break;
+            case CHANGELOG_UNAVAILABLE:
+                Utils.setVisibile(false, refreshProgress);
+                changelogText.setText(R.string.changelog_unavailable);
+                break;
+            case NEW_CHANGELOG:
+                Utils.setVisibile(false, refreshProgress);
+                changelogText.setText((SpannableStringBuilder) response.getResponseBody(),
+                    TextView.BufferType.SPANNABLE);
                 break;
         }
     }
@@ -318,6 +352,7 @@ public class UpdaterActivity extends AppCompatActivity {
     public void refreshStatus(View v) {
         v.performHapticFeedback(KEYBOARD_PRESS);
         viewModel.fetchBuildInfo();
+        viewModel.fetchChangelog();
     }
 
     public void startDownload(View v) {

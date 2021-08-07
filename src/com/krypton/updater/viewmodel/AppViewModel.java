@@ -41,7 +41,7 @@ public class AppViewModel extends AndroidViewModel {
     private MutableLiveData<Boolean> refreshButtonVisibility, localUpgradeButtonVisibility,
         downloadButtonVisibility, updateButtonVisibility, rebootButtonVisibility;
     private MutableLiveData<String> localUpgradeFileName;
-    private LiveData<Response> responseData;
+    private LiveData<Response> otaResponse, changelogResponse;
 
     public AppViewModel(Application application) {
         super(application);
@@ -63,15 +63,28 @@ public class AppViewModel extends AndroidViewModel {
         }
     }
 
-    public LiveData<Response> getResponse() {
-        if (responseData == null) {
-            responseData = LiveDataReactiveStreams.fromPublisher(repository.getResponsePublisher());
+    public LiveData<Response> getOTAResponse() {
+        if (otaResponse == null) {
+            otaResponse = LiveDataReactiveStreams.fromPublisher(
+                repository.getOTAResponsePublisher());
         }
-        return responseData;
+        return otaResponse;
+    }
+
+    public LiveData<Response> getChangelogResponse() {
+        if (changelogResponse == null) {
+            changelogResponse = LiveDataReactiveStreams.fromPublisher(
+                repository.getChangelogResponsePublisher());
+        }
+        return changelogResponse;
     }
 
     public void fetchBuildInfo() {
         repository.fetchBuildInfo();
+    }
+
+    public void fetchChangelog() {
+        repository.fetchChangelog();
     }
 
     public void initiateReboot() {

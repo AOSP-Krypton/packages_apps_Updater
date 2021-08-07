@@ -27,8 +27,6 @@ import android.os.SystemProperties;
 import android.util.Log;
 import android.view.View;
 
-import androidx.annotation.NonNull;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -56,14 +54,6 @@ public final class Utils {
 
     public static long getBuildDate() {
         return Long.parseLong(SystemProperties.get(PROP_DATE, "0")) * 1000; // Convert to millis here
-    }
-
-    public static void sleepThread(int duration) {
-        try {
-            Thread.sleep(duration);
-        } catch (InterruptedException e) {
-            Log.e(TAG, "thread interrupted while sleeping", e);
-        }
     }
 
     public static String formatDate(long date) {
@@ -94,7 +84,10 @@ public final class Utils {
             DIRECTORY_DOWNLOADS), fileName);
     }
 
-    public static String computeMd5(@NonNull File file) {
+    public static String computeMd5(File file) {
+        if (file == null) {
+            return null;
+        }
         try (FileInputStream inStream = new FileInputStream(file)) {
             final MessageDigest md5Digest = MessageDigest.getInstance("MD5");
             final byte[] buffer = new byte[MB]; // Files processed will be of GB order usually, so 1MB buffer will speed up the process
@@ -113,11 +106,15 @@ public final class Utils {
         return null;
     }
 
-    public static String parseRawContent(@NonNull URL url) {
+    public static String parseRawContent(URL url) {
+        if (url == null) {
+            return null;
+        }
         final StringBuilder builder = new StringBuilder();
         try (Scanner scanner = new Scanner(url.openStream())) {
             while (scanner.hasNext()) {
                 builder.append(scanner.nextLine());
+                builder.append("\n");
             }
             return builder.toString();
         } catch(IOException e) {
