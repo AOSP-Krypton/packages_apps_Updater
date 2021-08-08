@@ -43,7 +43,6 @@ public class Constants {
 
     // Database
     public static final String DATABASE = "updater_database";
-    public static final String TABLE_BUILD_INFO = "table_build_info";
     public static final String TABLE_CHANGELOG = "table_changelog";
     public static final String TABLE_GLOBAL_STATUS = "table_global_status";
     public static final String TABLE_DOWNLOAD_INFO = "table_download_info";

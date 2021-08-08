@@ -16,8 +16,6 @@
 
 package com.krypton.updater.model.data;
 
-import com.krypton.updater.model.room.BuildInfoEntity;
-
 public final class BuildInfo {
 
     private String version, url, fileName, md5;
@@ -75,16 +73,5 @@ public final class BuildInfo {
 
     public String getMd5() {
         return md5;
-    }
-
-    public BuildInfoEntity toEntity() {
-        final BuildInfoEntity entity = new BuildInfoEntity();
-        entity.md5 = md5;
-        entity.version = version;
-        entity.date = date;
-        entity.url = url;
-        entity.fileName = fileName;
-        entity.fileSize = fileSize;
-        return entity;
     }
 }

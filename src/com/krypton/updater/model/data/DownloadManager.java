@@ -37,9 +37,8 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
+import com.krypton.updater.model.data.DataStore;
 import com.krypton.updater.model.room.AppDatabase;
-import com.krypton.updater.model.room.BuildInfoDao;
-import com.krypton.updater.model.room.BuildInfoEntity;
 import com.krypton.updater.model.room.DownloadStatusDao;
 import com.krypton.updater.model.room.DownloadStatusEntity;
 import com.krypton.updater.workers.DownloadWorker;
@@ -55,16 +54,17 @@ import javax.inject.Singleton;
 public class DownloadManager {
 
     private final Constraints constraints;
-    private final BuildInfoDao buildInfoDao;
     private final DownloadStatusDao downloadStatusDao;
     private final WorkManager workManager;
+    private final DataStore dataStore;
     private final PublishSubject<UUID> uuidSubject;
     private UUID id;
 
     @Inject
-    public DownloadManager(WorkManager workManager, AppDatabase database) {
+    public DownloadManager(WorkManager workManager,
+            AppDatabase database, DataStore dataStore) {
         this.workManager = workManager;
-        buildInfoDao = database.getBuildInfoDao();
+        this.dataStore = dataStore;
         downloadStatusDao = database.getDownloadStatusDao();
         constraints = new Constraints.Builder()
             .setRequiredNetworkType(CONNECTED)
@@ -142,16 +142,16 @@ public class DownloadManager {
     }
 
     private void fetchAndEnqueueDownload() {
-        final BuildInfoEntity entity = buildInfoDao.getCurrentBuildInfo();
-        if (entity == null) {
+        final BuildInfo buildInfo = dataStore.getBuildInfo();
+        if (buildInfo.getFileName() == null) {
             return;
         }
-        final OneTimeWorkRequest downloadRequest = buildRequest(entity.toBuildInfo());
+        final OneTimeWorkRequest downloadRequest = buildRequest(buildInfo);
         id = downloadRequest.getId();
         workManager.enqueue(downloadRequest);
         uuidSubject.onNext(id);
         if (downloadStatusDao.getCurrentStatus() == null) {
-            resetTable(entity.fileSize);
+            resetTable(buildInfo.getFileSize());
         }
     }
 }

@@ -47,17 +47,15 @@ import android.os.SystemClock;
 import android.text.SpannableStringBuilder;
 import android.text.style.StyleSpan;
 import android.util.Log;
-import android.util.SparseArray;
 
 import com.krypton.updater.model.room.AppDatabase;
-import com.krypton.updater.model.room.BuildInfoDao;
-import com.krypton.updater.model.room.BuildInfoEntity;
 import com.krypton.updater.model.room.GlobalStatusDao;
 import com.krypton.updater.model.room.GlobalStatusEntity;
 import com.krypton.updater.model.room.ChangelogDao;
 import com.krypton.updater.model.room.ChangelogEntity;
 import com.krypton.updater.model.data.BuildInfo;
 import com.krypton.updater.model.data.Changelog;
+import com.krypton.updater.model.data.DataStore;
 import com.krypton.updater.model.data.DownloadManager;
 import com.krypton.updater.model.data.GithubApiHelper;
 import com.krypton.updater.model.data.Response;
@@ -70,7 +68,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.processors.BehaviorProcessor;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -78,7 +75,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.TreeMap;
-import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -92,7 +88,6 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
     private final Context context;
     private final ExecutorService executor;
     private final AppDatabase database;
-    private final BuildInfoDao buildInfoDao;
     private final ChangelogDao changelogDao;
     private final GlobalStatusDao globalStatusDao;
     private final BehaviorProcessor<Response> otaResponsePublisher,
@@ -101,6 +96,7 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
     private final DownloadManager downloadManager;
     private final UpdateManager updateManager;
     private final GithubApiHelper githubApiHelper;
+    private final DataStore dataStore;
     private final String changelogPrefix;
     private final SpannableStringBuilder stringBuilder;
     private Future<Boolean> fetching;
@@ -109,7 +105,7 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
     public AppRepository(Context context, AppDatabase database,
             ExecutorService executor, SharedPreferences sharedPrefs,
             DownloadManager downloadManager, UpdateManager updateManager,
-            GithubApiHelper githubApiHelper) {
+            GithubApiHelper githubApiHelper, DataStore dataStore) {
         this.context = context;
         this.database = database;
         this.executor = executor;
@@ -117,8 +113,8 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
         this.downloadManager = downloadManager;
         this.updateManager = updateManager;
         this.githubApiHelper = githubApiHelper;
+        this.dataStore = dataStore;
         globalStatusDao = database.getGlobalStatusDao();
-        buildInfoDao = database.getBuildInfoDao();
         changelogDao = database.getChangelogDao();
         alarmManager = context.getSystemService(AlarmManager.class);
         sharedPrefs.registerOnSharedPreferenceChangeListener(this);
@@ -126,7 +122,7 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
         changelogResponsePublisher = BehaviorProcessor.createDefault(new Response(0));
         changelogPrefix = context.getString(R.string.changelog).concat(" - ");
         stringBuilder = new SpannableStringBuilder();
-        updateFromDatabase();
+        updateFromDataStore();
     }
 
     @Override
@@ -166,16 +162,9 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
                 if (globalStatusEntity.buildDate != date) {
                     globalStatusEntity.entryDate = System.currentTimeMillis();
                     globalStatusEntity.buildDate = date;
-                    if (globalStatusEntity.tag == null) {
-                        globalStatusEntity.tag = UUID.randomUUID();
-                    }
                 }
                 globalStatusEntity.status = DOWNLOAD_PENDING;
-                if (buildInfoDao.findByMd5(buildInfo.getMd5()) == null) {
-                    final BuildInfoEntity buildInfoEntity = buildInfo.toEntity();
-                    buildInfoEntity.tag = globalStatusEntity.tag;
-                    buildInfoDao.insert(buildInfoEntity);
-                }
+                dataStore.updateBuildInfo(buildInfo);
                 globalStatusDao.insert(globalStatusEntity);
             }
             setAlarm();
@@ -232,9 +221,7 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
                 database.getDownloadStatusDao().deleteTable();
                 final GlobalStatusEntity entity = globalStatusDao.getCurrentStatus();
                 if (entity != null) {
-                    if (entity.tag != null) {
-                        buildInfoDao.deleteByTag(entity.tag);
-                    }
+                    dataStore.deleteBuildInfo();
                     globalStatusDao.delete(entity.rowId);
                 }
                 globalStatusDao.insert(new GlobalStatusEntity());
@@ -266,7 +253,7 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
         });
     }
 
-    private void updateFromDatabase() {
+    private void updateFromDataStore() {
         executor.execute(() -> {
             final GlobalStatusEntity entity = globalStatusDao.getCurrentStatus();
             if (entity == null) {
@@ -277,10 +264,9 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
                     REFRESH_INTERVAL_KEY, 7));
                 long timeSinceUpdate = System.currentTimeMillis() - entity.entryDate;
                 if (timeSinceUpdate < refreshTimeout) {
-                    final BuildInfoEntity buildInfoEntity = buildInfoDao.findByTag(entity.tag);
-                    if (buildInfoEntity != null) {
-                        otaResponsePublisher.onNext(new Response(
-                            buildInfoEntity.toBuildInfo(), NEW_UPDATE));
+                    final BuildInfo buildInfo = dataStore.getBuildInfo();
+                    if (buildInfo != null) {
+                        otaResponsePublisher.onNext(new Response(buildInfo, NEW_UPDATE));
                         changelogDao.getChangelogList().stream()
                             .forEach(cgEntity -> addChangelogToBuilder(stringBuilder,
                                 cgEntity.date, cgEntity.changelog));

@@ -25,8 +25,6 @@ import androidx.room.Fts4;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
-import java.util.UUID;
-
 @Fts4
 @Entity(tableName = TABLE_GLOBAL_STATUS)
 public class GlobalStatusEntity {
@@ -35,9 +33,6 @@ public class GlobalStatusEntity {
     @ColumnInfo(name = "rowid")
     @Ignore
     public int rowId;
-
-    @Nullable
-    public UUID tag;
 
     @ColumnInfo(name = "build_date")
     public long buildDate;
