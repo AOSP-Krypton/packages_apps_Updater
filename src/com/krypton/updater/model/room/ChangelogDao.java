@@ -27,10 +27,6 @@ import java.util.List;
 
 @Dao
 public interface ChangelogDao {
-
-    @Query("SELECT * FROM " + TABLE_CHANGELOG + " WHERE date LIKE :date LIMIT 1")
-    ChangelogEntity findByDate(long date);
-
     @Query("SELECT * FROM " + TABLE_CHANGELOG)
     List<ChangelogEntity> getChangelogList();
 

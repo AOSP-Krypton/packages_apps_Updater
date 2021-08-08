@@ -123,26 +123,30 @@ public class DownloadViewModel extends AndroidViewModel {
                     }
                 })
             );
-
         progressInfo.addSource(LiveDataReactiveStreams.fromPublisher(
-            repository.getDatabaseFlowable().filter(entity -> entity != null)),
-                entity -> {
-                    pauseStatus.setValue(entity.status == PAUSED);
+            repository.getDownloadStatusProcessor()),
+                downloadStatus -> {
+                    final int status = downloadStatus.getStatus();
+                    pauseStatus.setValue(status == PAUSED);
                     if (viewVisibility.getValue()) {
-                        if (entity.status == CANCELLED) {
+                        if (status == 0 || status == CANCELLED) {
                             viewVisibility.postValue(false);
                         }
                     } else {
-                        if (entity.status >= INDETERMINATE) {
+                        if (status >= INDETERMINATE) {
                             viewVisibility.postValue(true);
                         }
                     }
                     if (controlVisibility.getValue()) {
-                        if (entity.status == FINISHED || entity.status == FAILED) {
+                        if (status < INDETERMINATE || status > PAUSED) {
                             controlVisibility.postValue(false);
                         }
+                    } else {
+                        if (status >= INDETERMINATE && status <= PAUSED) {
+                            controlVisibility.postValue(true);
+                        }
                     }
-                    progressInfo.postValue(repository.getProgressInfo(entity));
+                    progressInfo.postValue(repository.getProgressInfo(downloadStatus));
                 });
     }
 }

@@ -22,8 +22,8 @@ import androidx.work.ListenableWorker;
 import androidx.work.WorkerFactory;
 import androidx.work.WorkerParameters;
 
+import com.krypton.updater.model.data.DataStore;
 import com.krypton.updater.model.data.OTAFileManager;
-import com.krypton.updater.model.room.AppDatabase;
 import com.krypton.updater.util.NotificationHelper;
 
 import javax.inject.Inject;
@@ -31,23 +31,22 @@ import javax.inject.Singleton;
 
 @Singleton
 public class DownloadWorkerFactory extends WorkerFactory {
-
-    private final AppDatabase database;
     private final NotificationHelper helper;
     private final OTAFileManager ofm;
+    private final DataStore dataStore;
 
     @Inject
-    public DownloadWorkerFactory(AppDatabase database,
-            NotificationHelper helper, OTAFileManager ofm) {
-        this.database = database;
+    public DownloadWorkerFactory(NotificationHelper helper,
+            OTAFileManager ofm, DataStore dataStore) {
         this.helper = helper;
         this.ofm = ofm;
+        this.dataStore = dataStore;
     }
 
     @Override
     public ListenableWorker createWorker(Context appContext,
             String workerClassName, WorkerParameters workerParameters) {
-        return new DownloadWorker(appContext,
-            workerParameters, database, helper, ofm);
+        return new DownloadWorker(appContext, workerParameters,
+            helper, ofm, dataStore);
     }
 }

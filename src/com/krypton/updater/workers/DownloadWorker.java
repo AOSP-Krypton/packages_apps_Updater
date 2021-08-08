@@ -39,17 +39,15 @@ import androidx.work.ListenableWorker.Result;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.krypton.updater.model.data.DataStore;
+import com.krypton.updater.model.data.DownloadStatus;
 import com.krypton.updater.model.data.OTAFileManager;
-import com.krypton.updater.model.room.AppDatabase;
-import com.krypton.updater.model.room.DownloadStatusDao;
-import com.krypton.updater.model.room.DownloadStatusEntity;
 import com.krypton.updater.R;
 import com.krypton.updater.util.NotificationHelper;
 import com.krypton.updater.util.Utils;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.IOException;
@@ -64,23 +62,22 @@ public class DownloadWorker extends Worker {
     private static final int BUF_SIZE = 8192; // 8 KB
     private final Context context;
     private final OTAFileManager ofm;
-    private final DownloadStatusDao dao;
     private final Handler handler;
     private final HandlerThread thread;
     private final NotificationHelper helper;
-    private final AppDatabase database;
     private final NotificationCompat.Builder notificationBuilder;
+    private final DataStore dataStore;
     private int currPercent;
     private long currSize, totalSize;
 
     public DownloadWorker(Context context, WorkerParameters parameters,
-            AppDatabase database, NotificationHelper helper, OTAFileManager ofm) {
+            NotificationHelper helper, OTAFileManager ofm,
+            DataStore dataStore) {
         super(context, parameters);
         this.context = context;
-        this.database = database;
         this.helper = helper;
         this.ofm = ofm;
-        dao = database.getDownloadStatusDao();
+        this.dataStore = dataStore;
         thread = new HandlerThread(TAG, THREAD_PRIORITY_BACKGROUND);
         thread.start();
         handler = new Handler(thread.getLooper());
@@ -126,12 +123,6 @@ public class DownloadWorker extends Worker {
      *    2 if download was stopped (could be pause, cancel, or constraints not met)
      */
     private int download(String urlString, String fileName, String md5) {
-        final DownloadStatusEntity entity = dao.getCurrentStatus();
-        if (entity == null) {
-            helper.notifyOrToast(R.string.download_failed,
-                R.string.database_corrupt, handler);
-            return -1;
-        }
         notificationBuilder.setContentText(fileName);
         setForegroundAsync(getForegroundInfo(0, true));
         final File file = new File(context.getExternalCacheDir(), fileName);
@@ -139,7 +130,9 @@ public class DownloadWorker extends Worker {
         boolean append = file.isFile();
         if (append) {
             currSize = file.length();
-            if (entity.downloadedSize != currSize) { // Corrupt download or some other file with the same name
+            final DownloadStatus downloadStatus = dataStore.getDownloadStatus();
+            if (downloadStatus == null ||
+                    downloadStatus.getDownloadedSize() != currSize) {
                 currSize = 0;
                 append = false;
             } else {
@@ -179,7 +172,7 @@ public class DownloadWorker extends Worker {
                     currPercent = tmp;
                     setForegroundAsync(getForegroundInfo(currPercent, false)); // Update notification
                 }
-                updateProgressAsync(currSize, currPercent); // Update database
+                updateProgressAsync(currSize, currPercent); // Update sharedPrefs
             }
             if (isStopped()) {
                 return 2;
@@ -195,7 +188,7 @@ public class DownloadWorker extends Worker {
                     file.delete();
                     helper.onlyNotify(R.string.download_finished, R.string.click_to_update);
                     // Mark as download finished and an update installation is pending
-                    database.getGlobalStatusDao().updateCurrentStatus(UPDATE_PENDING);
+                    dataStore.setGlobalStatus(UPDATE_PENDING);
                     return 1;
                 } else {
                     helper.notifyOrToast(R.string.download_failed,
@@ -213,11 +206,11 @@ public class DownloadWorker extends Worker {
     }
 
     private void updateStatusAsync(int status) {
-        handler.post(() -> dao.updateStatus(status));
+        handler.post(() -> dataStore.updateDownloadStatus(status));
     }
 
     private void updateProgressAsync(long size, int percent) {
-        handler.post(() -> dao.updateProgress(size, percent));
+        handler.post(() -> dataStore.updateDownloadProgress(size, percent));
     }
 
     private ForegroundInfo getForegroundInfo(int progress, boolean indeterminate) {

@@ -32,13 +32,11 @@ import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.krypton.updater.model.data.DataStore;
 import com.krypton.updater.model.data.OTAFileManager;
 import com.krypton.updater.model.data.ProgressInfo;
 import com.krypton.updater.model.data.UpdateManager;
 import com.krypton.updater.model.data.UpdateStatus;
-import com.krypton.updater.model.room.AppDatabase;
-import com.krypton.updater.model.room.GlobalStatusDao;
-import com.krypton.updater.model.room.GlobalStatusEntity;
 import com.krypton.updater.R;
 import com.krypton.updater.services.UpdateInstallerService;
 
@@ -55,32 +53,29 @@ import javax.inject.Singleton;
 public class UpdateRepository {
     private static final String TAG = "UpdateRepository";
     private final Context context;
-    private final GlobalStatusDao globalStatusDao;
     private final ExecutorService executor;
-    private final AppDatabase database;
     private final UpdateManager updateManager;
     private final OTAFileManager ofm;
+    private final DataStore dataStore;
 
     @Inject
     public UpdateRepository(Context context, UpdateManager updateManager,
-            ExecutorService executor, AppDatabase database, OTAFileManager ofm) {
+            ExecutorService executor, OTAFileManager ofm,
+            DataStore dataStore) {
         this.context = context;
-        this.database = database;
         this.executor = executor;
         this.updateManager = updateManager;
         this.ofm = ofm;
-        globalStatusDao = database.getGlobalStatusDao();
+        this.dataStore = dataStore;
     }
 
     public void startUpdate() {
-        executor.execute(() -> {
-            updateManager.start();
-        });
+        executor.execute(() -> updateManager.start());
     }
 
     public void pauseUpdate(boolean pause) {
         executor.execute(() -> {
-            if (isUpdating()) {
+            if (updateManager.isUpdating()) {
                 updateManager.pause(pause);
             }
         });
@@ -88,9 +83,9 @@ public class UpdateRepository {
 
     public void cancelUpdate() {
         executor.execute(() -> {
-            if (isUpdating()) {
+            if (updateManager.isUpdating()) {
                 updateManager.cancel();
-                clearData();
+                dataStore.setGlobalStatus(UPDATE_PENDING);
             }
         });
     }
@@ -103,8 +98,8 @@ public class UpdateRepository {
         executor.execute(() -> {
             try (InputStream inStream = context.getContentResolver().openInputStream(uri)) {
                 if (ofm.copyToOTAPackageDir(inStream)) {
-                    setGlobalStatus(UPDATE_PENDING);
-                    globalStatusDao.setLocalUpgradeFileName(fileName);
+                    dataStore.setLocalUpgradeFileName(fileName);
+                    dataStore.setGlobalStatus(UPDATE_PENDING);
                 }
             } catch (IOException e) {
                 Log.e(TAG, "IOException when copying file from uri " + uri.toString(), e);
@@ -142,25 +137,6 @@ public class UpdateRepository {
             .setIndeterminate(updateStatus.getStatusCode() == INDETERMINATE)
             .setExtras(String.format("%s %d/2", getString(R.string.step), updateStatus.getStep()))
             .setStatus(status);
-    }
-
-    private boolean isUpdating() {
-        final GlobalStatusEntity entity = globalStatusDao.getCurrentStatus();
-        return entity != null && entity.status == UPDATING;
-    }
-
-    private void clearData() {
-        setGlobalStatus(UPDATE_PENDING);
-    }
-
-    private void setGlobalStatus(int status) {
-        if (globalStatusDao.getCurrentStatus() == null) {
-            final GlobalStatusEntity entity = new GlobalStatusEntity();
-            entity.status = status;
-            globalStatusDao.insert(entity);
-        } else {
-            globalStatusDao.updateCurrentStatus(status);
-        }
     }
 
     private void stopUpdaterService() {

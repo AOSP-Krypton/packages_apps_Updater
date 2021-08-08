@@ -45,20 +45,18 @@ import androidx.work.WorkInfo.State;
 import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
 
+import com.krypton.updater.model.data.DataStore;
+import com.krypton.updater.model.data.DownloadStatus;
 import com.krypton.updater.model.data.ProgressInfo;
-import com.krypton.updater.model.room.AppDatabase;
-import com.krypton.updater.model.room.DownloadStatusDao;
-import com.krypton.updater.model.room.DownloadStatusEntity;
-import com.krypton.updater.model.room.GlobalStatusDao;
 import com.krypton.updater.R;
 import com.krypton.updater.model.data.DownloadManager;
 import com.krypton.updater.util.Utils;
 import com.krypton.updater.workers.DownloadWorker;
 
-import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.processors.BehaviorProcessor;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
-import java.io.File;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.UUID;
 
@@ -67,33 +65,28 @@ import javax.inject.Singleton;
 
 @Singleton
 public class DownloadRepository {
-
     private final Context context;
-    private final DownloadStatusDao downloadStatusDao;
-    private final GlobalStatusDao globalStatusDao;
     private final ExecutorService executor;
-    private final AppDatabase database;
     private final WorkManager workManager;
     private final DownloadManager downloadManager;
+    private final DataStore dataStore;
 
     @Inject
-    public DownloadRepository(Context context,
-            DownloadManager downloadManager, WorkManager workManager,
-            ExecutorService executor, AppDatabase database) {
+    public DownloadRepository(Context context, DownloadManager downloadManager,
+            WorkManager workManager, ExecutorService executor,
+            DataStore dataStore) {
         this.context = context;
         this.downloadManager = downloadManager;
-        this.database = database;
         this.executor = executor;
         this.workManager = workManager;
-        downloadStatusDao = database.getDownloadStatusDao();
-        globalStatusDao = database.getGlobalStatusDao();
+        this.dataStore = dataStore;
     }
 
     public void startDownload() {
         executor.execute(() -> {
             clearCache();
             downloadManager.start();
-            setGlobalStatus(DOWNLOADING);
+            dataStore.setGlobalStatus(DOWNLOADING);
         });
     }
 
@@ -102,12 +95,14 @@ public class DownloadRepository {
     }
 
     public void cancelDownload() {
-        executor.execute(() -> downloadManager.cancel());
-        clearData();
+        executor.execute(() -> {
+            downloadManager.cancel();
+            clearData();
+        });
     }
 
-    public Flowable<DownloadStatusEntity> getDatabaseFlowable() {
-        return downloadStatusDao.getCurrentStatusFlowable();
+    public BehaviorProcessor<DownloadStatus> getDownloadStatusProcessor() {
+        return dataStore.getDownloadStatusProcessor();
     }
 
     public PublishSubject<UUID> getUUIDSubject() {
@@ -118,9 +113,9 @@ public class DownloadRepository {
         return workManager;
     }
 
-    public ProgressInfo getProgressInfo(DownloadStatusEntity entity) {
+    public ProgressInfo getProgressInfo(DownloadStatus downloadStatus) {
         String status = "";
-        switch (entity.status) {
+        switch (downloadStatus.getStatus()) {
             case INDETERMINATE:
                 status = getString(R.string.waiting);
                 break;
@@ -138,10 +133,10 @@ public class DownloadRepository {
                 break;
         }
         return new ProgressInfo()
-            .setProgress(entity.progress)
-            .setIndeterminate(entity.status == INDETERMINATE)
-            .setExtras(String.format("%d/%d MB",
-                (int) (entity.downloadedSize / MB), (int) entity.fileSize / MB))
+            .setProgress(downloadStatus.getProgress())
+            .setIndeterminate(downloadStatus.getStatus() == INDETERMINATE)
+            .setExtras(String.format("%d/%d MB", (int) (downloadStatus.getDownloadedSize() / MB),
+                (int) downloadStatus.getFileSize() / MB))
             .setStatus(status);
     }
 
@@ -162,22 +157,15 @@ public class DownloadRepository {
     }
 
     private void clearData() {
-        executor.execute(() -> {
-            downloadManager.cancel();
-            workManager.pruneWork();
-            setGlobalStatus(DOWNLOAD_PENDING);
-            clearCache();
-        });
+        downloadManager.cancel();
+        workManager.pruneWork();
+        dataStore.setGlobalStatus(DOWNLOAD_PENDING);
+        clearCache();
     }
 
     private void clearCache() {
-        for (File file: context.getExternalCacheDir().listFiles()) {
-            file.delete();
-        }
-    }
-
-    private void setGlobalStatus(int status) {
-        globalStatusDao.updateCurrentStatus(status);
+        Arrays.stream(context.getExternalCacheDir()
+            .listFiles()).forEach(file -> file.delete());
     }
 
     private String getString(int id) {

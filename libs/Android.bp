@@ -1,5 +1,4 @@
-// Copyright (C) 2019 The Android Open Source Project
-//               2021 AOSP-Krypton Project
+// Copyright (C) 2021 AOSP-Krypton Project
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -12,9 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// These are prebuilt java and android libraries needed for
-// WorkManager, Room and RxJava. AOSP prebuilt sdk has only an outdated version of room
-// compiler and it's dependencies which does not support Flowables from RxJava3
+// These are prebuilt java and android libraries needed for WorkManager and RxJava.
 
 android_library_import {
     name: "androidx.lifecycle_lifecycle-reactivestreams-nodeps",
@@ -30,42 +27,6 @@ android_library {
     min_sdk_version: "14",
     sdk_version: "29",
     manifest: "androidx/lifecycle/AndroidManifest.xml",
-}
-
-android_library_import {
-    name: "androidx.room_room-runtime-stable-nodeps",
-    aars: ["androidx/room-runtime/room-runtime-2.3.0.aar"],
-    sdk_version: "current",
-}
-
-android_library {
-    name: "androidx.room_room-runtime-stable",
-    static_libs: [
-        "androidx.room_room-runtime-stable-nodeps",
-        "androidx.room_room-common-stable",
-        "androidx.sqlite_sqlite-framework",
-        "androidx.sqlite_sqlite",
-        "androidx.arch.core_core-runtime",
-    ],
-    min_sdk_version: "14",
-    sdk_version: "current",
-    manifest: "androidx/room-runtime/AndroidManifest.xml",
-}
-
-android_library_import {
-    name: "androidx.room_room-rxjava3-nodeps",
-    aars: ["androidx/room-rxjava/room-rxjava3-2.3.0.aar"],
-    sdk_version: "current",
-}
-
-android_library {
-    name: "androidx.room_room-rxjava3",
-    static_libs: [
-        "androidx.room_room-rxjava3-nodeps",
-    ],
-    min_sdk_version: "14",
-    sdk_version: "current",
-    manifest: "androidx/room-rxjava/AndroidManifest.xml",
 }
 
 android_library_import {
@@ -112,110 +73,4 @@ java_import {
     name: "reactivestreams",
     jars: ["rx/reactive-streams-1.0.3.jar"],
     sdk_version: "current",
-}
-
-java_import {
-    name: "kotlin-stdlib-latest",
-    host_supported: true,
-    jars: ["kotlin/kotlin-stdlib-1.4.31.jar"],
-    sdk_version: "current",
-}
-
-java_import {
-    name: "kotlinx-metadata-jvm-latest",
-    jars: ["kotlin/kotlinx-metadata-jvm-0.2.0.jar"],
-    host_supported: true,
-}
-
-java_import {
-    name: "androidx.room_room-common-stable-nodeps",
-    jars: ["androidx/room/room-common-2.3.0.jar"],
-    sdk_version: "current",
-    host_supported: true,
-}
-
-java_library {
-    name: "androidx.room_room-common-stable",
-    static_libs: [
-        "androidx.room_room-common-stable-nodeps",
-        "androidx.annotation_annotation",
-    ],
-    sdk_version: "current",
-    host_supported: true,
-}
-
-java_import {
-    name: "androidx.room_room-migration-stable-nodeps",
-    jars: ["androidx/room/room-migration-2.3.0.jar"],
-    sdk_version: "current",
-    host_supported: true,
-}
-
-java_library {
-    name: "androidx.room_room-migration-stable",
-    static_libs: [
-        "androidx.room_room-migration-stable-nodeps",
-        "androidx.room_room-common-stable",
-        "kotlin-stdlib-latest",
-        "gson-prebuilt-jar",
-    ],
-    sdk_version: "current",
-    host_supported: true,
-}
-
-java_import {
-    name: "androidx.room_room-compiler-processing-stable-nodeps",
-    jars: ["androidx/room/room-compiler-processing-2.3.0.jar"],
-    sdk_version: "current",
-    host_supported: true,
-}
-
-java_library {
-    name: "androidx.room_room-compiler-processing-stable",
-    static_libs: [
-        "androidx.annotation_annotation",
-        "androidx.room_room-compiler-processing-stable-nodeps",
-        "auto-common",
-        "auto-value-annotations",
-        "guava",
-        "kotlin-stdlib-latest",
-        "kotlinx-metadata-jvm-latest",
-    ],
-    sdk_version: "current",
-    host_supported: true,
-}
-
-java_import_host {
-    name: "androidx.room_room-compiler-stable-nodeps",
-    jars: ["androidx/room/room-compiler-2.3.0.jar"],
-    sdk_version: "current",
-}
-
-java_library_host {
-    name: "androidx.room_room-compiler-stable",
-    static_libs: [
-        "androidx.room_room-common-stable",
-        "androidx.room_room-compiler-processing-stable",
-        "androidx.room_room-compiler-stable-nodeps",
-        "androidx.room_room-migration-stable",
-        "kotlin-stdlib-latest",
-        "auto-common",
-        "auto-value-annotations",
-        "javapoet-prebuilt-jar",
-        "xerial-sqlite-jdbc",
-        "kotlinx-metadata-jvm-latest",
-        "commons-codec",
-        "jetbrains-annotations",
-        "guava",
-    ],
-}
-
-java_plugin {
-    name: "androidx.room_room-compiler-plugin-stable",
-    static_libs: [
-        "androidx.room_room-compiler-stable",
-        "kotlin-reflect"
-    ],
-    processor_class: "androidx.room.RoomProcessor",
-    generates_api: true,
 }

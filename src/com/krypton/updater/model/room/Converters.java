@@ -19,19 +19,8 @@ package com.krypton.updater.model.room;
 import androidx.room.TypeConverter;
 
 import java.util.Date;
-import java.util.UUID;
 
 public class Converters {
-    @TypeConverter
-    public static UUID fromId(String id) {
-        return id == null || id.equals("") ? null : UUID.fromString(id);
-    }
-
-    @TypeConverter
-    public static String uuidToString(UUID id) {
-        return id == null ? "" : id.toString();
-    }
-
     @TypeConverter
     public static Date fromTimeToDate(long time) {
         return new Date(time);

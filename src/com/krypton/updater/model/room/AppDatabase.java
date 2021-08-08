@@ -20,12 +20,9 @@ import androidx.room.Database;
 import androidx.room.RoomDatabase;
 import androidx.room.TypeConverters;
 
-@Database(entities = {ChangelogEntity.class, DownloadStatusEntity.class,
-        GlobalStatusEntity.class},
-    version = 3, exportSchema = false)
+@Database(entities = {ChangelogEntity.class},
+    version = 4, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
     public abstract ChangelogDao getChangelogDao();
-    public abstract DownloadStatusDao getDownloadStatusDao();
-    public abstract GlobalStatusDao getGlobalStatusDao();
 }

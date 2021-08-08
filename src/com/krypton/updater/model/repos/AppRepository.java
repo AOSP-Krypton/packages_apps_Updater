@@ -49,8 +49,6 @@ import android.text.style.StyleSpan;
 import android.util.Log;
 
 import com.krypton.updater.model.room.AppDatabase;
-import com.krypton.updater.model.room.GlobalStatusDao;
-import com.krypton.updater.model.room.GlobalStatusEntity;
 import com.krypton.updater.model.room.ChangelogDao;
 import com.krypton.updater.model.room.ChangelogEntity;
 import com.krypton.updater.model.data.BuildInfo;
@@ -64,7 +62,6 @@ import com.krypton.updater.R;
 import com.krypton.updater.services.UpdateCheckerService;
 import com.krypton.updater.util.Utils;
 
-import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.processors.BehaviorProcessor;
 
 import java.text.SimpleDateFormat;
@@ -89,7 +86,6 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
     private final ExecutorService executor;
     private final AppDatabase database;
     private final ChangelogDao changelogDao;
-    private final GlobalStatusDao globalStatusDao;
     private final BehaviorProcessor<Response> otaResponsePublisher,
         changelogResponsePublisher;
     private final SharedPreferences sharedPrefs;
@@ -114,7 +110,6 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
         this.updateManager = updateManager;
         this.githubApiHelper = githubApiHelper;
         this.dataStore = dataStore;
-        globalStatusDao = database.getGlobalStatusDao();
         changelogDao = database.getChangelogDao();
         alarmManager = context.getSystemService(AlarmManager.class);
         sharedPrefs.registerOnSharedPreferenceChangeListener(this);
@@ -140,8 +135,12 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
         return changelogResponsePublisher;
     }
 
-    public Flowable<GlobalStatusEntity> getCurrentStatusFlowable() {
-        return globalStatusDao.getCurrentStatusFlowable();
+    public BehaviorProcessor<Integer> getGlobalStatusProcessor() {
+        return dataStore.getGlobalStatusProcessor();
+    }
+
+    public BehaviorProcessor<String> getLocalUpgradeFileProcessor() {
+        return dataStore.getLocalUpgradeFileProcessor();
     }
 
     public void fetchBuildInfo() {
@@ -154,18 +153,10 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
             otaResponsePublisher.onNext(response);
             final BuildInfo buildInfo = (BuildInfo) response.getResponseBody();
             if (buildInfo != null) {
-                long date = buildInfo.getDate();
-                GlobalStatusEntity globalStatusEntity = globalStatusDao.getCurrentStatus();
-                if (globalStatusEntity == null) {
-                    globalStatusEntity = new GlobalStatusEntity();
-                }
-                if (globalStatusEntity.buildDate != date) {
-                    globalStatusEntity.entryDate = System.currentTimeMillis();
-                    globalStatusEntity.buildDate = date;
-                }
-                globalStatusEntity.status = DOWNLOAD_PENDING;
+                final long date = buildInfo.getDate();
                 dataStore.updateBuildInfo(buildInfo);
-                globalStatusDao.insert(globalStatusEntity);
+                dataStore.setEntryDate(System.currentTimeMillis());
+                dataStore.setGlobalStatus(DOWNLOAD_PENDING);
             }
             setAlarm();
             return response.getStatus() == NEW_UPDATE;
@@ -218,21 +209,18 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
                 otaResponsePublisher.onNext(empty);
                 changelogResponsePublisher.onNext(empty);
                 changelogDao.clear();
-                database.getDownloadStatusDao().deleteTable();
-                final GlobalStatusEntity entity = globalStatusDao.getCurrentStatus();
-                if (entity != null) {
-                    dataStore.deleteBuildInfo();
-                    globalStatusDao.delete(entity.rowId);
-                }
-                globalStatusDao.insert(new GlobalStatusEntity());
+                dataStore.setLocalUpgradeFileName("");
+                dataStore.deleteDownloadStatus();
+                dataStore.deleteGlobalStatus();
             }
         });
     }
 
     public void resetStatusAndReboot() {
         executor.execute(() -> {
-            globalStatusDao.insert(new GlobalStatusEntity());
-            database.getDownloadStatusDao().deleteTable();
+            dataStore.setLocalUpgradeFileName("");
+            dataStore.deleteDownloadStatus();
+            dataStore.deleteGlobalStatus();
             final PowerManager powerManager = context.getSystemService(PowerManager.class);
             if (powerManager != null) {
                 powerManager.reboot(REBOOT_REQUESTED_BY_DEVICE_OWNER);
@@ -245,33 +233,29 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
             return;
         }
         executor.execute(() -> {
-            final GlobalStatusEntity entity = globalStatusDao.getCurrentStatus();
-            if (entity != null && entity.status == REBOOT_PENDING) {
-                globalStatusDao.insert(new GlobalStatusEntity());
-                database.getDownloadStatusDao().deleteTable();
+            if (dataStore.getGlobalStatus() == REBOOT_PENDING) {
+                dataStore.deleteDownloadStatus();
+                dataStore.deleteGlobalStatus();
             }
         });
     }
 
     private void updateFromDataStore() {
         executor.execute(() -> {
-            final GlobalStatusEntity entity = globalStatusDao.getCurrentStatus();
-            if (entity == null) {
+            final BuildInfo buildInfo = dataStore.getBuildInfo();
+            if (buildInfo == null) {
                 return;
             }
-            if (entity.buildDate > Utils.getBuildDate()) {
+            if (buildInfo.getDate() > Utils.getBuildDate()) {
                 long refreshTimeout =  DAYS.toMillis(sharedPrefs.getInt(
                     REFRESH_INTERVAL_KEY, 7));
-                long timeSinceUpdate = System.currentTimeMillis() - entity.entryDate;
+                long timeSinceUpdate = System.currentTimeMillis() - dataStore.getEntryDate();
                 if (timeSinceUpdate < refreshTimeout) {
-                    final BuildInfo buildInfo = dataStore.getBuildInfo();
-                    if (buildInfo != null) {
-                        otaResponsePublisher.onNext(new Response(buildInfo, NEW_UPDATE));
-                        changelogDao.getChangelogList().stream()
-                            .forEach(cgEntity -> addChangelogToBuilder(stringBuilder,
-                                cgEntity.date, cgEntity.changelog));
-                        changelogResponsePublisher.onNext(new Response(stringBuilder, NEW_CHANGELOG));
-                    }
+                    otaResponsePublisher.onNext(new Response(buildInfo, NEW_UPDATE));
+                    changelogDao.getChangelogList().stream()
+                        .forEach(cgEntity -> addChangelogToBuilder(stringBuilder,
+                            cgEntity.date, cgEntity.changelog));
+                    changelogResponsePublisher.onNext(new Response(stringBuilder, NEW_CHANGELOG));
                 }
             } else {
                 // Stored data is too old, reset to prompt user to do a manual refresh

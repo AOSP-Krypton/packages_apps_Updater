@@ -38,8 +38,7 @@ import android.util.Log;
 
 import androidx.annotation.WorkerThread;
 
-import com.krypton.updater.model.room.AppDatabase;
-import com.krypton.updater.model.room.GlobalStatusDao;
+import com.krypton.updater.model.data.DataStore;
 import com.krypton.updater.R;
 import com.krypton.updater.util.NotificationHelper;
 
@@ -55,8 +54,7 @@ public class UpdateManager {
     private final UpdateEngine updateEngine;
     private final NotificationHelper helper;
     private final UpdateStatus updateStatus;
-    private final AppDatabase database;
-    private final GlobalStatusDao globalStatusDao;
+    private final DataStore dataStore;
     private final BehaviorProcessor<UpdateStatus> updateStatusProcessor;
     private HandlerThread thread;
     private Handler handler;
@@ -123,16 +121,15 @@ public class UpdateManager {
     };
 
     @Inject
-    public UpdateManager(UpdateEngine updateEngine, AppDatabase database,
-            OTAFileManager ofm, NotificationHelper helper) {
+    public UpdateManager(UpdateEngine updateEngine, OTAFileManager ofm,
+            NotificationHelper helper, DataStore dataStore) {
         this.updateEngine = updateEngine;
-        this.database = database;
         this.ofm = ofm;
         this.helper = helper;
+        this.dataStore = dataStore;
         thread = new HandlerThread(TAG, THREAD_PRIORITY_BACKGROUND);
         updateStatus = new UpdateStatus();
         updateStatusProcessor = BehaviorProcessor.create();
-        globalStatusDao = database.getGlobalStatusDao();
         updateEngineReset(); // Cancel any ongoing updates / unbind callbacks we are not aware of
     }
 
@@ -198,7 +195,7 @@ public class UpdateManager {
     }
 
     private void setGlobalStatus(int status) {
-        handler.post(() -> globalStatusDao.updateCurrentStatus(status));
+        handler.post(() -> dataStore.setGlobalStatus(status));
     }
 
     private void updateEngineReset() {

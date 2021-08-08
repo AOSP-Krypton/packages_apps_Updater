@@ -38,9 +38,6 @@ import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
 import com.krypton.updater.model.data.DataStore;
-import com.krypton.updater.model.room.AppDatabase;
-import com.krypton.updater.model.room.DownloadStatusDao;
-import com.krypton.updater.model.room.DownloadStatusEntity;
 import com.krypton.updater.workers.DownloadWorker;
 
 import io.reactivex.rxjava3.subjects.PublishSubject;
@@ -54,18 +51,15 @@ import javax.inject.Singleton;
 public class DownloadManager {
 
     private final Constraints constraints;
-    private final DownloadStatusDao downloadStatusDao;
     private final WorkManager workManager;
     private final DataStore dataStore;
     private final PublishSubject<UUID> uuidSubject;
     private UUID id;
 
     @Inject
-    public DownloadManager(WorkManager workManager,
-            AppDatabase database, DataStore dataStore) {
+    public DownloadManager(WorkManager workManager, DataStore dataStore) {
         this.workManager = workManager;
         this.dataStore = dataStore;
-        downloadStatusDao = database.getDownloadStatusDao();
         constraints = new Constraints.Builder()
             .setRequiredNetworkType(CONNECTED)
             .setRequiresStorageNotLow(true)
@@ -75,24 +69,23 @@ public class DownloadManager {
 
     @WorkerThread
     public void start() {
-        downloadStatusDao.deleteTable();
+        dataStore.deleteDownloadStatus();
         fetchAndEnqueueDownload();
     }
 
     @WorkerThread
     public void pauseOrResume() {
         if (id == null) {
-            id = downloadStatusDao.getDownloadId();
+            id = dataStore.getCurrentDownloadId();
         }
         if (id != null) {
             workManager.cancelWorkById(id);
             id = null;
-            downloadStatusDao.updateStatus(PAUSED);
+            dataStore.updateDownloadStatus(PAUSED);
         } else {
             fetchAndEnqueueDownload();
-            downloadStatusDao.updateStatus(INDETERMINATE);
         }
-        downloadStatusDao.updateDownloadId(id);
+        dataStore.updateDownloadId(id);
     }
 
     @WorkerThread
@@ -100,32 +93,24 @@ public class DownloadManager {
         if (id != null) {
             workManager.cancelWorkById(id);
             id = null;
-            downloadStatusDao.updateDownloadId(null);
+            dataStore.updateDownloadId(null);
         }
-        downloadStatusDao.updateStatus(CANCELLED);
+        dataStore.updateDownloadStatus(CANCELLED);
     }
 
     @WorkerThread
     public boolean isDownloading() {
-        final int status = downloadStatusDao.getStatus();
+        final int status = dataStore.getDownloadStatusCode();
         return status >= INDETERMINATE && status <= PAUSED;
     }
 
     @WorkerThread
     public boolean isPaused() {
-        return downloadStatusDao.getStatus() == PAUSED;
+        return dataStore.getDownloadStatusCode() == PAUSED;
     }
 
     public PublishSubject<UUID> getUUIDSubject() {
         return uuidSubject;
-    }
-
-    @WorkerThread
-    private void resetTable(long size) {
-        final DownloadStatusEntity entity = new DownloadStatusEntity();
-        entity.id = id;
-        entity.fileSize = size;
-        downloadStatusDao.insert(entity);
     }
 
     private OneTimeWorkRequest buildRequest(BuildInfo buildInfo) {
@@ -150,8 +135,8 @@ public class DownloadManager {
         id = downloadRequest.getId();
         workManager.enqueue(downloadRequest);
         uuidSubject.onNext(id);
-        if (downloadStatusDao.getCurrentStatus() == null) {
-            resetTable(buildInfo.getFileSize());
+        if (dataStore.getDownloadStatusCode() == 0) {
+            dataStore.updateDownloadStatus(INDETERMINATE);
         }
     }
 }

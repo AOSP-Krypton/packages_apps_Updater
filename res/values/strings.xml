@@ -61,7 +61,6 @@
     <string name="download_finished">Download finished</string>
     <string name="download_cancelled">Download cancelled</string>
     <string name="invalid_url">URL parsed from json is invalid</string>
-    <string name="database_corrupt">Application database is corrupt</string>
     <string name="click_to_update">Click here to proceed with update installation</string>
     <string name="copy_failed">Copy to Downloads failed</string>
     <string name="md5_check_failed">Md5 verification failed, file is corrupt</string>

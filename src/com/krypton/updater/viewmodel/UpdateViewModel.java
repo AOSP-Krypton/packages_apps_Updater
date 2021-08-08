@@ -75,13 +75,12 @@ public class UpdateViewModel extends AndroidViewModel {
 
     private void observeProgress() {
         final LiveData<UpdateStatus> updateStatusLiveData = LiveDataReactiveStreams
-            .fromPublisher(repository.getUpdateStatusProcessor()
-                .filter(updateStatus -> updateStatus.getStatusCode() != 0));
+            .fromPublisher(repository.getUpdateStatusProcessor());
         progressInfo.addSource(updateStatusLiveData, updateStatus -> {
             final int statusCode = updateStatus.getStatusCode();
             pauseStatus.setValue(statusCode == PAUSED);
             if (viewVisibility.getValue()) {
-                if (statusCode == CANCELLED) {
+                if (statusCode == 0 || statusCode == CANCELLED) {
                     viewVisibility.postValue(false);
                 }
             } else {
@@ -90,11 +89,11 @@ public class UpdateViewModel extends AndroidViewModel {
                 }
             }
             if (controlVisibility.getValue()) {
-                if (statusCode == FINISHED || statusCode == FAILED) {
+                if (statusCode < INDETERMINATE || statusCode > PAUSED) {
                     controlVisibility.postValue(false);
                 }
             } else {
-                if (statusCode != FINISHED && statusCode != FAILED) {
+                if (statusCode >= INDETERMINATE && statusCode <= PAUSED) {
                     controlVisibility.postValue(true);
                 }
             }

@@ -40,7 +40,7 @@ public class AppViewModel extends AndroidViewModel {
     private Disposable disposable;
     private MutableLiveData<Boolean> refreshButtonVisibility, localUpgradeButtonVisibility,
         downloadButtonVisibility, updateButtonVisibility, rebootButtonVisibility;
-    private MutableLiveData<String> localUpgradeFileName;
+    private LiveData<String> localUpgradeFileName;
     private LiveData<Response> otaResponse, changelogResponse;
 
     public AppViewModel(Application application) {
@@ -124,18 +124,17 @@ public class AppViewModel extends AndroidViewModel {
     }
 
     private void observe() {
-        disposable = repository.getCurrentStatusFlowable()
+        disposable = repository.getGlobalStatusProcessor()
             .observeOn(AndroidSchedulers.mainThread())
-            .filter(entity -> entity != null)
-            .subscribe(entity -> {
-                final int status = entity.status;
+            .subscribe(status -> {
                 final boolean statusUnknown = status == 0;
                 refreshButtonVisibility.setValue(statusUnknown);
                 localUpgradeButtonVisibility.setValue(statusUnknown);
                 downloadButtonVisibility.setValue(status == DOWNLOAD_PENDING);
                 updateButtonVisibility.setValue(status == UPDATE_PENDING);
                 rebootButtonVisibility.setValue(status == REBOOT_PENDING);
-                localUpgradeFileName.setValue(entity.localUpgradeFile);
             });
+        localUpgradeFileName = LiveDataReactiveStreams.fromPublisher(
+            repository.getLocalUpgradeFileProcessor());
     }
 }

@@ -44,20 +44,27 @@ public class Constants {
     // Database
     public static final String DATABASE = "updater_database";
     public static final String TABLE_CHANGELOG = "table_changelog";
-    public static final String TABLE_GLOBAL_STATUS = "table_global_status";
-    public static final String TABLE_DOWNLOAD_INFO = "table_download_info";
+
+    // SharedPreferences keys
+    public static final String DOWNLOAD_ID = "download_id";
+    public static final String DOWNLOAD_STATUS = "download_status";
+    public static final String DOWNLOADED_PERCENT = "downloaded_percent";
+    public static final String DOWNLOADED_SIZE = "downloaded_size";
+    public static final String ENTRY_DATE = "entry_date";
+    public static final String GLOBAL_STATUS = "global_status";
+    public static final String LOCAL_UPGRADE_FILE = "local_upgrade_file";
 
     // Download / Update status
-    public static final int DOWNLOAD_PENDING = 300;
     public static final int CANCELLED = 301;
     public static final int FAILED = 302;
     public static final int INDETERMINATE = 303;
     public static final int DOWNLOADING = 304;
-    public static final int PAUSED = 305;
-    public static final int FINISHED = 306;
-    public static final int UPDATE_PENDING = 307;
-    public static final int UPDATING = 308;
-    public static final int REBOOT_PENDING = 320;
+    public static final int UPDATING = 305;
+    public static final int PAUSED = 306;
+    public static final int FINISHED = 307;
+    public static final int DOWNLOAD_PENDING = 308;
+    public static final int UPDATE_PENDING = 309;
+    public static final int REBOOT_PENDING = 310;
 
     // Update intent actions
     public static final String ACION_START_UPDATE = "com.krypton.updater.START_UPDATE";

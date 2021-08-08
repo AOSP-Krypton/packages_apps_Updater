@@ -295,9 +295,9 @@ public class UpdaterActivity extends AppCompatActivity {
             });
         viewModel.getLocalUpgradeFileName().observe(this,
             fileName -> {
-                Utils.setVisibile(fileName != null, localUpgradeFileName);
                 localUpgradeFileName.setText(fileName);
-                Utils.setVisibile(fileName == null, currentStatus);
+                Utils.setVisibile(!fileName.isEmpty(), localUpgradeFileName);
+                Utils.setVisibile(fileName.isEmpty(), currentStatus);
             });
     }
 
