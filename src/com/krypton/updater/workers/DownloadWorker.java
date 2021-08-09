@@ -58,7 +58,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class DownloadWorker extends Worker {
     private static final String TAG = "DownloadWorker";
-    private static final int UPDATER_DOWNLOAD_NOTIF_ID = 1003;
+    private static final int UPDATE_DOWNLOAD_NOTIF_ID = 1002;
     private static final int BUF_SIZE = 8192; // 8 KB
     private final Context context;
     private final OTAFileManager ofm;
@@ -214,7 +214,7 @@ public class DownloadWorker extends Worker {
     }
 
     private ForegroundInfo getForegroundInfo(int progress, boolean indeterminate) {
-        return new ForegroundInfo(UPDATER_DOWNLOAD_NOTIF_ID, notificationBuilder
+        return new ForegroundInfo(UPDATE_DOWNLOAD_NOTIF_ID, notificationBuilder
             .setProgress(100, progress, indeterminate)
             .build());
     }

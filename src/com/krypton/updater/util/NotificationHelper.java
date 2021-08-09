@@ -41,8 +41,8 @@ import javax.inject.Singleton;
 
 @Singleton
 public class NotificationHelper {
-    private static final int UPDATER_CANCELLABLE_NOTIF_ID = 1001;
-    private static final int ACTIVITY_REQUEST_CODE = 1002;
+    private static final int ACTIVITY_REQUEST_CODE = 1000;
+    private static final int UPDATER_NOTIF_ID = 1001;
     private final String TAG;
     private final Context context;
     private final NotificationManager manager;
@@ -61,7 +61,7 @@ public class NotificationHelper {
     }
 
     public synchronized void showCancellableNotification(int titleId, int descId) {
-        NotificationManagerCompat.from(context).notify(UPDATER_CANCELLABLE_NOTIF_ID,
+        NotificationManagerCompat.from(context).notify(UPDATER_NOTIF_ID,
             getDefaultBuilder()
                 .setContentTitle(context.getString(titleId))
                 .setContentText(context.getString(descId))
@@ -70,7 +70,7 @@ public class NotificationHelper {
     }
 
     public void removeCancellableNotifications() {
-        manager.cancel(UPDATER_CANCELLABLE_NOTIF_ID);
+        manager.cancelAll();
     }
 
     public void onlyNotify(int titleId, int msgId) {
