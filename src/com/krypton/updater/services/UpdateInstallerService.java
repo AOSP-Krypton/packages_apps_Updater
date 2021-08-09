@@ -35,8 +35,6 @@ import com.krypton.updater.UpdaterApplication;
 import javax.inject.Inject;
 
 public class UpdateInstallerService extends Service {
-
-    private static final String TAG = "UpdateInstallerService";
     private static final String WL_TAG = "UpdateInstallerService.WakeLock";
     private static final int UPDATE_INSTALLATION_NOTIF_ID = 1002;
     private IBinder binder;
