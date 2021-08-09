@@ -212,6 +212,7 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
                 dataStore.setLocalUpgradeFileName("");
                 dataStore.deleteDownloadStatus();
                 dataStore.deleteGlobalStatus();
+                updateManager.userInitiatedReset();
             }
         });
     }

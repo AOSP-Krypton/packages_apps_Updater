@@ -53,11 +53,11 @@ public class UpdateManager {
     private final OTAFileManager ofm;
     private final UpdateEngine updateEngine;
     private final NotificationHelper helper;
-    private final UpdateStatus updateStatus;
     private final DataStore dataStore;
     private final BehaviorProcessor<UpdateStatus> updateStatusProcessor;
     private HandlerThread thread;
     private Handler handler;
+    private UpdateStatus updateStatus;
 
     private final UpdateEngineCallback updateEngineCallback = new UpdateEngineCallback() {
         @Override
@@ -192,6 +192,12 @@ public class UpdateManager {
     public boolean isUpdating() {
         final int statusCode = getCurrentStatusCode();
         return statusCode >= INDETERMINATE && statusCode <= PAUSED;
+    }
+
+    public void userInitiatedReset() {
+        reset();
+        updateStatus = new UpdateStatus();
+        updateStatusProcessor.onNext(updateStatus);
     }
 
     private void setGlobalStatus(int status) {
