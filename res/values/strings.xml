@@ -89,7 +89,7 @@
     <string name="rootfs_verification_failed">New rootfs verification error, you may retry</string>
     <string name="copying">Copying file to internal directory</string>
     <string name="do_not_close">Please do not close the app until this is over</string>
-    <string name="update_in_progress">OTA update is running</string>
+    <string name="update_in_progress">Installing OTA update</string>
     <string name="magisk_not_installed">Magisk is not installed or is hidden</string>
 
     <!-- Updater Settings -->
