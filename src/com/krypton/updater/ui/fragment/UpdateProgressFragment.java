@@ -16,6 +16,7 @@
 
 package com.krypton.updater.ui.fragment;
 
+import static android.content.Context.BIND_AUTO_CREATE;
 import static android.os.UserHandle.SYSTEM;
 import static android.view.HapticFeedbackConstants.KEYBOARD_PRESS;
 
@@ -95,7 +96,7 @@ public class UpdateProgressFragment extends Fragment {
     public void onStart() {
         super.onStart();
         context.bindServiceAsUser(new Intent(context, UpdateInstallerService.class),
-            connection, 0, SYSTEM);
+            connection, BIND_AUTO_CREATE, SYSTEM);
     }
 
     @Override
