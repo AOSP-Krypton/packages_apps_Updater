@@ -25,7 +25,6 @@ import static android.graphics.Typeface.BOLD;
 import static android.os.PowerManager.REBOOT_REQUESTED_BY_DEVICE_OWNER;
 import static android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE;
 import static com.krypton.updater.util.Constants.DOWNLOAD_PENDING;
-import static com.krypton.updater.util.Constants.CHANGELOG_UP_TO_DATE;
 import static com.krypton.updater.util.Constants.FETCHING_CHANGELOG;
 import static com.krypton.updater.util.Constants.FINISHED;
 import static com.krypton.updater.util.Constants.NEW_CHANGELOG;
@@ -182,19 +181,20 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
                 )
             );
             final int status = response.getStatus();
-            if (status == NEW_CHANGELOG || status == CHANGELOG_UP_TO_DATE) {
+            if (status == NEW_CHANGELOG) {
                 final TreeMap<Date, Changelog> mappedChangelog = (TreeMap) response.getResponseBody();
                 if (status == NEW_CHANGELOG) {
                     changelogDao.clear();
                     changelogDao.insert(mappedChangelog.values().stream()
                         .map(changelog -> changelog.toEntity())
                         .collect(Collectors.toList()));
+                    stringBuilder.clear();
+                    mappedChangelog.values().stream()
+                        .forEach(changelog -> addChangelogToBuilder(stringBuilder,
+                            changelog.getDate(), changelog.getChangelog()));
+                    changelogResponsePublisher.onNext(new Response(stringBuilder, NEW_CHANGELOG));
                 }
-                stringBuilder.clear();
-                mappedChangelog.values().stream()
-                    .forEach(changelog -> addChangelogToBuilder(stringBuilder,
-                        changelog.getDate(), changelog.getChangelog()));
-                changelogResponsePublisher.onNext(new Response(stringBuilder, NEW_CHANGELOG));
+
             } else {
                 changelogResponsePublisher.onNext(response);
             }

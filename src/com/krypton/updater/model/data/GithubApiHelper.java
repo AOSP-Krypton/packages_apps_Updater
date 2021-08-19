@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.model.data;;
+package com.krypton.updater.model.data;
 
 import static com.krypton.updater.util.Constants.BUILD_DATE;
 import static com.krypton.updater.util.Constants.BUILD_NAME;
@@ -101,7 +101,6 @@ public class GithubApiHelper {
                     // There is only an ota json present
                     return new Response(CHANGELOG_UNAVAILABLE);
                 }
-                final TreeMap<Date, Changelog> newMap = new TreeMap<>();
                 for (int i = 0; i < length; i++) {
                     final JSONObject blobJSONObj = treeJSON.getJSONObject(i);
                     final String path = blobJSONObj.getString("path");
@@ -124,15 +123,15 @@ public class GithubApiHelper {
                                 if (!listUpdated) {
                                     listUpdated = true;
                                 }
+                                currentMap.put(changelogDate, new Changelog()
+                                    .setDate(changelogDate)
+                                    .setChangelog(Utils.parseRawContent(url))
+                                    .setSHA(sha));
                             }
-                            newMap.put(changelogDate, new Changelog()
-                                .setDate(changelogDate)
-                                .setChangelog(Utils.parseRawContent(url))
-                                .setSHA(sha));
                         }
                     }
                 }
-                return new Response(newMap, listUpdated ?
+                return new Response(currentMap, listUpdated ?
                     NEW_CHANGELOG : CHANGELOG_UP_TO_DATE);
             } catch(IllegalArgumentException|JSONException e) {
                 Log.e(TAG, "Exception when parsing json", e);

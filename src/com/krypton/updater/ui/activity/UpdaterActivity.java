@@ -27,6 +27,7 @@ import static android.view.HapticFeedbackConstants.KEYBOARD_PRESS;
 import static android.widget.Toast.LENGTH_SHORT;
 import static com.krypton.updater.util.Constants.ACION_START_UPDATE;
 import static com.krypton.updater.util.Constants.CHANGELOG_UNAVAILABLE;
+import static com.krypton.updater.util.Constants.CHANGELOG_UP_TO_DATE;
 import static com.krypton.updater.util.Constants.FETCH_CHANGELOG_FAILED;
 import static com.krypton.updater.util.Constants.FETCHING_CHANGELOG;
 import static com.krypton.updater.util.Constants.REFRESH_FAILED;
@@ -344,6 +345,7 @@ public class UpdaterActivity extends AppCompatActivity {
                 changelogText.setText(R.string.unable_to_fetch_changelog);
                 break;
             case CHANGELOG_UNAVAILABLE:
+            case CHANGELOG_UP_TO_DATE:
                 Utils.setVisibile(false, refreshProgress);
                 changelogText.setText(R.string.changelog_unavailable);
                 break;
@@ -351,7 +353,6 @@ public class UpdaterActivity extends AppCompatActivity {
                 Utils.setVisibile(false, refreshProgress);
                 changelogText.setText((SpannableStringBuilder) response.getResponseBody(),
                     TextView.BufferType.SPANNABLE);
-                break;
         }
     }
 
