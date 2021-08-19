@@ -91,6 +91,7 @@
     <string name="do_not_close">Please do not close the app until this is over</string>
     <string name="update_in_progress">Installing OTA update</string>
     <string name="magisk_not_installed">Magisk is not installed or is hidden</string>
+    <string name="update_finished_notif_desc">Click here to know what to do next</string>
 
     <!-- Updater Settings -->
     <string name="updater_settings_title">Updater Settings</string>

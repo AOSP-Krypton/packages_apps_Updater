@@ -18,6 +18,9 @@ package com.krypton.updater.services;
 
 import static android.os.PowerManager.PARTIAL_WAKE_LOCK;
 import static com.krypton.updater.util.Constants.ACION_START_UPDATE;
+import static com.krypton.updater.util.Constants.CANCELLED;
+import static com.krypton.updater.util.Constants.FAILED;
+import static com.krypton.updater.util.Constants.FINISHED;
 
 import android.app.Service;
 import android.content.Intent;
@@ -32,6 +35,8 @@ import com.krypton.updater.R;
 import com.krypton.updater.util.NotificationHelper;
 import com.krypton.updater.UpdaterApplication;
 
+import io.reactivex.rxjava3.disposables.Disposable;
+
 import javax.inject.Inject;
 
 public class UpdateInstallerService extends Service {
@@ -44,6 +49,7 @@ public class UpdateInstallerService extends Service {
     private WakeLock wakeLock;
     private UpdateRepository repository;
     private NotificationHelper notificationHelper;
+    private Disposable disposable;
     private boolean updateStarted, updatePaused;
 
     @Inject
@@ -66,6 +72,14 @@ public class UpdateInstallerService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && intent.getAction().equals(ACION_START_UPDATE)) {
             startUpdate();
+            disposable = repository.getUpdateStatusProcessor()
+                .map(status -> status.getStatusCode())
+                .filter(code -> code != 0)
+                .subscribe(code -> {
+                    if (code == FINISHED || code == CANCELLED || code == FAILED) {
+                        stopSelf();
+                    }
+                });
         }
         return START_STICKY;
     }
@@ -77,6 +91,9 @@ public class UpdateInstallerService extends Service {
 
     @Override
     public void onDestroy() {
+        if (disposable != null && !disposable.isDisposed()) {
+            disposable.dispose();
+        }
         stopForeground(true);
         releaseWakeLock();
     }

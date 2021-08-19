@@ -25,7 +25,6 @@ import static com.krypton.updater.util.Constants.UPDATE_PENDING;
 import static com.krypton.updater.util.Constants.UPDATING;
 
 import android.content.Context;
-import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
 
@@ -38,7 +37,6 @@ import com.krypton.updater.model.data.ProgressInfo;
 import com.krypton.updater.model.data.UpdateManager;
 import com.krypton.updater.model.data.UpdateStatus;
 import com.krypton.updater.R;
-import com.krypton.updater.services.UpdateInstallerService;
 
 import io.reactivex.rxjava3.processors.BehaviorProcessor;
 
@@ -125,11 +123,9 @@ public class UpdateRepository {
                 break;
             case FINISHED:
                 status = getString(R.string.update_finished);
-                stopUpdaterService();
                 break;
             case FAILED:
                 status = getString(R.string.update_failed);
-                stopUpdaterService();
         }
         status = String.format("%s\t\t%d%%", status, updateStatus.getProgress());
         return new ProgressInfo()
@@ -137,10 +133,6 @@ public class UpdateRepository {
             .setIndeterminate(updateStatus.getStatusCode() == INDETERMINATE)
             .setExtras(String.format("%s %d/2", getString(R.string.step), updateStatus.getStep()))
             .setStatus(status);
-    }
-
-    private void stopUpdaterService() {
-        context.stopServiceAsUser(new Intent(context, UpdateInstallerService.class), SYSTEM);
     }
 
     private String getString(int id) {

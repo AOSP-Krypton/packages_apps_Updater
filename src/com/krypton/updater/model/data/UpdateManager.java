@@ -84,6 +84,9 @@ public class UpdateManager {
                 case UPDATED_NEED_REBOOT:
                     // Ready for reboot
                     setGlobalStatus(REBOOT_PENDING);
+                    helper.onlyNotify(R.string.update_finished,
+                        R.string.update_finished_notif_desc);
+                    thread.quitSafely();
                     break;
                 default:
                     // Log unhandled cases
