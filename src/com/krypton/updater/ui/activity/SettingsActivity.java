@@ -17,9 +17,7 @@
 package com.krypton.updater.ui.activity;
 
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.krypton.updater.R;
@@ -30,8 +28,7 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ActionBar actionBar = getSupportActionBar();
-        actionBar.setTitle(R.string.updater_settings_title);
+        getSupportActionBar().setTitle(R.string.updater_settings_title);
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
                 .setReorderingAllowed(true)
