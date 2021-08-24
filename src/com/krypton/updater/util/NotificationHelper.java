@@ -21,6 +21,7 @@ import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.widget.Toast.LENGTH_SHORT;
 import static androidx.core.app.NotificationCompat.PRIORITY_DEFAULT;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -60,9 +61,12 @@ public class NotificationHelper {
             ACTIVITY_REQUEST_CODE, intent, 0);
     }
 
+    public void notify(int id, Notification notif) {
+        NotificationManagerCompat.from(context).notify(id, notif);
+    }
+
     public synchronized void showCancellableNotification(int titleId, int descId) {
-        NotificationManagerCompat.from(context).notify(UPDATER_NOTIF_ID,
-            getDefaultBuilder()
+        notify(UPDATER_NOTIF_ID, getDefaultBuilder()
                 .setContentTitle(context.getString(titleId))
                 .setContentText(context.getString(descId))
                 .setAutoCancel(true)

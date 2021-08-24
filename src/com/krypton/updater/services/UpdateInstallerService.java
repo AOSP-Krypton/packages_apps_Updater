@@ -30,6 +30,8 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 
+import androidx.core.app.NotificationCompat.Builder;
+
 import com.krypton.updater.model.repos.UpdateRepository;
 import com.krypton.updater.R;
 import com.krypton.updater.util.NotificationHelper;
@@ -47,6 +49,7 @@ public class UpdateInstallerService extends Service {
     private WakeLock wakeLock;
     private UpdateRepository repository;
     private NotificationHelper notificationHelper;
+    private Builder notificationBuilder;
     private Disposable disposable;
     private boolean updateStarted, updatePaused;
 
@@ -54,6 +57,9 @@ public class UpdateInstallerService extends Service {
     void setDependencies(UpdateRepository repository, NotificationHelper notificationHelper) {
         this.repository = repository;
         this.notificationHelper = notificationHelper;
+        notificationBuilder = notificationHelper.getDefaultBuilder()
+            .setNotificationSilent()
+            .setOngoing(true);
     }
 
     @Override
@@ -71,11 +77,19 @@ public class UpdateInstallerService extends Service {
         if (intent != null && intent.getAction().equals(ACION_START_UPDATE)) {
             startUpdate();
             disposable = repository.getUpdateStatusProcessor()
-                .map(status -> status.getStatusCode())
-                .filter(code -> code != 0)
-                .subscribe(code -> {
+                .filter(status -> status.getStatusCode() != 0)
+                .subscribe(status -> {
+                    final int code = status.getStatusCode();
                     if (code == FINISHED || code == CANCELLED || code == FAILED) {
                         stopSelf();
+                    } else {
+                        final int progress = status.getProgress();
+                        notificationHelper.notify(UPDATE_INSTALLATION_NOTIF_ID,
+                            notificationBuilder.setContentTitle(
+                                    getUpdateStepString(status.getStep()))
+                                .setContentText(String.valueOf(progress) + "%")
+                                .setProgress(100, progress, false)
+                                .build());
                     }
                 });
         }
@@ -141,10 +155,17 @@ public class UpdateInstallerService extends Service {
 
     private void startForeground() {
         startForeground(UPDATE_INSTALLATION_NOTIF_ID,
-            notificationHelper.getDefaultBuilder()
-                .setContentTitle(getString(R.string.update_in_progress))
-                .setOngoing(true)
-                .build());
+            notificationBuilder.setContentTitle(getString(
+                R.string.update_in_progress)).build());
+    }
+
+    private String getUpdateStepString(int step) {
+        if (step == 1) {
+            return getString(R.string.processing_payload);
+        } else if (step == 2) {
+            return getString(R.string.applying_update);
+        }
+        return null;
     }
 
     public final class ServiceBinder extends Binder {
