@@ -99,4 +99,8 @@
     <string name="theme_settings_summary">Select theme for the app</string>
     <string name="theme_chooser_dialog_title">Select theme</string>
     <string name="refresh_interval_settings_title">Update check interval (days)</string>
+
+    <!-- Low battery message -->
+    <string name="battery_low">Battery is low in charge</string>
+    <string name="plug_in_charger">Plug in the charger to proceed</string>
 </resources>

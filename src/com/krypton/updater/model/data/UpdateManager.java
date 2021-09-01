@@ -19,6 +19,7 @@ package com.krypton.updater.model.data;;
 import static android.os.Process.THREAD_PRIORITY_BACKGROUND;
 import static android.os.UpdateEngine.ErrorCodeConstants.*;
 import static android.os.UpdateEngine.UpdateStatusConstants.*;
+import static com.krypton.updater.util.Constants.BATTERY_LOW;
 import static com.krypton.updater.util.Constants.INDETERMINATE;
 import static com.krypton.updater.util.Constants.UPDATE_PENDING;
 import static com.krypton.updater.util.Constants.UPDATING;
@@ -31,6 +32,7 @@ import static com.krypton.updater.util.Constants.FAILED;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.os.ServiceSpecificException;
 import android.os.UpdateEngine;
 import android.os.UpdateEngineCallback;
@@ -55,9 +57,11 @@ public class UpdateManager {
     private final NotificationHelper helper;
     private final DataStore dataStore;
     private final BehaviorProcessor<UpdateStatus> updateStatusProcessor;
+    private final BatteryMonitor batteryMonitor;
     private HandlerThread thread;
-    private Handler handler;
+    private Handler bgHandler, mainHandler;
     private UpdateStatus updateStatus;
+    private boolean batteryOkay;
 
     private final UpdateEngineCallback updateEngineCallback = new UpdateEngineCallback() {
         @Override
@@ -125,26 +129,41 @@ public class UpdateManager {
 
     @Inject
     public UpdateManager(UpdateEngine updateEngine, OTAFileManager ofm,
-            NotificationHelper helper, DataStore dataStore) {
+            NotificationHelper helper, DataStore dataStore,
+            BatteryMonitor batteryMonitor) {
         this.updateEngine = updateEngine;
         this.ofm = ofm;
         this.helper = helper;
         this.dataStore = dataStore;
+        this.batteryMonitor = batteryMonitor;
         thread = new HandlerThread(TAG, THREAD_PRIORITY_BACKGROUND);
         updateStatus = new UpdateStatus();
         updateStatusProcessor = BehaviorProcessor.create();
         updateEngineReset(); // Cancel any ongoing updates / unbind callbacks we are not aware of
+        batteryMonitor.getBatteryOkayProcessor().subscribe(status -> {
+            batteryOkay = status;
+            if (isUpdating()) {
+                pause(true);
+            }
+        });
+        mainHandler = new Handler(Looper.getMainLooper());
     }
 
     @WorkerThread
     public void start() {
+        if (!batteryOkay) {
+            helper.notifyOrToast(R.string.battery_low,
+                R.string.plug_in_charger, mainHandler);
+            updateStatusProcessor.onNext(updateStatus.setStatusCode(BATTERY_LOW));
+            return;
+        }
         reset(); // Reset update engine whenever a new update is applied
         if (thread.getState() == Thread.State.TERMINATED) {
             // Create a new thread if the current one is terminated
             thread = new HandlerThread(TAG, THREAD_PRIORITY_BACKGROUND);
         }
         thread.start();
-        handler = new Handler(thread.getLooper());
+        bgHandler = new Handler(thread.getLooper());
         updateEngine.setPerformanceMode(true);
         final PayloadInfo payloadInfo = new PayloadInfo();
         payloadInfo.extractPayloadInfo(ofm.getOTAFileUri());
@@ -153,7 +172,7 @@ public class UpdateManager {
             return;
         }
         updateStatusProcessor.onNext(updateStatus.setStatusCode(INDETERMINATE));
-        updateEngine.bind(updateEngineCallback, handler);
+        updateEngine.bind(updateEngineCallback, bgHandler);
         try {
             updateEngine.applyPayload(payloadInfo.getFilePath(),
                 payloadInfo.getOffset(), payloadInfo.getSize(), payloadInfo.getHeader());
@@ -169,6 +188,12 @@ public class UpdateManager {
                 updateEngine.suspend();
                 updateStatusProcessor.onNext(updateStatus.setStatusCode(PAUSED));
             } else {
+                if (!batteryOkay) {
+                    helper.notifyOrToast(R.string.battery_low,
+                        R.string.plug_in_charger, mainHandler);
+                    updateStatusProcessor.onNext(updateStatus.setStatusCode(BATTERY_LOW));
+                    return;
+                }
                 updateEngine.resume();
                 updateStatusProcessor.onNext(updateStatus.setStatusCode(INDETERMINATE));
             }
@@ -204,7 +229,7 @@ public class UpdateManager {
     }
 
     private void setGlobalStatus(int status) {
-        handler.post(() -> dataStore.setGlobalStatus(status));
+        bgHandler.post(() -> dataStore.setGlobalStatus(status));
     }
 
     private void updateEngineReset() {
@@ -228,7 +253,7 @@ public class UpdateManager {
         updateStatusProcessor.onNext(updateStatus.setStatusCode(FAILED));
         setGlobalStatus(UPDATE_PENDING);
         reset();
-        helper.notifyOrToast(R.string.update_failed, msgId, handler);
+        helper.notifyOrToast(R.string.update_failed, msgId, mainHandler);
         thread.quitSafely();
     }
 }

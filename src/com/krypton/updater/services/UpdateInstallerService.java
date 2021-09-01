@@ -18,6 +18,7 @@ package com.krypton.updater.services;
 
 import static android.os.PowerManager.PARTIAL_WAKE_LOCK;
 import static com.krypton.updater.util.Constants.ACION_START_UPDATE;
+import static com.krypton.updater.util.Constants.BATTERY_LOW;
 import static com.krypton.updater.util.Constants.CANCELLED;
 import static com.krypton.updater.util.Constants.FAILED;
 import static com.krypton.updater.util.Constants.FINISHED;
@@ -80,7 +81,8 @@ public class UpdateInstallerService extends Service {
                 .filter(status -> status.getStatusCode() != 0)
                 .subscribe(status -> {
                     final int code = status.getStatusCode();
-                    if (code == FINISHED || code == CANCELLED || code == FAILED) {
+                    if (code == BATTERY_LOW || code == FINISHED ||
+                            code == CANCELLED || code == FAILED) {
                         stopForeground(STOP_FOREGROUND_REMOVE);
                         releaseWakeLock();
                     } else {

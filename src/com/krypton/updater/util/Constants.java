@@ -55,6 +55,7 @@ public class Constants {
     public static final String LOCAL_UPGRADE_FILE = "local_upgrade_file";
 
     // Download / Update status
+    public static final int BATTERY_LOW = 300;
     public static final int CANCELLED = 301;
     public static final int FAILED = 302;
     public static final int INDETERMINATE = 303;
