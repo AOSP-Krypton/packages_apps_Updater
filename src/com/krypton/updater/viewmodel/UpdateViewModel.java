@@ -16,6 +16,7 @@
 
 package com.krypton.updater.viewmodel;
 
+import static com.krypton.updater.util.Constants.BATTERY_LOW;
 import static com.krypton.updater.util.Constants.INDETERMINATE;
 import static com.krypton.updater.util.Constants.PAUSED;
 import static com.krypton.updater.util.Constants.CANCELLED;
@@ -75,7 +76,8 @@ public class UpdateViewModel extends AndroidViewModel {
 
     private void observeProgress() {
         final LiveData<UpdateStatus> updateStatusLiveData = LiveDataReactiveStreams
-            .fromPublisher(repository.getUpdateStatusProcessor());
+            .fromPublisher(repository.getUpdateStatusProcessor()
+                .filter(updateStatus -> updateStatus.getStatusCode() != BATTERY_LOW));
         progressInfo.addSource(updateStatusLiveData, updateStatus -> {
             final int statusCode = updateStatus.getStatusCode();
             pauseStatus.setValue(statusCode == PAUSED);
