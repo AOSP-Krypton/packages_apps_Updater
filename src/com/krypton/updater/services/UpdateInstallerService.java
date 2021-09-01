@@ -81,7 +81,8 @@ public class UpdateInstallerService extends Service {
                 .subscribe(status -> {
                     final int code = status.getStatusCode();
                     if (code == FINISHED || code == CANCELLED || code == FAILED) {
-                        stopSelf();
+                        stopForeground(STOP_FOREGROUND_REMOVE);
+                        releaseWakeLock();
                     } else {
                         final int progress = status.getProgress();
                         notificationHelper.notify(UPDATE_INSTALLATION_NOTIF_ID,
@@ -106,7 +107,6 @@ public class UpdateInstallerService extends Service {
         if (disposable != null && !disposable.isDisposed()) {
             disposable.dispose();
         }
-        stopForeground(true);
         releaseWakeLock();
     }
 
@@ -122,7 +122,7 @@ public class UpdateInstallerService extends Service {
             updatePaused = !updatePaused;
             if (updatePaused) {
                 releaseWakeLock();
-                stopForeground(true);
+                stopForeground(STOP_FOREGROUND_REMOVE);
             } else {
                 acquireWakeLock();
                 startForeground();
@@ -133,7 +133,7 @@ public class UpdateInstallerService extends Service {
 
     public void cancelUpdate() {
         if (updateStarted) {
-            stopForeground(true);
+            stopForeground(STOP_FOREGROUND_REMOVE);
             releaseWakeLock();
             repository.cancelUpdate();
             updatePaused = false;
