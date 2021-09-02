@@ -59,11 +59,11 @@ import com.krypton.updater.util.Utils;
 import io.reactivex.rxjava3.processors.BehaviorProcessor;
 
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.Date;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.TreeMap;
 
@@ -158,9 +158,8 @@ public class AppRepository {
                 return;
             }
             changelogResponsePublisher.onNext(new Response(FETCHING_CHANGELOG));
-            final List<ChangelogEntity> currentList = changelogDao.getChangelogList();
             final Response response = githubApiHelper.parseChangelogInfo(
-                new TreeMap<>(currentList.stream()
+                new TreeMap<>(changelogDao.getChangelogList().stream()
                     .collect(Collectors.toMap(entity -> entity.date,
                         entity -> Changelog.from(entity)))
                 )
@@ -170,13 +169,13 @@ public class AppRepository {
                 final TreeMap<Date, Changelog> mappedChangelog = (TreeMap) response.getResponseBody();
                 if (status == NEW_CHANGELOG) {
                     changelogDao.clear();
-                    changelogDao.insert(mappedChangelog.values().stream()
+                    final Collection<Changelog> collection = mappedChangelog.values();
+                    changelogDao.insert(collection.stream()
                         .map(changelog -> changelog.toEntity())
                         .collect(Collectors.toList()));
                     stringBuilder.clear();
-                    mappedChangelog.values().stream()
-                        .forEach(changelog -> addChangelogToBuilder(stringBuilder,
-                            changelog.getDate(), changelog.getChangelog()));
+                    collection.stream().forEach(changelog -> addChangelogToBuilder(
+                        stringBuilder, changelog.getDate(), changelog.getChangelog()));
                     changelogResponsePublisher.onNext(new Response(stringBuilder, NEW_CHANGELOG));
                 }
 
