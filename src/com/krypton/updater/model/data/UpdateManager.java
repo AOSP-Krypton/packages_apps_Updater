@@ -61,7 +61,7 @@ public class UpdateManager {
     private HandlerThread thread;
     private Handler bgHandler, mainHandler;
     private UpdateStatus updateStatus;
-    private boolean batteryOkay;
+    private boolean batteryOkay, isUpdating;
 
     private final UpdateEngineCallback updateEngineCallback = new UpdateEngineCallback() {
         @Override
@@ -82,10 +82,12 @@ public class UpdateManager {
                     setGlobalStatus(UPDATING);
                     break;
                 case DOWNLOADING:
+                    isUpdating = true;
                 case FINALIZING:
                     updateStatusProcessor.onNext(updateStatus.setProgress((int) (percent*100)));
                     break;
                 case UPDATED_NEED_REBOOT:
+                    isUpdating = false;
                     // Ready for reboot
                     setGlobalStatus(REBOOT_PENDING);
                     helper.onlyNotify(R.string.update_finished,
@@ -204,6 +206,7 @@ public class UpdateManager {
 
     @WorkerThread
     public void cancel() {
+        isUpdating = false;
         updateEngineReset();
         updateStatusProcessor.onNext(updateStatus.setStatusCode(CANCELLED));
         thread.quitSafely();
@@ -218,8 +221,7 @@ public class UpdateManager {
     }
 
     public boolean isUpdating() {
-        final int statusCode = getCurrentStatusCode();
-        return statusCode >= INDETERMINATE && statusCode <= PAUSED;
+        return isUpdating;
     }
 
     public void userInitiatedReset() {
