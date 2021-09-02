@@ -127,7 +127,6 @@ public class UpdateRepository {
             case FAILED:
                 status = getString(R.string.update_failed);
         }
-        status = String.format("%s\t\t%d%%", status, updateStatus.getProgress());
         return new ProgressInfo()
             .setProgress(updateStatus.getProgress())
             .setIndeterminate(updateStatus.getStatusCode() == INDETERMINATE)

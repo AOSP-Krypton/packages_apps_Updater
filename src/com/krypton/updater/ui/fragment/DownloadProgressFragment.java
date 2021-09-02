@@ -41,11 +41,11 @@ public class DownloadProgressFragment extends Fragment {
     private DownloadViewModel viewModel;
     private View rootView;
     private ProgressBar progressBar;
-    private TextView downloadStatus, downloadSize;
+    private TextView downloadStatus, downloadSize, progressValue;
     private Button pauseButton, cancelButton;
 
     public DownloadProgressFragment() {
-        super(R.xml.progress_fragment);
+        super(R.layout.progress_fragment_layout);
     }
 
     @Override
@@ -67,6 +67,7 @@ public class DownloadProgressFragment extends Fragment {
         downloadStatus = rootView.findViewById(R.id.status);
         downloadSize = rootView.findViewById(R.id.extra_data);
         progressBar = rootView.findViewById(R.id.progress);
+        progressValue = rootView.findViewById(R.id.progress_value);
 
         pauseButton = rootView.findViewById(R.id.pause);
         pauseButton.setOnClickListener(v -> {
@@ -104,6 +105,7 @@ public class DownloadProgressFragment extends Fragment {
         progressBar.setIndeterminate(progressInfo.isIndeterminate());
         downloadStatus.setText(progressInfo.getStatus());
         progressBar.setProgress(progressInfo.getProgress());
+        progressValue.setText(progressInfo.getProgress() + "%");
         downloadSize.setText(progressInfo.getExtras());
     }
 

@@ -38,6 +38,7 @@
 
     <dimen name="progress_bar_height">6dp</dimen>
     <dimen name="progress_bar_margin_top">7dp</dimen>
+    <dimen name="progress_bar_margin_end">8dp</dimen>
 
     <dimen name="circular_refresh_progress_margin">36dp</dimen>
     <dimen name="circular_refresh_progress_bar_width">24dp</dimen>

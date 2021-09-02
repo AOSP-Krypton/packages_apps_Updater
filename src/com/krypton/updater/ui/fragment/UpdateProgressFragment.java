@@ -52,9 +52,9 @@ public class UpdateProgressFragment extends Fragment {
     private UpdateViewModel viewModel;
     private View rootView;
     private ProgressBar progressBar;
-    private TextView updateStatus, updateStep;
+    private TextView updateStatus, updateStep, progressValue;
     private Button pauseButton, cancelButton;
-    private boolean bound = false;
+    private boolean bound;
 
     private final ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -73,7 +73,7 @@ public class UpdateProgressFragment extends Fragment {
     };
 
     public UpdateProgressFragment() {
-        super(R.xml.progress_fragment);
+        super(R.layout.progress_fragment_layout);
     }
 
     @Override
@@ -110,6 +110,7 @@ public class UpdateProgressFragment extends Fragment {
         updateStatus = rootView.findViewById(R.id.status);
         updateStep = rootView.findViewById(R.id.extra_data);
         progressBar = rootView.findViewById(R.id.progress);
+        progressValue = rootView.findViewById(R.id.progress_value);
 
         pauseButton = rootView.findViewById(R.id.pause);
         pauseButton.setOnClickListener(v -> {
@@ -150,6 +151,7 @@ public class UpdateProgressFragment extends Fragment {
         progressBar.setIndeterminate(progressInfo.isIndeterminate());
         updateStatus.setText(progressInfo.getStatus());
         progressBar.setProgress(progressInfo.getProgress());
+        progressValue.setText(progressInfo.getProgress() + "%");
         updateStep.setText(progressInfo.getExtras());
     }
 
