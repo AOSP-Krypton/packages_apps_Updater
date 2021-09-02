@@ -16,88 +16,63 @@
 
 package com.krypton.updater.ui.fragment;
 
-import static android.graphics.Color.TRANSPARENT;
-import static android.os.VibrationEffect.EFFECT_CLICK;
 import static com.krypton.updater.util.Constants.REFRESH_INTERVAL_KEY;
 import static com.krypton.updater.util.Constants.THEME_KEY;
 
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 
-import androidx.preference.Preference;
+import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SeekBarPreference;
 
 import com.krypton.updater.R;
-import com.krypton.updater.util.Utils;
-import com.krypton.updater.UpdaterApplication;
-
-import javax.inject.Inject;
+import com.krypton.updater.viewmodel.AppViewModel;
 
 public class SettingsFragment extends PreferenceFragmentCompat {
-    private static final VibrationEffect click = VibrationEffect.createPredefined(EFFECT_CLICK);
-    private SharedPreferences sharedPrefs;
-    private Editor editor;
-    private SeekBarPreference seekBar;
+    private static final VibrationEffect click = VibrationEffect.createPredefined(
+        VibrationEffect.EFFECT_CLICK);
+    private AppViewModel viewModel;
     private Vibrator vibrator;
-    private int currThemeMode;
-
-    @Inject
-    public void setDependencies(SharedPreferences prefs) {
-        sharedPrefs = prefs;
-    }
+    private AlertDialog themePickerDialog;
 
     @Override
     public void onCreatePreferences(Bundle bundle, String key) {
         setPreferencesFromResource(R.xml.settings_fragment, key);
-        ((UpdaterApplication) getActivity().getApplication())
-            .getComponent().inject(this);
-        vibrator = getContext().getSystemService(Vibrator.class);
-        editor = sharedPrefs.edit();
-        currThemeMode = sharedPrefs.getInt(THEME_KEY, 2);
-        seekBar = getPreferenceScreen().findPreference(REFRESH_INTERVAL_KEY);
-        seekBar.setValue(sharedPrefs.getInt(REFRESH_INTERVAL_KEY, 7));
+        final FragmentActivity activity = requireActivity();
+        viewModel = new ViewModelProvider(activity).get(AppViewModel.class);
+        vibrator = activity.getSystemService(Vibrator.class);
+        SeekBarPreference seekBar = findPreference(REFRESH_INTERVAL_KEY);
+        seekBar.setValue(viewModel.getRefreshInterval());
         seekBar.setUpdatesContinuously(true);
         seekBar.setOnPreferenceChangeListener((preference, newValue) -> {
             if (vibrator != null && vibrator.hasVibrator()) {
                 vibrator.vibrate(click);
             }
-            updateSharedPrefs(REFRESH_INTERVAL_KEY, (Integer) newValue);
+            viewModel.updateRefreshInterval((Integer) newValue);
+            return true;
+        });
+        findPreference(THEME_KEY).setOnPreferenceClickListener(pref -> {
+            showPickerDialog();
             return true;
         });
     }
 
-    @Override
-    public boolean onPreferenceTreeClick(Preference preference) {
-        if (preference.getKey().equals(THEME_KEY)) {
-            showPickerDialog();
-            return true;
-        }
-        return super.onPreferenceTreeClick(preference);
-    }
-
     private void showPickerDialog() {
-        AlertDialog themePickerDialog = new Builder(getActivity(), R.style.AlertDialogTheme)
-            .setTitle(R.string.theme_chooser_dialog_title)
-            .setSingleChoiceItems(R.array.theme_modes,
-                    currThemeMode, (dialog, which) -> {
-                        dialog.dismiss();
-                        currThemeMode = which;
-                        updateSharedPrefs(THEME_KEY, currThemeMode);
-                        Utils.setTheme(currThemeMode);
-                    })
-            .create();
-        themePickerDialog.getWindow().setBackgroundDrawable(new ColorDrawable(TRANSPARENT));
+        if (themePickerDialog == null) {
+            themePickerDialog = new Builder(getActivity(), R.style.AlertDialogTheme)
+                .setTitle(R.string.theme_chooser_dialog_title)
+                .setSingleChoiceItems(R.array.theme_modes, viewModel.getAppThemeMode(),
+                        (dialog, which) -> {
+                            dialog.dismiss();
+                            viewModel.updateThemeMode(which);
+                        })
+                .create();
+        }
         themePickerDialog.show();
-    }
-
-    private void updateSharedPrefs(String key, int value) {
-        editor.putInt(key, value).apply();
     }
 }

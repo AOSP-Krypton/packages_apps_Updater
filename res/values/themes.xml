@@ -33,7 +33,6 @@
 
     <style name="AlertDialogThemeBase" parent="Theme.AppCompat.DayNight.Dialog.Alert">
         <item name="android:fontFamily">@*android:string/config_headlineFontFamilyMedium</item>
-        <item name="android:background">@drawable/rounded_rectangle</item>
         <item name="android:windowMinWidthMinor">@dimen/alert_dialog_min_width_minor</item>
         <item name="android:windowMinWidthMajor">@dimen/alert_dialog_min_width_major</item>
     </style>

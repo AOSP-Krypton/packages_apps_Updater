@@ -29,6 +29,8 @@ import static com.krypton.updater.util.Constants.DOWNLOADED_SIZE;
 import static com.krypton.updater.util.Constants.ENTRY_DATE;
 import static com.krypton.updater.util.Constants.GLOBAL_STATUS;
 import static com.krypton.updater.util.Constants.LOCAL_UPGRADE_FILE;
+import static com.krypton.updater.util.Constants.REFRESH_INTERVAL_KEY;
+import static com.krypton.updater.util.Constants.THEME_KEY;
 
 import android.content.SharedPreferences;
 
@@ -41,7 +43,6 @@ import javax.inject.Singleton;
 
 @Singleton
 public final class DataStore {
-
     private final SharedPreferences sharedPrefs;
     private final BehaviorProcessor<Integer> globalStatusProcessor;
     private final BehaviorProcessor<DownloadStatus> downloadStatusProcessor;
@@ -232,5 +233,25 @@ public final class DataStore {
             .putString(LOCAL_UPGRADE_FILE, localUpgradeFile)
             .commit();
         localUpgradeFileProcessor.onNext(localUpgradeFile);
+    }
+
+    public void updateThemeMode(int mode) {
+        sharedPrefs.edit()
+            .putInt(THEME_KEY, mode)
+            .commit();
+    }
+
+    public int getAppThemeMode() {
+        return sharedPrefs.getInt(THEME_KEY, 2);
+    }
+
+    public void setRefreshInterval(int days) {
+        sharedPrefs.edit()
+            .putInt(REFRESH_INTERVAL_KEY, days)
+            .commit();
+    }
+
+    public int getRefreshInterval() {
+        return sharedPrefs.getInt(REFRESH_INTERVAL_KEY, 7);
     }
 }

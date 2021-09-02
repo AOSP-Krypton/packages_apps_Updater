@@ -16,12 +16,16 @@
 
 package com.krypton.updater.viewmodel;
 
+import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO;
+import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES;
+import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
 import static com.krypton.updater.util.Constants.DOWNLOAD_PENDING;
 import static com.krypton.updater.util.Constants.UPDATE_PENDING;
 import static com.krypton.updater.util.Constants.REBOOT_PENDING;
 
 import android.app.Application;
 
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.LiveDataReactiveStreams;
@@ -89,6 +93,40 @@ public class AppViewModel extends AndroidViewModel {
 
     public void initiateReboot() {
         repository.resetStatusAndReboot();
+    }
+
+    public int getAppThemeMode() {
+        return repository.getAppThemeMode();
+    }
+
+    public int getRefreshInterval() {
+        return repository.getRefreshInterval();
+    }
+
+    public void updateRefreshInterval(int days) {
+        repository.updateRefreshInterval(days);
+    }
+
+    public void updateThemeFromDataStore() {
+        switchThemeMode(getAppThemeMode());
+    }
+
+    public void updateThemeMode(int mode) {
+        repository.updateThemeInDataStore(mode);
+        switchThemeMode(mode);
+    }
+
+    private void switchThemeMode(int mode) {
+        switch (mode) {
+            case 0:
+                AppCompatDelegate.setDefaultNightMode(MODE_NIGHT_NO);
+                break;
+            case 1:
+                AppCompatDelegate.setDefaultNightMode(MODE_NIGHT_YES);
+                break;
+            case 2:
+                AppCompatDelegate.setDefaultNightMode(MODE_NIGHT_FOLLOW_SYSTEM);
+        }
     }
 
     public LiveData<Boolean> getRefreshButtonVisibility() {

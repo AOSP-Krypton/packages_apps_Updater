@@ -17,9 +17,7 @@
 package com.krypton.updater.model.repos;
 
 import static android.app.AlarmManager.ELAPSED_REALTIME_WAKEUP;
-import static android.app.AlarmManager.INTERVAL_DAY;
 import static android.app.PendingIntent.FLAG_IMMUTABLE;
-import static android.app.PendingIntent.FLAG_NO_CREATE;
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.graphics.Typeface.BOLD;
 import static android.os.PowerManager.REBOOT_REQUESTED_BY_DEVICE_OWNER;
@@ -30,7 +28,6 @@ import static com.krypton.updater.util.Constants.FINISHED;
 import static com.krypton.updater.util.Constants.NEW_CHANGELOG;
 import static com.krypton.updater.util.Constants.NEW_UPDATE;
 import static com.krypton.updater.util.Constants.REBOOT_PENDING;
-import static com.krypton.updater.util.Constants.REFRESH_INTERVAL_KEY;
 import static com.krypton.updater.util.Constants.REFRESHING;
 import static com.krypton.updater.util.Constants.UPDATE_PENDING;
 import static java.util.concurrent.TimeUnit.DAYS;
@@ -39,8 +36,6 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.text.SpannableStringBuilder;
@@ -76,7 +71,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class AppRepository implements OnSharedPreferenceChangeListener {
+public class AppRepository {
     private static final String TAG = "AppRepository";
     private static final int REQUEST_CODE_CHECK_UPDATE = 1003;
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yy");
@@ -87,7 +82,6 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
     private final ChangelogDao changelogDao;
     private final BehaviorProcessor<Response> otaResponsePublisher,
         changelogResponsePublisher;
-    private final SharedPreferences sharedPrefs;
     private final DownloadManager downloadManager;
     private final UpdateManager updateManager;
     private final GithubApiHelper githubApiHelper;
@@ -98,32 +92,23 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
 
     @Inject
     public AppRepository(Context context, AppDatabase database,
-            ExecutorService executor, SharedPreferences sharedPrefs,
-            DownloadManager downloadManager, UpdateManager updateManager,
-            GithubApiHelper githubApiHelper, DataStore dataStore) {
+            ExecutorService executor, DownloadManager downloadManager,
+            UpdateManager updateManager, GithubApiHelper githubApiHelper,
+            DataStore dataStore) {
         this.context = context;
         this.database = database;
         this.executor = executor;
-        this.sharedPrefs = sharedPrefs;
         this.downloadManager = downloadManager;
         this.updateManager = updateManager;
         this.githubApiHelper = githubApiHelper;
         this.dataStore = dataStore;
         changelogDao = database.getChangelogDao();
         alarmManager = context.getSystemService(AlarmManager.class);
-        sharedPrefs.registerOnSharedPreferenceChangeListener(this);
         otaResponsePublisher = BehaviorProcessor.createDefault(new Response(0));
         changelogResponsePublisher = BehaviorProcessor.createDefault(new Response(0));
         changelogPrefix = context.getString(R.string.changelog).concat(" - ");
         stringBuilder = new SpannableStringBuilder();
         updateFromDataStore();
-    }
-
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-        if (key.equals(REFRESH_INTERVAL_KEY)) {
-            setAlarm();
-        }
     }
 
     public BehaviorProcessor<Response> getOTAResponsePublisher() {
@@ -157,7 +142,7 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
                 dataStore.setEntryDate(System.currentTimeMillis());
                 dataStore.setGlobalStatus(DOWNLOAD_PENDING);
             }
-            setAlarm();
+            setAlarm(DAYS.toMillis(getRefreshInterval()));
             return response.getStatus() == NEW_UPDATE;
         });
     }
@@ -241,6 +226,23 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
         });
     }
 
+    public int getAppThemeMode() {
+        return dataStore.getAppThemeMode();
+    }
+
+    public int getRefreshInterval() {
+        return dataStore.getRefreshInterval();
+    }
+
+    public void updateRefreshInterval(int days) {
+        dataStore.setRefreshInterval(days);
+        setAlarm(DAYS.toMillis(days));
+    }
+
+    public void updateThemeInDataStore(int mode) {
+        dataStore.updateThemeMode(mode);
+    }
+
     private void updateFromDataStore() {
         executor.execute(() -> {
             final BuildInfo buildInfo = dataStore.getBuildInfo();
@@ -248,10 +250,8 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
                 return;
             }
             if (buildInfo.getDate() > Utils.getBuildDate()) {
-                long refreshTimeout =  DAYS.toMillis(sharedPrefs.getInt(
-                    REFRESH_INTERVAL_KEY, 7));
                 long timeSinceUpdate = System.currentTimeMillis() - dataStore.getEntryDate();
-                if (timeSinceUpdate < refreshTimeout) {
+                if (timeSinceUpdate < DAYS.toMillis(getRefreshInterval())) {
                     otaResponsePublisher.onNext(new Response(buildInfo, NEW_UPDATE));
                     changelogDao.getChangelogList().stream()
                         .forEach(cgEntity -> addChangelogToBuilder(stringBuilder,
@@ -265,8 +265,7 @@ public class AppRepository implements OnSharedPreferenceChangeListener {
         });
     }
 
-    private void setAlarm() {
-        long interval = sharedPrefs.getInt(REFRESH_INTERVAL_KEY, 7) * INTERVAL_DAY;
+    private void setAlarm(long interval) {
         final PendingIntent alarmIntent = PendingIntent.getService(
             context, REQUEST_CODE_CHECK_UPDATE, new Intent(context, UpdateCheckerService.class),
                 FLAG_IMMUTABLE | FLAG_UPDATE_CURRENT);

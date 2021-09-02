@@ -19,7 +19,6 @@ package com.krypton.updater.util;
 import static android.os.Environment.DIRECTORY_DOWNLOADS;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static androidx.appcompat.app.AppCompatDelegate.*;
 import static com.krypton.updater.util.Constants.MB;
 
 import android.os.Environment;
@@ -58,19 +57,6 @@ public final class Utils {
 
     public static String formatDate(long date) {
         return dateFormat.format(new Date(date));
-    }
-
-    public static void setTheme(int mode) {
-        switch (mode) {
-            case 0:
-                setDefaultNightMode(MODE_NIGHT_NO);
-                break;
-            case 1:
-                setDefaultNightMode(MODE_NIGHT_YES);
-                break;
-            case 2:
-                setDefaultNightMode(MODE_NIGHT_FOLLOW_SYSTEM);
-        }
     }
 
     public static void setVisibile(boolean visible, View... views) {

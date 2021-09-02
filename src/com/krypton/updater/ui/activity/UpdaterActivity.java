@@ -92,15 +92,12 @@ public class UpdaterActivity extends AppCompatActivity {
         magiskButton, rebootButton;
     private ProgressBar refreshProgress;
     private AppViewModel viewModel;
-    private SharedPreferences sharedPrefs;
     private NotificationHelper notificationHelper;
     private ViewModelProvider provider;
     private AlertDialog copyingDialog;
 
     @Inject
-    void setDependencies(SharedPreferences prefs,
-            NotificationHelper helper) {
-        sharedPrefs = prefs;
+    void setDependencies(NotificationHelper helper) {
         notificationHelper = helper;
     }
 
@@ -109,13 +106,13 @@ public class UpdaterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         ((UpdaterApplication) getApplication()).getComponent().inject(this);
         notificationHelper.removeCancellableNotifications(); // Clear all cancellable notifications
-        Utils.setTheme(sharedPrefs.getInt(THEME_KEY, 2));
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setTitle(R.string.app_name);
         provider = new ViewModelProvider(this);
         viewModel = provider.get(AppViewModel.class);
         viewModel.resetStatusIfNotDone();
+        viewModel.updateThemeFromDataStore();
         setContentView(R.layout.updater_activity);
         getSupportFragmentManager().beginTransaction()
             .setReorderingAllowed(true)
