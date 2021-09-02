@@ -30,9 +30,11 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+import android.util.Log;
 
 import androidx.core.app.NotificationCompat.Builder;
 
+import com.krypton.updater.model.data.ProgressInfo;
 import com.krypton.updater.model.repos.UpdateRepository;
 import com.krypton.updater.R;
 import com.krypton.updater.util.NotificationHelper;
@@ -43,7 +45,9 @@ import io.reactivex.rxjava3.disposables.Disposable;
 import javax.inject.Inject;
 
 public class UpdateInstallerService extends Service {
-    private static final String WL_TAG = "UpdateInstallerService.WakeLock";
+    private static final String TAG = "UpdateInstallerService";
+    private static final String WL_TAG = TAG + ".WakeLock";
+    private static final boolean DEBUG = false;
     private static final int UPDATE_INSTALLATION_NOTIF_ID = 1002;
     private IBinder binder;
     private PowerManager powerManager;
@@ -65,17 +69,21 @@ public class UpdateInstallerService extends Service {
 
     @Override
     public void onCreate() {
+        logD("onCreate");
         ((UpdaterApplication) getApplication()).getComponent().inject(this);
         binder = new ServiceBinder();
         powerManager = getSystemService(PowerManager.class);
         if (powerManager != null) {
+            logD("instantiating wakeLock");
             wakeLock = powerManager.newWakeLock(PARTIAL_WAKE_LOCK, WL_TAG);
         }
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        logD("onStartCommand");
         if (intent != null && intent.getAction().equals(ACION_START_UPDATE)) {
+            logD("starting update");
             startUpdate();
             disposable = repository.getUpdateStatusProcessor()
                 .filter(status -> status.getStatusCode() != 0)
@@ -83,15 +91,14 @@ public class UpdateInstallerService extends Service {
                     final int code = status.getStatusCode();
                     if (code == BATTERY_LOW || code == FINISHED ||
                             code == CANCELLED || code == FAILED) {
-                        stopForeground(STOP_FOREGROUND_REMOVE);
-                        releaseWakeLock();
+                        stop();
                     } else {
-                        final int progress = status.getProgress();
+                        final ProgressInfo info = repository.getProgressInfo(status);
+                        logD("info = " + info);
                         notificationHelper.notify(UPDATE_INSTALLATION_NOTIF_ID,
-                            notificationBuilder.setContentTitle(
-                                    getUpdateStepString(status.getStep()))
-                                .setContentText(String.valueOf(progress) + "%")
-                                .setProgress(100, progress, false)
+                            notificationBuilder.setContentTitle(info.getStatus())
+                                .setContentText(String.valueOf(info.getProgress()) + "%")
+                                .setProgress(100, info.getProgress(), false)
                                 .build());
                     }
                 });
@@ -101,12 +108,15 @@ public class UpdateInstallerService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
+        logD("onBind");
         return binder;
     }
 
     @Override
     public void onDestroy() {
+        logD("onDestroy");
         if (disposable != null && !disposable.isDisposed()) {
+            logD("disposing");
             disposable.dispose();
         }
         releaseWakeLock();
@@ -120,11 +130,11 @@ public class UpdateInstallerService extends Service {
     }
 
     public void pauseUpdate() {
+        logD("pauseUpdate, updateStarted = " + updateStarted);
         if (updateStarted) {
             updatePaused = !updatePaused;
             if (updatePaused) {
-                releaseWakeLock();
-                stopForeground(STOP_FOREGROUND_REMOVE);
+                stop();
             } else {
                 acquireWakeLock();
                 startForeground();
@@ -134,40 +144,46 @@ public class UpdateInstallerService extends Service {
     }
 
     public void cancelUpdate() {
+        logD("cancelUpdate, updateStarted = " + updateStarted);
         if (updateStarted) {
-            stopForeground(STOP_FOREGROUND_REMOVE);
-            releaseWakeLock();
+            updateStarted = updatePaused = false;
+            stop();
             repository.cancelUpdate();
-            updatePaused = false;
-            updateStarted = false;
         }
     }
 
     private void releaseWakeLock() {
         if (wakeLock != null && wakeLock.isHeld()) {
+            logD("releaseWakeLock");
             wakeLock.release();
         }
     }
 
     private void acquireWakeLock() {
         if (wakeLock != null && !wakeLock.isHeld()) {
+            logD("acquireWakeLock");
             wakeLock.acquire();
         }
     }
 
     private void startForeground() {
+        logD("startForeground");
         startForeground(UPDATE_INSTALLATION_NOTIF_ID,
             notificationBuilder.setContentTitle(getString(
                 R.string.update_in_progress)).build());
     }
 
-    private String getUpdateStepString(int step) {
-        if (step == 1) {
-            return getString(R.string.processing_payload);
-        } else if (step == 2) {
-            return getString(R.string.applying_update);
+    private void stop() {
+        logD("stop");
+        releaseWakeLock();
+        stopForeground(true);
+        notificationHelper.removeCancellableNotifications();
+    }
+
+    private static void logD(String msg) {
+        if (DEBUG) {
+            Log.d(TAG, msg);
         }
-        return null;
     }
 
     public final class ServiceBinder extends Binder {

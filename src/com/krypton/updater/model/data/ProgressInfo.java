@@ -57,4 +57,11 @@ public class ProgressInfo {
     public int getProgress() {
         return progress;
     }
+
+    @Override
+    public String toString() {
+        return "ProgressInfo [ indeterminate = " + indeterminate +
+            " status = " + status + " extras = " + extras +
+            " progress = " + progress + " ]";
+    }
 }

@@ -29,7 +29,6 @@ import static com.krypton.updater.util.Constants.PAUSED;
 import static com.krypton.updater.util.Constants.CANCELLED;
 import static com.krypton.updater.util.Constants.FAILED;
 
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -61,7 +60,7 @@ public class UpdateManager {
     private HandlerThread thread;
     private Handler bgHandler, mainHandler;
     private UpdateStatus updateStatus;
-    private boolean batteryOkay, isUpdating;
+    private boolean isUpdating;
 
     private final UpdateEngineCallback updateEngineCallback = new UpdateEngineCallback() {
         @Override
@@ -142,10 +141,9 @@ public class UpdateManager {
         updateStatus = new UpdateStatus();
         updateStatusProcessor = BehaviorProcessor.create();
         updateEngineReset(); // Cancel any ongoing updates / unbind callbacks we are not aware of
-        batteryMonitor.getBatteryOkayProcessor().subscribe(status -> {
-            batteryOkay = status;
-            if (isUpdating()) {
-                pause(true);
+        batteryMonitor.getBatteryOkayProcessor().subscribe(okay -> {
+            if (!okay && isUpdating) {
+                pause(true); // Pause any ongoing updates if battery is low & unplugged
             }
         });
         mainHandler = new Handler(Looper.getMainLooper());
@@ -153,10 +151,8 @@ public class UpdateManager {
 
     @WorkerThread
     public void start() {
-        if (!batteryOkay) {
-            helper.notifyOrToast(R.string.battery_low,
-                R.string.plug_in_charger, mainHandler);
-            updateStatusProcessor.onNext(updateStatus.setStatusCode(BATTERY_LOW));
+        if (!batteryMonitor.isBatteryOkay()) {
+            notifyBatteryIsLow();
             return;
         }
         reset(); // Reset update engine whenever a new update is applied
@@ -190,10 +186,8 @@ public class UpdateManager {
                 updateEngine.suspend();
                 updateStatusProcessor.onNext(updateStatus.setStatusCode(PAUSED));
             } else {
-                if (!batteryOkay) {
-                    helper.notifyOrToast(R.string.battery_low,
-                        R.string.plug_in_charger, mainHandler);
-                    updateStatusProcessor.onNext(updateStatus.setStatusCode(BATTERY_LOW));
+                if (!batteryMonitor.isBatteryOkay()) {
+                    notifyBatteryIsLow();
                     return;
                 }
                 updateEngine.resume();
@@ -257,5 +251,11 @@ public class UpdateManager {
         reset();
         helper.notifyOrToast(R.string.update_failed, msgId, mainHandler);
         thread.quitSafely();
+    }
+
+    private void notifyBatteryIsLow() {
+        helper.notifyOrToast(R.string.battery_low,
+            R.string.plug_in_charger, mainHandler);
+        updateStatusProcessor.onNext(updateStatus.setStatusCode(BATTERY_LOW));
     }
 }
