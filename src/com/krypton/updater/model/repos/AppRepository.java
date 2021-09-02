@@ -162,7 +162,7 @@ public class AppRepository {
             final Response response = githubApiHelper.parseChangelogInfo(
                 new TreeMap<>(currentList.stream()
                     .collect(Collectors.toMap(entity -> entity.date,
-                        entity -> new Changelog(entity)))
+                        entity -> Changelog.from(entity)))
                 )
             );
             final int status = response.getStatus();

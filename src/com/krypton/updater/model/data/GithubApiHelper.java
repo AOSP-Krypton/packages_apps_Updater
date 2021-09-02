@@ -105,7 +105,6 @@ public class GithubApiHelper {
                     final JSONObject blobJSONObj = treeJSON.getJSONObject(i);
                     final String path = blobJSONObj.getString("path");
                     if (!path.equals(OTA_JSON_FILE_NAME)) {
-                        final Changelog changelog = new Changelog();
                         Date changelogDate = new Date(date);
                         if (path.contains("changelog_")) {
                             changelogDate = getDateFromChangelogFile(
@@ -123,10 +122,8 @@ public class GithubApiHelper {
                                 if (!listUpdated) {
                                     listUpdated = true;
                                 }
-                                currentMap.put(changelogDate, new Changelog()
-                                    .setDate(changelogDate)
-                                    .setChangelog(Utils.parseRawContent(url))
-                                    .setSHA(sha));
+                                currentMap.put(changelogDate, new Changelog(changelogDate,
+                                    Utils.parseRawContent(url), sha));
                             }
                         }
                     }

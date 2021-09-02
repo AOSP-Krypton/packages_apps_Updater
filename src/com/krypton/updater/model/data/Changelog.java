@@ -21,33 +21,17 @@ import com.krypton.updater.model.room.ChangelogEntity;
 import java.util.Date;
 
 public final class Changelog {
-
     private String changelog, sha;
     private Date date;
 
-    public Changelog() {
-        // Empty constructor
-    }
-
-    public Changelog(ChangelogEntity entity) {
-        date = entity.date;
-        changelog = entity.changelog;
-        sha = entity.sha;
-    }
-
-    public Changelog setDate(Date date) {
+    public Changelog(Date date, String changelog, String sha) {
         this.date = date;
-        return this;
-    }
-
-    public Changelog setChangelog(String changelog) {
         this.changelog = changelog;
-        return this;
+        this.sha = sha;
     }
 
-    public Changelog setSHA(String sha) {
-        this.sha = sha;
-        return this;
+    public static Changelog from(ChangelogEntity entity) {
+        return new Changelog(entity.date, entity.changelog, entity.sha);
     }
 
     public Date getDate() {
