@@ -23,9 +23,8 @@
     <dimen name="rounded_corner_radius_small">4dp</dimen>
     <dimen name="stroke_width">1dp</dimen>
 
-    <dimen name="alert_dialog_min_width_minor">65%</dimen>
+    <dimen name="alert_dialog_min_width_minor">80%</dimen>
     <dimen name="alert_dialog_min_width_major">45%</dimen>
-    <dimen name="wide_alert_dialog_min_width_minor">90%</dimen>
 
     <dimen name="fetch_build_status_height">24dp</dimen>
     <dimen name="fetch_build_status_margin">10dp</dimen>

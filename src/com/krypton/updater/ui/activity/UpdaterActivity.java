@@ -147,12 +147,10 @@ public class UpdaterActivity extends AppCompatActivity {
                 if (cursor != null && cursor.moveToFirst()) {
                     String fileName = cursor.getString(cursor.getColumnIndex(DISPLAY_NAME));
                     if (fileName != null) {
-                        showConfirmDialog(R.style.WideAlertDialogTheme, R.string.confirm_selection,
+                        showConfirmDialog(R.string.confirm_selection,
                             fileName, (dialog, which) -> {
-                                if (which == BUTTON_POSITIVE) {
-                                    showCopyingDialog();
-                                    provider.get(UpdateViewModel.class).setupLocalUpgrade(fileName, fileUri);
-                                }
+                                showCopyingDialog();
+                                provider.get(UpdateViewModel.class).setupLocalUpgrade(fileName, fileUri);
                             });
                     }
                 }
@@ -187,27 +185,28 @@ public class UpdaterActivity extends AppCompatActivity {
         Toast.makeText(this, resId, LENGTH_SHORT).show();
     }
 
-    private void showConfirmDialog(int themeId, int titleId, String msg, OnClickListener listener) {
-        AlertDialog dialog = new Builder(this, themeId)
-            .setTitle(titleId)
-            .setMessage(msg)
+    private void showConfirmDialog(int titleId,
+            String msg, OnClickListener listener) {
+        final View view = getLayoutInflater().inflate(R.layout.dialog_layout, null);
+        final TextView title = view.findViewById(R.id.title);
+        title.setText(titleId);
+        final TextView message = view.findViewById(R.id.message);
+        message.setText(msg);
+        new Builder(this, R.style.AlertDialogTheme)
+            .setView(view)
             .setPositiveButton(android.R.string.yes, listener)
-            .setNegativeButton(android.R.string.no, listener)
-            .create();
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(TRANSPARENT));
-        dialog.show();
+            .setNegativeButton(android.R.string.no, null)
+            .show();
     }
 
     private void showCopyingDialog() {
-        copyingDialog = new Builder(this, R.style.WideAlertDialogTheme)
+        copyingDialog = new Builder(this, R.style.AlertDialogTheme)
             .setTitle(R.string.copying)
             .setMessage(R.string.do_not_close)
             .setCancelable(false)
             .setView(LayoutInflater.from(this).inflate(
                 R.layout.copy_progress_bar, null, false))
-            .create();
-        copyingDialog.getWindow().setBackgroundDrawable(new ColorDrawable(TRANSPARENT));
-        copyingDialog.show();
+            .show();
     }
 
     private void setWidgets() {
@@ -391,12 +390,7 @@ public class UpdaterActivity extends AppCompatActivity {
 
     public void rebootSystem(View v) {
         v.performHapticFeedback(KEYBOARD_PRESS);
-        showConfirmDialog(R.style.AlertDialogTheme, R.string.sure_to_reboot,
-            null, (dialog, which) -> {
-                if (which == BUTTON_POSITIVE) {
-                    Utils.setVisibile(false, v);
-                    viewModel.initiateReboot();
-                }
-            });
+        showConfirmDialog(R.string.sure_to_reboot,
+            null, (dialog, which) -> viewModel.initiateReboot());
     }
 }

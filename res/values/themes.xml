@@ -41,8 +41,4 @@
         <item name="colorAccent">@color/colorAccentLight</item>
         <item name="android:windowBackground">@*android:color/background_device_default_light</item>
     </style>
-
-    <style name="WideAlertDialogTheme" parent="AlertDialogTheme">
-        <item name="android:windowMinWidthMinor">@dimen/wide_alert_dialog_min_width_minor</item>
-    </style>
 </resources>
