@@ -194,6 +194,7 @@ public class AppRepository {
                 changelogResponsePublisher.onNext(empty);
                 changelogDao.clear();
                 dataStore.setLocalUpgradeFileName("");
+                dataStore.deleteBuildInfo();
                 dataStore.deleteDownloadStatus();
                 dataStore.deleteGlobalStatus();
                 updateManager.userInitiatedReset();
@@ -204,6 +205,7 @@ public class AppRepository {
     public void resetStatusAndReboot() {
         executor.execute(() -> {
             dataStore.setLocalUpgradeFileName("");
+            dataStore.deleteBuildInfo();
             dataStore.deleteDownloadStatus();
             dataStore.deleteGlobalStatus();
             final PowerManager powerManager = context.getSystemService(PowerManager.class);
@@ -219,6 +221,8 @@ public class AppRepository {
         }
         executor.execute(() -> {
             if (dataStore.getGlobalStatus() == REBOOT_PENDING) {
+                dataStore.setLocalUpgradeFileName("");
+                dataStore.deleteBuildInfo();
                 dataStore.deleteDownloadStatus();
                 dataStore.deleteGlobalStatus();
             }
