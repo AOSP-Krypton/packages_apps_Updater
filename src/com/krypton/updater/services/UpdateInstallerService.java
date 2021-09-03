@@ -89,9 +89,10 @@ public class UpdateInstallerService extends Service {
                 .filter(status -> status.getStatusCode() != 0)
                 .subscribe(status -> {
                     final int code = status.getStatusCode();
-                    if (code == BATTERY_LOW || code == FINISHED ||
-                            code == CANCELLED || code == FAILED) {
-                        stop();
+                    if (code == BATTERY_LOW || code == CANCELLED) {
+                        stop(true);
+                    } else if (code == FAILED || code == FINISHED) {
+                        stop(false);
                     } else {
                         final ProgressInfo info = repository.getProgressInfo(status);
                         logD("info = " + info);
@@ -134,7 +135,7 @@ public class UpdateInstallerService extends Service {
         if (updateStarted) {
             updatePaused = !updatePaused;
             if (updatePaused) {
-                stop();
+                stop(true);
             } else {
                 acquireWakeLock();
                 startForeground();
@@ -147,7 +148,7 @@ public class UpdateInstallerService extends Service {
         logD("cancelUpdate, updateStarted = " + updateStarted);
         if (updateStarted) {
             updateStarted = updatePaused = false;
-            stop();
+            stop(true);
             repository.cancelUpdate();
         }
     }
@@ -173,11 +174,13 @@ public class UpdateInstallerService extends Service {
                 R.string.update_in_progress)).build());
     }
 
-    private void stop() {
+    private void stop(boolean clear) {
         logD("stop");
         releaseWakeLock();
-        stopForeground(true);
-        notificationHelper.removeCancellableNotifications();
+        stopForeground(clear);
+        if (clear) {
+            notificationHelper.removeCancellableNotifications();
+        }
     }
 
     private static void logD(String msg) {
