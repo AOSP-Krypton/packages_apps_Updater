@@ -135,7 +135,7 @@ public class UpdateInstallerService extends Service {
         if (updateStarted) {
             updatePaused = !updatePaused;
             if (updatePaused) {
-                stop(true);
+                stop(false);
             } else {
                 acquireWakeLock();
                 startForeground();
