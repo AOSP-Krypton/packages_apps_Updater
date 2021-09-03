@@ -144,6 +144,8 @@ public class UpdateManager {
         batteryMonitor.getBatteryOkayProcessor().subscribe(okay -> {
             if (!okay && isUpdating) {
                 pause(true); // Pause any ongoing updates if battery is low & unplugged
+                helper.notifyOrToast(R.string.battery_low,
+                    R.string.plug_in_charger, mainHandler);
             }
         });
         mainHandler = new Handler(Looper.getMainLooper());

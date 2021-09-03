@@ -18,7 +18,6 @@ package com.krypton.updater.services;
 
 import static android.os.PowerManager.PARTIAL_WAKE_LOCK;
 import static com.krypton.updater.util.Constants.ACION_START_UPDATE;
-import static com.krypton.updater.util.Constants.BATTERY_LOW;
 import static com.krypton.updater.util.Constants.CANCELLED;
 import static com.krypton.updater.util.Constants.FAILED;
 import static com.krypton.updater.util.Constants.FINISHED;
@@ -89,10 +88,8 @@ public class UpdateInstallerService extends Service {
                 .filter(status -> status.getStatusCode() != 0)
                 .subscribe(status -> {
                     final int code = status.getStatusCode();
-                    if (code == BATTERY_LOW || code == CANCELLED) {
+                    if (code == FAILED || code == FINISHED || code == CANCELLED) {
                         stop(true);
-                    } else if (code == FAILED || code == FINISHED) {
-                        stop(false);
                     } else {
                         final ProgressInfo info = repository.getProgressInfo(status);
                         logD("info = " + info);
@@ -169,9 +166,7 @@ public class UpdateInstallerService extends Service {
 
     private void startForeground() {
         logD("startForeground");
-        startForeground(UPDATE_INSTALLATION_NOTIF_ID,
-            notificationBuilder.setContentTitle(getString(
-                R.string.update_in_progress)).build());
+        startForeground(UPDATE_INSTALLATION_NOTIF_ID, notificationBuilder.build());
     }
 
     private void stop(boolean clear) {
@@ -179,7 +174,7 @@ public class UpdateInstallerService extends Service {
         releaseWakeLock();
         stopForeground(clear);
         if (clear) {
-            notificationHelper.removeCancellableNotifications();
+            notificationHelper.removeNotificationForId(UPDATE_INSTALLATION_NOTIF_ID);
         }
     }
 

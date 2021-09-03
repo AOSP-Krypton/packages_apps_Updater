@@ -73,7 +73,11 @@ public class NotificationHelper {
                 .build());
     }
 
-    public void removeCancellableNotifications() {
+    public void removeNotificationForId(int id) {
+        manager.cancel(id);
+    }
+
+    public void removeAllNotifications() {
         manager.cancelAll();
     }
 

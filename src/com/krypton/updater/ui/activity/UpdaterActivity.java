@@ -105,7 +105,7 @@ public class UpdaterActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ((UpdaterApplication) getApplication()).getComponent().inject(this);
-        notificationHelper.removeCancellableNotifications(); // Clear all cancellable notifications
+        notificationHelper.removeAllNotifications(); // Clear all cancellable notifications
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setTitle(R.string.app_name);
