@@ -25,11 +25,10 @@ import static com.krypton.updater.util.Constants.FINISHED;
 
 import android.app.Application;
 import android.net.Uri;
+import android.util.Log;
 
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.LiveDataReactiveStreams;
-import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.krypton.updater.model.data.ProgressInfo;
@@ -37,17 +36,20 @@ import com.krypton.updater.model.data.UpdateStatus;
 import com.krypton.updater.model.repos.UpdateRepository;;
 import com.krypton.updater.UpdaterApplication;
 
-public class UpdateViewModel extends AndroidViewModel {
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 
+public class UpdateViewModel extends AndroidViewModel {
+    private static final String TAG = "UpdateViewModel";
+    private static final boolean DEBUG = false;
     private final UpdateRepository repository;
-    private final MediatorLiveData<ProgressInfo> progressInfo;
+    private final MutableLiveData<ProgressInfo> progressInfo;
     private final MutableLiveData<Boolean> viewVisibility, controlVisibility, pauseStatus;
 
     public UpdateViewModel(Application application) {
         super(application);
         repository = ((UpdaterApplication) application)
             .getComponent().getUpdateRepository();
-        progressInfo = new MediatorLiveData<>();
+        progressInfo = new MutableLiveData<>();
         viewVisibility = new MutableLiveData<>(false);
         controlVisibility = new MutableLiveData<>(true);
         pauseStatus = new MutableLiveData<>(false);
@@ -75,31 +77,30 @@ public class UpdateViewModel extends AndroidViewModel {
     }
 
     private void observeProgress() {
-        final LiveData<UpdateStatus> updateStatusLiveData = LiveDataReactiveStreams
-            .fromPublisher(repository.getUpdateStatusProcessor()
-                .filter(updateStatus -> updateStatus.getStatusCode() != BATTERY_LOW));
-        progressInfo.addSource(updateStatusLiveData, updateStatus -> {
-            final int statusCode = updateStatus.getStatusCode();
-            pauseStatus.setValue(statusCode == PAUSED);
-            if (viewVisibility.getValue()) {
-                if (statusCode == 0 || statusCode == CANCELLED) {
-                    viewVisibility.postValue(false);
-                }
-            } else {
+        repository.getUpdateStatusProcessor()
+            .filter(updateStatus -> updateStatus.getStatusCode() != BATTERY_LOW)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(updateStatus -> {
+                final int statusCode = updateStatus.getStatusCode();
+                logD("statusCode = " + statusCode);
+                pauseStatus.setValue(statusCode == PAUSED);
                 if (statusCode >= INDETERMINATE) {
                     viewVisibility.postValue(true);
+                } else if (statusCode == 0 || statusCode == CANCELLED) {
+                    viewVisibility.postValue(false);
                 }
-            }
-            if (controlVisibility.getValue()) {
-                if (statusCode < INDETERMINATE || statusCode > PAUSED) {
-                    controlVisibility.postValue(false);
-                }
-            } else {
                 if (statusCode >= INDETERMINATE && statusCode <= PAUSED) {
                     controlVisibility.postValue(true);
+                } else {
+                    controlVisibility.postValue(false);
                 }
-            }
-            progressInfo.postValue(repository.getProgressInfo(updateStatus));
-        });
+                progressInfo.postValue(repository.getProgressInfo(updateStatus));
+            });
+    }
+
+    private static void logD(String msg) {
+        if (DEBUG) {
+            Log.d(TAG, msg);
+        }
     }
 }
