@@ -48,39 +48,24 @@ public class BatteryMonitor {
     private final int lowBatteryPercent;
     private boolean isBatteryLow, isChargerConnected;
 
-    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            logD("onReceive, action = " + action);
-            switch (action) {
-                case ACTION_BATTERY_LOW:
-                    isBatteryLow = true;
-                    break;
-                case ACTION_POWER_CONNECTED:
-                    isChargerConnected = true;
-                    break;
-                case ACTION_POWER_DISCONNECTED:
-                    isChargerConnected = false;
-                    updateBatteryLowStatus();
-            }
-            batteryOkayProcessor.onNext(!isBatteryLow || isChargerConnected);
-        }
-    };
-
     @Inject
     public BatteryMonitor(Context context) {
         lowBatteryPercent = context.getResources().getInteger(
                 com.android.internal.R.integer.config_lowBatteryWarningLevel);
+        batteryManager = context.getSystemService(BatteryManager.class);
+        batteryOkayProcessor = BehaviorProcessor.createDefault(isBatteryOkay());
         final IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_BATTERY_LOW);
         filter.addAction(ACTION_POWER_CONNECTED);
         filter.addAction(ACTION_POWER_DISCONNECTED);
         logD("registering BroadcastReceiver");
-        context.registerReceiver(broadcastReceiver, filter);
-        batteryManager = context.getSystemService(BatteryManager.class);
-        isChargerConnected = batteryManager.isCharging();
-        batteryOkayProcessor = BehaviorProcessor.createDefault(isBatteryOkay());
+        context.registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                logD("onReceive, action = " + intent.getAction());
+                batteryOkayProcessor.onNext(isBatteryOkay());
+            }
+        }, filter);
     }
 
     public BehaviorProcessor<Boolean> getBatteryOkayProcessor() {
@@ -88,14 +73,15 @@ public class BatteryMonitor {
     }
 
     public boolean isBatteryOkay() {
-        updateBatteryLowStatus();
+        updateStatus();
         return !isBatteryLow || isChargerConnected;
     }
 
-    private void updateBatteryLowStatus() {
+    private void updateStatus() {
         final int level = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
         logD("level = " + level);
         isBatteryLow = level <= lowBatteryPercent;
+        isChargerConnected = batteryManager.isCharging();
     }
 
     private static void logD(String msg) {
