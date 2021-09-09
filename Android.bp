@@ -17,6 +17,9 @@ android_app {
     platform_apis: true,
     certificate: "platform",
     privileged: true,
+    defaults: [
+        "SettingsLibDefaults",
+    ],
     srcs: [
         "src/**/*.java",
     ],

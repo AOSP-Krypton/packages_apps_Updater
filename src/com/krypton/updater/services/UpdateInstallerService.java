@@ -62,6 +62,7 @@ public class UpdateInstallerService extends Service {
         this.repository = repository;
         this.notificationHelper = notificationHelper;
         notificationBuilder = notificationHelper.getDefaultBuilder()
+            .setSmallIcon(com.android.settingslib.R.drawable.ic_system_update)
             .setNotificationSilent()
             .setOngoing(true);
     }

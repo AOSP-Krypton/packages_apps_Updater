@@ -82,6 +82,7 @@ public class DownloadWorker extends Worker {
         thread.start();
         handler = new Handler(thread.getLooper());
         notificationBuilder = helper.getDefaultBuilder()
+            .setSmallIcon(android.R.drawable.stat_sys_download)
             .setNotificationSilent()
             .setOngoing(true)
             .setContentTitle(context.getString(R.string.downloading));

@@ -67,6 +67,7 @@ public class NotificationHelper {
 
     public synchronized void showCancellableNotification(int titleId, int descId) {
         notify(UPDATER_NOTIF_ID, getDefaultBuilder()
+                .setSmallIcon(android.R.drawable.ic_info)
                 .setContentTitle(context.getString(titleId))
                 .setContentText(context.getString(descId))
                 .setAutoCancel(true)
@@ -97,7 +98,6 @@ public class NotificationHelper {
 
     public Builder getDefaultBuilder() {
         return new Builder(context, TAG)
-            .setSmallIcon(R.drawable.ic_info)
             .setContentIntent(activityIntent)
             .setPriority(PRIORITY_DEFAULT);
     }
