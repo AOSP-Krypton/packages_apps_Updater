@@ -16,6 +16,7 @@
 
 package com.krypton.updater.model.data;
 
+import static android.content.Intent.ACTION_BATTERY_CHANGED;
 import static android.content.Intent.ACTION_BATTERY_LOW;
 import static android.content.Intent.ACTION_BATTERY_OKAY;
 import static android.content.Intent.ACTION_POWER_CONNECTED;
@@ -43,6 +44,7 @@ import javax.inject.Singleton;
 public class BatteryMonitor {
     private static final String TAG = "BatteryMonitor";
     private static final boolean DEBUG = false;
+    private final Context context;
     private final BatteryManager batteryManager;
     private final BehaviorProcessor<Boolean> batteryOkayProcessor;
     private final int lowBatteryPercent;
@@ -50,6 +52,7 @@ public class BatteryMonitor {
 
     @Inject
     public BatteryMonitor(Context context) {
+        this.context = context;
         lowBatteryPercent = context.getResources().getInteger(
                 com.android.internal.R.integer.config_lowBatteryWarningLevel);
         batteryManager = context.getSystemService(BatteryManager.class);
@@ -81,7 +84,9 @@ public class BatteryMonitor {
         final int level = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
         logD("level = " + level);
         isBatteryLow = level <= lowBatteryPercent;
-        isChargerConnected = batteryManager.isCharging();
+        final Intent intent = context.registerReceiver(null, new IntentFilter(ACTION_BATTERY_CHANGED));
+        isChargerConnected = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0;
+        logD("charging = " + isChargerConnected);
     }
 
     private static void logD(String msg) {

@@ -65,6 +65,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.core.widget.NestedScrollView;
 
 import com.android.internal.util.krypton.KryptonUtils;
+import com.krypton.updater.model.data.BatteryMonitor;
 import com.krypton.updater.model.data.BuildInfo;
 import com.krypton.updater.model.data.Response;
 import com.krypton.updater.R;
@@ -93,12 +94,14 @@ public class UpdaterActivity extends AppCompatActivity {
     private ProgressBar refreshProgress;
     private AppViewModel viewModel;
     private NotificationHelper notificationHelper;
+    private BatteryMonitor batteryMonitor;
     private ViewModelProvider provider;
     private AlertDialog copyingDialog;
 
     @Inject
-    void setDependencies(NotificationHelper helper) {
+    void setDependencies(NotificationHelper helper, BatteryMonitor batteryMonitor) {
         notificationHelper = helper;
+        this.batteryMonitor = batteryMonitor;
     }
 
     @Override
@@ -373,6 +376,10 @@ public class UpdaterActivity extends AppCompatActivity {
 
     public void startUpdate(View v) {
         v.performHapticFeedback(KEYBOARD_PRESS);
+        if (!batteryMonitor.isBatteryOkay()) {
+            Toast.makeText(this, R.string.plug_in_charger, Toast.LENGTH_LONG).show();
+            return;
+        }
         final Intent intent = new Intent(this, UpdateInstallerService.class);
         intent.setAction(ACION_START_UPDATE);
         startServiceAsUser(intent, SYSTEM);
