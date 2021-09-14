@@ -124,7 +124,6 @@ public class UpdateManager {
                     // Log unhandled cases
                     Log.e(TAG, "onPayloadApplicationComplete: unknown errorCode " + errorCode);
             }
-            reset();
         }
     };
 
