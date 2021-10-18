@@ -19,7 +19,7 @@ package com.krypton.updater.util;
 // Constants needed application wide
 public class Constants {
     // Github branch we are using for the ota
-    public static final String GIT_BRANCH = "A11";
+    public static final String GIT_BRANCH = "A12";
     public static final String OTA_JSON_FILE_NAME = "ota.json";
 
     // For build info
