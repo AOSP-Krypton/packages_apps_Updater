@@ -254,7 +254,7 @@ public class UpdaterActivity extends AppCompatActivity {
             buildInfo.getFileName()));
         latestBuildMd5.setText(getString(R.string.md5,
             buildInfo.getMd5()));
-        Utils.setVisibile(true, latestBuildGroup);
+        Utils.setVisible(true, latestBuildGroup);
     }
 
     private String getString(int id, String str) {
@@ -271,14 +271,14 @@ public class UpdaterActivity extends AppCompatActivity {
         viewModel.getChangelogResponse().observe(this,
             response -> handleChaneglogResponse(response));
         viewModel.getRefreshButtonVisibility().observe(this,
-            visibility -> Utils.setVisibile(visibility, refreshButton));
+            visibility -> Utils.setVisible(visibility, refreshButton));
         viewModel.getLocalUpgradeButtonVisibility().observe(this,
-            visibility -> Utils.setVisibile(visibility, localUpgradeButton));
+            visibility -> Utils.setVisible(visibility, localUpgradeButton));
         viewModel.getDownloadButtonVisibility().observe(this,
-            visibility -> Utils.setVisibile(visibility, changelogView, downloadButton));
+            visibility -> Utils.setVisible(visibility, changelogView, downloadButton));
         viewModel.getUpdateButtonVisibility().observe(this,
             visibility -> {
-                Utils.setVisibile(visibility, updateButton);
+                Utils.setVisible(visibility, updateButton);
                 if (visibility && copyingDialog != null &&
                         copyingDialog.isShowing()) {
                     copyingDialog.dismiss();
@@ -286,18 +286,18 @@ public class UpdaterActivity extends AppCompatActivity {
             });
         viewModel.getRebootButtonVisibility().observe(this,
             visibility -> {
-                Utils.setVisibile(visibility, rebootButtonGroup);
+                Utils.setVisible(visibility, rebootButtonGroup);
                 if (visibility) {
                     stopServiceAsUser(new Intent(this, UpdateInstallerService.class), SYSTEM);
-                    Utils.setVisibile(KryptonUtils.isPackageInstalled(this,
+                    Utils.setVisible(KryptonUtils.isPackageInstalled(this,
                         MAGISK_PACKAGE), magiskButton);
                 }
             });
         viewModel.getLocalUpgradeFileName().observe(this,
             fileName -> {
                 localUpgradeFileName.setText(fileName);
-                Utils.setVisibile(!fileName.isEmpty(), localUpgradeFileName);
-                Utils.setVisibile(fileName.isEmpty(), currentStatus);
+                Utils.setVisible(!fileName.isEmpty(), localUpgradeFileName);
+                Utils.setVisible(fileName.isEmpty(), currentStatus);
             });
     }
 
@@ -307,23 +307,23 @@ public class UpdaterActivity extends AppCompatActivity {
         switch (status) {
             case 0:
                 setBuildFetchResult(R.string.hit_refresh);
-                Utils.setVisibile(false, latestBuildGroup);
+                Utils.setVisible(false, latestBuildGroup);
                 break;
             case REFRESHING:
                 setBuildFetchResult(R.string.fetching_build_status_text);
-                Utils.setVisibile(true, refreshProgress);
+                Utils.setVisible(true, refreshProgress);
                 break;
             case REFRESH_FAILED:
                 setBuildFetchResult(R.string.unable_to_fetch_details);
-                Utils.setVisibile(false, refreshProgress);
+                Utils.setVisible(false, refreshProgress);
                 break;
             case UP_TO_DATE:
                 setBuildFetchResult(R.string.current_is_latest);
-                Utils.setVisibile(false, refreshProgress);
+                Utils.setVisible(false, refreshProgress);
                 break;
             case NEW_UPDATE:
                 setBuildFetchResult(R.string.new_update);
-                Utils.setVisibile(false, refreshProgress);
+                Utils.setVisible(false, refreshProgress);
                 setNewBuildInfo((BuildInfo) response.getResponseBody());
                 break;
         }
@@ -332,24 +332,24 @@ public class UpdaterActivity extends AppCompatActivity {
     private void handleChaneglogResponse(Response response) {
         switch (response.getStatus()) {
             case 0:
-                Utils.setVisibile(false, changelogView);
+                Utils.setVisible(false, changelogView);
                 changelogText.setText(null);
                 break;
             case FETCHING_CHANGELOG:
-                Utils.setVisibile(true, changelogView, refreshProgress);
+                Utils.setVisible(true, changelogView, refreshProgress);
                 changelogText.setText(R.string.fetching_changelog);
                 break;
             case FETCH_CHANGELOG_FAILED:
-                Utils.setVisibile(false, refreshProgress);
+                Utils.setVisible(false, refreshProgress);
                 changelogText.setText(R.string.unable_to_fetch_changelog);
                 break;
             case CHANGELOG_UNAVAILABLE:
             case CHANGELOG_UP_TO_DATE:
-                Utils.setVisibile(false, refreshProgress);
+                Utils.setVisible(false, refreshProgress);
                 changelogText.setText(R.string.changelog_unavailable);
                 break;
             case NEW_CHANGELOG:
-                Utils.setVisibile(false, refreshProgress);
+                Utils.setVisible(false, refreshProgress);
                 changelogText.setText((SpannableStringBuilder) response.getResponseBody(),
                     TextView.BufferType.SPANNABLE);
         }

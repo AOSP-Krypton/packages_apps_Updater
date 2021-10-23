@@ -142,7 +142,7 @@ public class UpdateProgressFragment extends Fragment {
 
         viewModel.getControlVisibility().observe(owner,
             visible -> {
-                Utils.setVisibile(visible, pauseButton, cancelButton);
+                Utils.setVisible(visible, pauseButton, cancelButton);
                 rootView.invalidate();
             });
     }
@@ -156,7 +156,7 @@ public class UpdateProgressFragment extends Fragment {
     }
 
     private void hideSelf(boolean hide) {
-        Utils.setVisibile(!hide, rootView);
+        Utils.setVisible(!hide, rootView);
         rootView.invalidate();
     }
 }

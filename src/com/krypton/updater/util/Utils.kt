@@ -35,13 +35,18 @@ import kotlin.jvm.JvmStatic
 
 // TODO : remove all JvmStatic annotations once entire app is in kotlin
 class Utils {
-    private const val TAG = "UpdaterUtils"
-
     companion object {
+        private const val TAG = "UpdaterUtils"
+
+        // Build props
         private const val PROP_DEVICE = "ro.krypton.build.device"
         private const val PROP_VERSION = "ro.krypton.build.version"
         private const val PROP_DATE = "ro.build.date.utc"
+
+        // Date format (Ex: 12 June 2021, 11:59 AM)
         private val DATE_FORMAT = SimpleDateFormat("dd MMM yyyy, hh:mm a")
+
+        // Downloads directory as a File object
         // TODO : deal with this deprecated API
         private val DOWNLOADS_DIR = Environment.getExternalStoragePublicDirectory(
             Environment.DIRECTORY_DOWNLOADS)
@@ -65,9 +70,8 @@ class Utils {
         /* Set visibility to all views in @param views
          * View.VISIBLE or View.GONE based on @param visible
          */
-        // TODO : fix the typo in function name application wide
         @JvmStatic
-        fun setVisibile(
+        fun setVisible(
             visible: Boolean,
             vararg views: View,
         ) {
