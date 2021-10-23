@@ -37,7 +37,7 @@ import java.util.concurrent.ExecutorService
 import javax.inject.Singleton
 
 @Module
-class UpdaterModule constructor(ctx: Context) {
+class UpdaterModule(ctx: Context) {
     val context = ctx
     
     @Provides
