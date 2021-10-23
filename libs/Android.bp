@@ -15,8 +15,8 @@
 
 android_library_import {
     name: "androidx.lifecycle_lifecycle-reactivestreams-nodeps",
-    aars: ["androidx/lifecycle/lifecycle-reactivestreams-2.3.0-alpha05.aar"],
-    sdk_version: "29",
+    aars: ["androidx/lifecycle/lifecycle-reactivestreams-2.4.0-rc01.aar"],
+    sdk_version: "current",
 }
 
 android_library {
@@ -25,7 +25,7 @@ android_library {
         "androidx.lifecycle_lifecycle-reactivestreams-nodeps",
     ],
     min_sdk_version: "14",
-    sdk_version: "29",
+    sdk_version: "current",
     manifest: "androidx/lifecycle/AndroidManifest.xml",
 }
 
