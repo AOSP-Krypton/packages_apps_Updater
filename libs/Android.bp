@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// These are prebuilt java and android libraries needed for RxJava.
+// These are prebuilt java and android libraries needed for WorkManager and RxJava.
 
 android_library_import {
     name: "androidx.lifecycle_lifecycle-reactivestreams-nodeps",
@@ -27,6 +27,24 @@ android_library {
     min_sdk_version: "14",
     sdk_version: "29",
     manifest: "androidx/lifecycle/AndroidManifest.xml",
+}
+
+android_library_import {
+    name: "androidx.work_work-runtime-nodeps",
+    aars: ["androidx/work-runtime/work-runtime-2.5.0.aar"],
+    sdk_version: "current",
+}
+
+android_library {
+    name: "androidx.work_work-runtime",
+    static_libs: [
+        "androidx.work_work-runtime-nodeps",
+        "androidx.paging_paging-common",
+        "guava",
+    ],
+    min_sdk_version: "14",
+    sdk_version: "current",
+    manifest: "androidx/work-runtime/AndroidManifest.xml",
 }
 
 android_library_import {
