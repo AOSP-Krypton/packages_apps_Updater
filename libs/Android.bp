@@ -65,7 +65,7 @@ android_library {
 
 java_import {
     name: "rxjava3",
-    jars: ["rx/rxjava-3.0.13.jar"],
+    jars: ["rx/rxjava-3.1.2.jar"],
     sdk_version: "current",
 }
 
