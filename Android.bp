@@ -23,9 +23,7 @@ android_app {
     ],
     srcs: [
         "src/**/*.java",
-    ],
-    resource_dirs: [
-        "res",
+        "src/**/*.kt",
     ],
     required: [
         "privapp_whitelist_com.krypton.updater",
