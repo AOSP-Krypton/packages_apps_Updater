@@ -58,7 +58,7 @@ public class NotificationHelper {
         final Intent intent = new Intent(context, UpdaterActivity.class);
         intent.setFlags(FLAG_ACTIVITY_SINGLE_TOP);
         activityIntent = PendingIntent.getActivity(context,
-            ACTIVITY_REQUEST_CODE, intent, 0);
+            ACTIVITY_REQUEST_CODE, intent, PendingIntent.FLAG_IMMUTABLE);
     }
 
     public void notify(int id, Notification notif) {
