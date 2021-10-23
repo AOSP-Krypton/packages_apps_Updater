@@ -31,7 +31,7 @@ android_library {
 
 android_library_import {
     name: "androidx.work_work-runtime-nodeps",
-    aars: ["androidx/work-runtime/work-runtime-2.5.0.aar"],
+    aars: ["androidx/work-runtime/work-runtime-2.7.0.aar"],
     sdk_version: "current",
 }
 
