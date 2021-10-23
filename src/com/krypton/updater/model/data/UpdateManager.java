@@ -101,6 +101,7 @@ public class UpdateManager {
 
         @Override
         public void onPayloadApplicationComplete(int errorCode) {
+            isUpdating = false;
             switch (errorCode) {
                 case SUCCESS:
                     updateStatusProcessor.onNext(updateStatus.setStatusCode(FINISHED));
