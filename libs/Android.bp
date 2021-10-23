@@ -30,15 +30,15 @@ android_library {
 }
 
 android_library_import {
-    name: "androidx.work_work-runtime-nodeps",
+    name: "androidx.work_work-runtime-latest-nodeps",
     aars: ["androidx/work-runtime/work-runtime-2.7.0.aar"],
     sdk_version: "current",
 }
 
 android_library {
-    name: "androidx.work_work-runtime",
+    name: "androidx.work_work-runtime-latest",
     static_libs: [
-        "androidx.work_work-runtime-nodeps",
+        "androidx.work_work-runtime-latest-nodeps",
         "androidx.paging_paging-common",
         "guava",
     ],

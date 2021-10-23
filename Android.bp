@@ -39,7 +39,7 @@ android_app {
         "androidx.lifecycle_lifecycle-service",
         "androidx.preference_preference",
         "androidx.room_room-runtime",
-        "androidx.work_work-runtime",
+        "androidx.work_work-runtime-latest",
         "dagger2",
         "jsr330",
         "reactivestreams",
