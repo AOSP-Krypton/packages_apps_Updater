@@ -34,7 +34,7 @@ import java.util.Date
 import kotlin.jvm.JvmStatic
 
 // TODO : remove all JvmStatic annotations once entire app is in kotlin
-class Utils {
+class Utils private constructor() {
     companion object {
         private const val TAG = "UpdaterUtils"
 
@@ -112,7 +112,6 @@ class Utils {
         }
 
         // Reads the content from a url and returns a string representation of it
-        // TODO : remove this function and inline url.readText() where it's used
         @JvmStatic
         fun parseRawContent(url: URL): String? {
             try {
