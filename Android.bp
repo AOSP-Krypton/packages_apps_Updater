@@ -50,7 +50,6 @@ android_app {
         "dagger2-compiler",
         "androidx.room_room-compiler-plugin",
     ],
-    min_sdk_version: "30",
 }
 
 prebuilt_etc {
