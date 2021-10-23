@@ -17,6 +17,7 @@ android_app {
     platform_apis: true,
     certificate: "platform",
     privileged: true,
+    system_ext_specific: true,
     defaults: [
         "SettingsLibDefaults",
     ],
@@ -57,4 +58,5 @@ prebuilt_etc {
     sub_dir: "permissions",
     src: "privapp-permissions-updater.xml",
     filename_from_src: true,
+    system_ext_specific: true,
 }
