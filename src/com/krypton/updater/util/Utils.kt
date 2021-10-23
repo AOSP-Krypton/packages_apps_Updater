@@ -114,6 +114,13 @@ class Utils {
         // Reads the content from a url and returns a string representation of it
         // TODO : remove this function and inline url.readText() where it's used
         @JvmStatic
-        fun parseRawContent(url: URL): String? = url.readText()
+        fun parseRawContent(url: URL): String? {
+            try {
+                return url.readText()
+            } catch (e: IOException) {
+                Log.e(TAG, "IOException while parsing content of ${url.toString()}")
+            }
+            return null
+        }
     }
 }
