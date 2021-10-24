@@ -33,10 +33,11 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.krypton.updater.model.data.ProgressInfo;
 import com.krypton.updater.R;
+import com.krypton.updater.ui.VisibilityControlInterface;
 import com.krypton.updater.util.Utils;
 import com.krypton.updater.viewmodel.DownloadViewModel;
 
-public class DownloadProgressFragment extends Fragment {
+public class DownloadProgressFragment extends Fragment implements VisibilityControlInterface {
 
     private DownloadViewModel viewModel;
     private View rootView;
@@ -96,7 +97,7 @@ public class DownloadProgressFragment extends Fragment {
 
         viewModel.getControlVisibility().observe(owner,
             visible -> {
-                Utils.setVisible(visible, pauseButton, cancelButton);
+                setGroupVisibility(visible, pauseButton, cancelButton);
                 rootView.invalidate();
             });
     }
@@ -110,7 +111,7 @@ public class DownloadProgressFragment extends Fragment {
     }
 
     private void hideSelf(boolean hide) {
-        Utils.setVisible(!hide, rootView);
+        setGroupVisibility(!hide, rootView);
         rootView.invalidate();
     }
 }

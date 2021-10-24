@@ -42,10 +42,11 @@ import com.krypton.updater.model.data.ProgressInfo;
 import com.krypton.updater.R;
 import com.krypton.updater.services.UpdateInstallerService;
 import com.krypton.updater.services.UpdateInstallerService.ServiceBinder;
+import com.krypton.updater.ui.VisibilityControlInterface;
 import com.krypton.updater.util.Utils;
 import com.krypton.updater.viewmodel.UpdateViewModel;
 
-public class UpdateProgressFragment extends Fragment {
+public class UpdateProgressFragment extends Fragment implements VisibilityControlInterface {
     private static final String TAG = "UpdateProgressFragment";
     private Context context;
     private UpdateInstallerService service;
@@ -142,7 +143,7 @@ public class UpdateProgressFragment extends Fragment {
 
         viewModel.getControlVisibility().observe(owner,
             visible -> {
-                Utils.setVisible(visible, pauseButton, cancelButton);
+                setGroupVisibility(visible, pauseButton, cancelButton);
                 rootView.invalidate();
             });
     }
@@ -156,7 +157,7 @@ public class UpdateProgressFragment extends Fragment {
     }
 
     private void hideSelf(boolean hide) {
-        Utils.setVisible(!hide, rootView);
+        setGroupVisibility(!hide, rootView);
         rootView.invalidate();
     }
 }

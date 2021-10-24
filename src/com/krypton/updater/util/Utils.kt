@@ -19,7 +19,6 @@ package com.krypton.updater.util
 import android.os.Environment
 import android.os.SystemProperties
 import android.util.Log
-import android.view.View
 
 import com.krypton.updater.util.Constants.MB
 
@@ -66,18 +65,6 @@ class Utils private constructor() {
         // Format given time in milliseconds with dateFormat
         @JvmStatic
         fun formatDate(date: Long) = DATE_FORMAT.format(Date(date))
-
-        /* Set visibility to all views in @param views
-         * View.VISIBLE or View.GONE based on @param visible
-         */
-        @JvmStatic
-        fun setVisible(
-            visible: Boolean,
-            vararg views: View,
-        ) {
-            val flag = if (visible) View.VISIBLE else View.GONE
-            views.forEach { it.setVisibility(flag) }
-        }
 
         // Get a File object pointing to the @param fileName
         // file in Downloads folder

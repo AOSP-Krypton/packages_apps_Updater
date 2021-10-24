@@ -45,6 +45,9 @@ android_app {
         "rxandroid",
         "rxjava3",
     ],
+    kotlincflags: [
+        "-Xjvm-default=enable",
+    ],
     plugins: [
         "dagger2-compiler",
         "androidx.room_room-compiler-plugin",

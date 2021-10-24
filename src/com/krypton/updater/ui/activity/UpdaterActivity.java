@@ -71,6 +71,7 @@ import com.krypton.updater.model.data.Response;
 import com.krypton.updater.R;
 import com.krypton.updater.services.UpdateInstallerService;
 import com.krypton.updater.ui.fragment.*;
+import com.krypton.updater.ui.VisibilityControlInterface;
 import com.krypton.updater.util.NotificationHelper;
 import com.krypton.updater.util.Utils;
 import com.krypton.updater.UpdaterApplication;
@@ -78,7 +79,7 @@ import com.krypton.updater.viewmodel.*;
 
 import javax.inject.Inject;
 
-public class UpdaterActivity extends AppCompatActivity {
+public class UpdaterActivity extends AppCompatActivity implements VisibilityControlInterface {
     private static final String MAGISK_PACKAGE = "com.topjohnwu.magisk";
     private static final String MIME_TYPE_ZIP = "application/zip";
     private static final int SELECT_FILE = 1001;
@@ -254,7 +255,7 @@ public class UpdaterActivity extends AppCompatActivity {
             buildInfo.getFileName()));
         latestBuildMd5.setText(getString(R.string.md5,
             buildInfo.getMd5()));
-        Utils.setVisible(true, latestBuildGroup);
+        setGroupVisibility(true, latestBuildGroup);
     }
 
     private String getString(int id, String str) {
@@ -271,14 +272,14 @@ public class UpdaterActivity extends AppCompatActivity {
         viewModel.getChangelogResponse().observe(this,
             response -> handleChaneglogResponse(response));
         viewModel.getRefreshButtonVisibility().observe(this,
-            visibility -> Utils.setVisible(visibility, refreshButton));
+            visibility -> setGroupVisibility(visibility, refreshButton));
         viewModel.getLocalUpgradeButtonVisibility().observe(this,
-            visibility -> Utils.setVisible(visibility, localUpgradeButton));
+            visibility -> setGroupVisibility(visibility, localUpgradeButton));
         viewModel.getDownloadButtonVisibility().observe(this,
-            visibility -> Utils.setVisible(visibility, changelogView, downloadButton));
+            visibility -> setGroupVisibility(visibility, changelogView, downloadButton));
         viewModel.getUpdateButtonVisibility().observe(this,
             visibility -> {
-                Utils.setVisible(visibility, updateButton);
+                setGroupVisibility(visibility, updateButton);
                 if (visibility && copyingDialog != null &&
                         copyingDialog.isShowing()) {
                     copyingDialog.dismiss();
@@ -286,18 +287,18 @@ public class UpdaterActivity extends AppCompatActivity {
             });
         viewModel.getRebootButtonVisibility().observe(this,
             visibility -> {
-                Utils.setVisible(visibility, rebootButtonGroup);
+                setGroupVisibility(visibility, rebootButtonGroup);
                 if (visibility) {
                     stopServiceAsUser(new Intent(this, UpdateInstallerService.class), SYSTEM);
-                    Utils.setVisible(KryptonUtils.isPackageInstalled(this,
+                    setGroupVisibility(KryptonUtils.isPackageInstalled(this,
                         MAGISK_PACKAGE), magiskButton);
                 }
             });
         viewModel.getLocalUpgradeFileName().observe(this,
             fileName -> {
                 localUpgradeFileName.setText(fileName);
-                Utils.setVisible(!fileName.isEmpty(), localUpgradeFileName);
-                Utils.setVisible(fileName.isEmpty(), currentStatus);
+                setGroupVisibility(!fileName.isEmpty(), localUpgradeFileName);
+                setGroupVisibility(fileName.isEmpty(), currentStatus);
             });
     }
 
@@ -307,23 +308,23 @@ public class UpdaterActivity extends AppCompatActivity {
         switch (status) {
             case 0:
                 setBuildFetchResult(R.string.hit_refresh);
-                Utils.setVisible(false, latestBuildGroup);
+                setGroupVisibility(false, latestBuildGroup);
                 break;
             case REFRESHING:
                 setBuildFetchResult(R.string.fetching_build_status_text);
-                Utils.setVisible(true, refreshProgress);
+                setGroupVisibility(true, refreshProgress);
                 break;
             case REFRESH_FAILED:
                 setBuildFetchResult(R.string.unable_to_fetch_details);
-                Utils.setVisible(false, refreshProgress);
+                setGroupVisibility(false, refreshProgress);
                 break;
             case UP_TO_DATE:
                 setBuildFetchResult(R.string.current_is_latest);
-                Utils.setVisible(false, refreshProgress);
+                setGroupVisibility(false, refreshProgress);
                 break;
             case NEW_UPDATE:
                 setBuildFetchResult(R.string.new_update);
-                Utils.setVisible(false, refreshProgress);
+                setGroupVisibility(false, refreshProgress);
                 setNewBuildInfo((BuildInfo) response.getResponseBody());
                 break;
         }
@@ -332,24 +333,24 @@ public class UpdaterActivity extends AppCompatActivity {
     private void handleChaneglogResponse(Response response) {
         switch (response.getStatus()) {
             case 0:
-                Utils.setVisible(false, changelogView);
+                setGroupVisibility(false, changelogView);
                 changelogText.setText(null);
                 break;
             case FETCHING_CHANGELOG:
-                Utils.setVisible(true, changelogView, refreshProgress);
+                setGroupVisibility(true, changelogView, refreshProgress);
                 changelogText.setText(R.string.fetching_changelog);
                 break;
             case FETCH_CHANGELOG_FAILED:
-                Utils.setVisible(false, refreshProgress);
+                setGroupVisibility(false, refreshProgress);
                 changelogText.setText(R.string.unable_to_fetch_changelog);
                 break;
             case CHANGELOG_UNAVAILABLE:
             case CHANGELOG_UP_TO_DATE:
-                Utils.setVisible(false, refreshProgress);
+                setGroupVisibility(false, refreshProgress);
                 changelogText.setText(R.string.changelog_unavailable);
                 break;
             case NEW_CHANGELOG:
-                Utils.setVisible(false, refreshProgress);
+                setGroupVisibility(false, refreshProgress);
                 changelogText.setText((SpannableStringBuilder) response.getResponseBody(),
                     TextView.BufferType.SPANNABLE);
         }
