@@ -126,23 +126,23 @@ public class DownloadViewModel extends AndroidViewModel {
         progressInfo.addSource(LiveDataReactiveStreams.fromPublisher(
             repository.getDownloadStatusProcessor()),
                 downloadStatus -> {
-                    final int status = downloadStatus.getStatus();
-                    pauseStatus.setValue(status == PAUSED);
+                    final int statusCode = downloadStatus.getStatusCode();
+                    pauseStatus.setValue(statusCode == PAUSED);
                     if (viewVisibility.getValue()) {
-                        if (status == 0 || status == CANCELLED) {
+                        if (statusCode == 0 || statusCode == CANCELLED) {
                             viewVisibility.postValue(false);
                         }
                     } else {
-                        if (status >= INDETERMINATE) {
+                        if (statusCode >= INDETERMINATE) {
                             viewVisibility.postValue(true);
                         }
                     }
                     if (controlVisibility.getValue()) {
-                        if (status < INDETERMINATE || status > PAUSED) {
+                        if (statusCode < INDETERMINATE || statusCode > PAUSED) {
                             controlVisibility.postValue(false);
                         }
                     } else {
-                        if (status >= INDETERMINATE && status <= PAUSED) {
+                        if (statusCode >= INDETERMINATE && statusCode <= PAUSED) {
                             controlVisibility.postValue(true);
                         }
                     }

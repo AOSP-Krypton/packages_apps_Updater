@@ -115,7 +115,8 @@ public class DownloadRepository {
 
     public ProgressInfo getProgressInfo(DownloadStatus downloadStatus) {
         String status = "";
-        switch (downloadStatus.getStatus()) {
+        final int statusCode = downloadStatus.getStatusCode();
+        switch (statusCode) {
             case INDETERMINATE:
                 status = getString(R.string.waiting);
                 break;
@@ -134,7 +135,7 @@ public class DownloadRepository {
         }
         return new ProgressInfo()
             .setProgress(downloadStatus.getProgress())
-            .setIndeterminate(downloadStatus.getStatus() == INDETERMINATE)
+            .setIndeterminate(statusCode == INDETERMINATE)
             .setExtras(String.format("%d/%d MB", (int) (downloadStatus.getDownloadedSize() / MB),
                 (int) downloadStatus.getFileSize() / MB))
             .setStatus(status);

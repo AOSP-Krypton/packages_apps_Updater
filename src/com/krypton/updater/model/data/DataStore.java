@@ -115,7 +115,7 @@ public final class DataStore {
     }
 
     public int getDownloadStatusCode() {
-        return downloadStatus == null ? 0 : downloadStatus.getStatus();
+        return downloadStatus == null ? 0 : downloadStatus.getStatusCode();
     }
 
     public void updateDownloadStatus(int status) {
@@ -128,7 +128,8 @@ public final class DataStore {
         if (downloadStatus.getFileSize() == 0) {
             downloadStatus.setFileSize(sharedPrefs.getLong(BUILD_SIZE, 0));
         }
-        downloadStatusProcessor.onNext(downloadStatus.setStatus(status));
+        downloadStatus.setStatusCode(status);
+        downloadStatusProcessor.onNext(downloadStatus);
     }
 
     public void updateDownloadProgress(long size, int percent) {
@@ -137,9 +138,9 @@ public final class DataStore {
             .putInt(DOWNLOADED_PERCENT, percent)
             .commit();
         if (downloadStatus != null) {
-            downloadStatusProcessor.onNext(downloadStatus
-                .setDownloadedSize(size)
-                .setProgress(percent));
+            downloadStatus.setDownloadedSize(size);
+            downloadStatus.setProgress(percent);
+            downloadStatusProcessor.onNext(downloadStatus);
         }
     }
 
