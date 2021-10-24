@@ -67,13 +67,14 @@ public final class DataStore {
         if (buildInfo == null) {
             final String md5 = sharedPrefs.getString(BUILD_MD5, null);
             if (md5 != null) {
-                buildInfo = new BuildInfo()
-                    .setVersion(sharedPrefs.getString(BUILD_VERSION, null))
-                    .setDate(sharedPrefs.getLong(BUILD_DATE, 0))
-                    .setURL(sharedPrefs.getString(BUILD_URL, null))
-                    .setFileName(sharedPrefs.getString(BUILD_NAME, null))
-                    .setFileSize(sharedPrefs.getLong(BUILD_SIZE, 0))
-                    .setMd5(md5);
+                buildInfo = new BuildInfo(
+                    sharedPrefs.getString(BUILD_VERSION, null),
+                    sharedPrefs.getLong(BUILD_DATE, 0),
+                    sharedPrefs.getString(BUILD_URL, null),
+                    sharedPrefs.getString(BUILD_NAME, null),
+                    sharedPrefs.getLong(BUILD_SIZE, 0),
+                    md5
+                );
             }
         }
         return buildInfo;
@@ -84,7 +85,7 @@ public final class DataStore {
         sharedPrefs.edit()
             .putString(BUILD_VERSION, buildInfo.getVersion())
             .putLong(BUILD_DATE, buildInfo.getDate())
-            .putString(BUILD_URL, buildInfo.getURL())
+            .putString(BUILD_URL, buildInfo.getUrl())
             .putString(BUILD_NAME, buildInfo.getFileName())
             .putLong(BUILD_SIZE, buildInfo.getFileSize())
             .putString(BUILD_MD5, buildInfo.getMd5())

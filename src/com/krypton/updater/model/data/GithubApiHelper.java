@@ -72,13 +72,14 @@ public class GithubApiHelper {
                 final String version = jsonObj.getString(BUILD_VERSION);
                 final float currVersion = Float.parseFloat(Utils.getVersion());
                 if (Float.parseFloat(version) > currVersion || date > Utils.getBuildDate()) {
-                    return new Response(new BuildInfo()
-                        .setVersion(version)
-                        .setDate(date)
-                        .setFileName(jsonObj.getString(BUILD_NAME))
-                        .setURL(jsonObj.getString(BUILD_URL))
-                        .setMd5(jsonObj.getString(BUILD_MD5))
-                        .setFileSize(jsonObj.getLong(BUILD_SIZE)), NEW_UPDATE);
+                    return new Response(new BuildInfo(
+                        version,
+                        date,
+                        jsonObj.getString(BUILD_URL),
+                        jsonObj.getString(BUILD_NAME),
+                        jsonObj.getLong(BUILD_SIZE),
+                        jsonObj.getString(BUILD_MD5)
+                    ), NEW_UPDATE);
                 } else {
                     return new Response(UP_TO_DATE);
                 }

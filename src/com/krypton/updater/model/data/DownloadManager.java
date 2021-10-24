@@ -117,7 +117,7 @@ public class DownloadManager {
         return new OneTimeWorkRequest.Builder(DownloadWorker.class)
             .setConstraints(constraints)
             .setInputData(new Data.Builder()
-                .putString(BUILD_URL, buildInfo.getURL())
+                .putString(BUILD_URL, buildInfo.getUrl())
                 .putString(BUILD_NAME, buildInfo.getFileName())
                 .putString(BUILD_MD5, buildInfo.getMd5())
                 .putLong(BUILD_SIZE, buildInfo.getFileSize())
