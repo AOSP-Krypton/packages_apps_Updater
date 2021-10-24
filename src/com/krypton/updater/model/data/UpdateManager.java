@@ -165,9 +165,9 @@ public class UpdateManager {
         thread.start();
         bgHandler = new Handler(thread.getLooper());
         updateEngine.setPerformanceMode(true);
-        final PayloadInfo payloadInfo = new PayloadInfo();
-        payloadInfo.extractPayloadInfo(ofm.getOTAFileUri());
-        if (!payloadInfo.validateData()) {
+        final PayloadInfo payloadInfo = PayloadInfoFactory.createPayloadInfo(
+            ofm.getOTAFileUri());
+        if (!payloadInfo.validate()) {
             resetAndNotify(R.string.invalid_zip_file);
             return;
         }
@@ -175,7 +175,8 @@ public class UpdateManager {
         updateEngine.bind(updateEngineCallback, bgHandler);
         try {
             updateEngine.applyPayload(payloadInfo.getFilePath(),
-                payloadInfo.getOffset(), payloadInfo.getSize(), payloadInfo.getHeader());
+                payloadInfo.getOffset(), payloadInfo.getSize(),
+                payloadInfo.getHeaderKeyValuePairs());
         } catch (ServiceSpecificException e) {
             Log.e(TAG, "ServiceSpecificException when applying payload", e);
             resetAndNotify(R.string.update_failed);
