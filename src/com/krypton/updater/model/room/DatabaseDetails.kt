@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2021 AOSP-Krypton Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -14,20 +14,9 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.model.room;
+package com.krypton.updater.model.room
 
-import androidx.room.TypeConverter;
-
-import java.util.Date;
-
-public class Converters {
-    @TypeConverter
-    public static Date fromTimeToDate(long time) {
-        return new Date(time);
-    }
-
-    @TypeConverter
-    public static long dateToTime(Date date) {
-        return date == null ? 0 : date.getTime();
-    }
+object DatabaseDetails {
+    const val DATABASE_NAME = "updater_database"
+    const val CHANGELOG_TABLE_NAME = "changelog_table"
 }

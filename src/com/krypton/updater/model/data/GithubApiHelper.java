@@ -90,7 +90,7 @@ public class GithubApiHelper {
         return new Response(REFRESH_FAILED);
     }
 
-    public Response parseChangelogInfo(final TreeMap<Date, Changelog> currentMap) {
+    public Response parseChangelogInfo(final TreeMap<Date, ChangelogInfo> currentMap) {
         boolean listUpdated = false;
         String json = Utils.parseRawContent(getTreeURLForDevice());
         if (json != null) {
@@ -119,11 +119,11 @@ public class GithubApiHelper {
                         if (url != null) {
                             final String sha = blobJSONObj.getString("sha");
                             if (!currentMap.containsKey(changelogDate) ||
-                                    !currentMap.get(changelogDate).getSHA().equals(sha)) {
+                                    !currentMap.get(changelogDate).getSha().equals(sha)) {
                                 if (!listUpdated) {
                                     listUpdated = true;
                                 }
-                                currentMap.put(changelogDate, new Changelog(changelogDate,
+                                currentMap.put(changelogDate, new ChangelogInfo(changelogDate,
                                     Utils.parseRawContent(url), sha));
                             }
                         }

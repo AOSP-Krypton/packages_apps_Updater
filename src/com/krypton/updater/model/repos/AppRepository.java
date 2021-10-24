@@ -46,7 +46,8 @@ import com.krypton.updater.model.room.AppDatabase;
 import com.krypton.updater.model.room.ChangelogDao;
 import com.krypton.updater.model.room.ChangelogEntity;
 import com.krypton.updater.model.data.BuildInfo;
-import com.krypton.updater.model.data.Changelog;
+import com.krypton.updater.model.data.ChangelogFactory;
+import com.krypton.updater.model.data.ChangelogInfo;
 import com.krypton.updater.model.data.DataStore;
 import com.krypton.updater.model.data.DownloadManager;
 import com.krypton.updater.model.data.GithubApiHelper;
@@ -161,17 +162,17 @@ public class AppRepository {
             final Response response = githubApiHelper.parseChangelogInfo(
                 new TreeMap<>(changelogDao.getChangelogList().stream()
                     .collect(Collectors.toMap(entity -> entity.date,
-                        entity -> Changelog.from(entity)))
+                        ChangelogFactory::toChangelogInfo))
                 )
             );
             final int status = response.getStatus();
             if (status == NEW_CHANGELOG) {
-                final TreeMap<Date, Changelog> mappedChangelog = (TreeMap) response.getResponseBody();
+                final TreeMap<Date, ChangelogInfo> mappedChangelog = (TreeMap) response.getResponseBody();
                 if (status == NEW_CHANGELOG) {
                     changelogDao.clear();
-                    final Collection<Changelog> collection = mappedChangelog.values();
+                    final Collection<ChangelogInfo> collection = mappedChangelog.values();
                     changelogDao.insert(collection.stream()
-                        .map(changelog -> changelog.toEntity())
+                        .map(ChangelogFactory::toChangelogEntity)
                         .collect(Collectors.toList()));
                     stringBuilder.clear();
                     collection.stream().forEach(changelog -> addChangelogToBuilder(

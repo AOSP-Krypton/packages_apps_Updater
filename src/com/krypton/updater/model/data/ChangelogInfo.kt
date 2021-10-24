@@ -14,25 +14,12 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.model.room;
+package com.krypton.updater.model.data
 
-import static androidx.room.OnConflictStrategy.REPLACE;
-import static com.krypton.updater.util.Constants.TABLE_CHANGELOG;
+import java.util.Date
 
-import androidx.room.Dao;
-import androidx.room.Insert;
-import androidx.room.Query;
-
-import java.util.List;
-
-@Dao
-public interface ChangelogDao {
-    @Query("SELECT * FROM " + TABLE_CHANGELOG)
-    List<ChangelogEntity> getChangelogList();
-
-    @Insert(onConflict = REPLACE)
-    void insert(List<ChangelogEntity> list);
-
-    @Query("DELETE FROM " + TABLE_CHANGELOG)
-    void clear();
-}
+data class ChangelogInfo(
+    val date: Date,
+    val changelog: String?,
+    val sha: String,
+)

@@ -26,7 +26,7 @@ import androidx.room.Room
 import androidx.work.WorkManager
 
 import com.krypton.updater.model.room.AppDatabase
-import com.krypton.updater.util.Constants.DATABASE
+import com.krypton.updater.model.room.DatabaseDetails.DATABASE_NAME
 
 import dagger.Module
 import dagger.Provides
@@ -46,7 +46,7 @@ class UpdaterModule(ctx: Context) {
     @Singleton
     @Provides
     fun provideAppDatabase(): AppDatabase = Room.databaseBuilder(
-        context, AppDatabase::class.java, DATABASE)
+        context, AppDatabase::class.java, DATABASE_NAME)
             .fallbackToDestructiveMigration()
             .build()
 

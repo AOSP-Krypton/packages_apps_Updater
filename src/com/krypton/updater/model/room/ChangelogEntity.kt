@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2021 AOSP-Krypton Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -14,35 +14,30 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.model.room;
+package com.krypton.updater.model.room
 
-import static com.krypton.updater.util.Constants.TABLE_CHANGELOG;
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.Fts4
+import androidx.room.Ignore
+import androidx.room.PrimaryKey
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.room.ColumnInfo;
-import androidx.room.Entity;
-import androidx.room.Fts4;
-import androidx.room.Ignore;
-import androidx.room.PrimaryKey;
-
-import java.util.Date;
+import java.util.Date
 
 @Fts4
-@Entity(tableName = TABLE_CHANGELOG)
-public class ChangelogEntity {
+@Entity(tableName = DatabaseDetails.CHANGELOG_TABLE_NAME)
+class ChangelogEntity {
 
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "rowid")
     @Ignore
-    public int rowId;
+    var rowId: Int = 0
 
-    @NonNull
-    public Date date;
+    lateinit var date: Date
 
-    @NonNull
-    public String sha;
+    lateinit var sha: String
 
-    @Nullable
-    public String changelog;
+    // TODO : remove this annotation once everything is in kotlin
+    @JvmField
+    var changelog: String? = null
 }

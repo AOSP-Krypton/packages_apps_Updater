@@ -41,10 +41,6 @@ public class Constants {
     public static final int CHANGELOG_UP_TO_DATE = 207;
     public static final int NEW_CHANGELOG = 208;
 
-    // Database
-    public static final String DATABASE = "updater_database";
-    public static final String TABLE_CHANGELOG = "table_changelog";
-
     // SharedPreferences keys
     public static final String DOWNLOAD_ID = "download_id";
     public static final String DOWNLOAD_STATUS = "download_status";
