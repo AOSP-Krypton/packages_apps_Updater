@@ -16,12 +16,6 @@
 
 package com.krypton.updater.model.data;
 
-import static com.krypton.updater.util.Constants.BUILD_DATE;
-import static com.krypton.updater.util.Constants.BUILD_NAME;
-import static com.krypton.updater.util.Constants.BUILD_SIZE;
-import static com.krypton.updater.util.Constants.BUILD_MD5;
-import static com.krypton.updater.util.Constants.BUILD_URL;
-import static com.krypton.updater.util.Constants.BUILD_VERSION;
 import static com.krypton.updater.util.Constants.DOWNLOAD_ID;
 import static com.krypton.updater.util.Constants.DOWNLOAD_STATUS;
 import static com.krypton.updater.util.Constants.DOWNLOADED_PERCENT;
@@ -65,14 +59,14 @@ public final class DataStore {
 
     public BuildInfo getBuildInfo() {
         if (buildInfo == null) {
-            final String md5 = sharedPrefs.getString(BUILD_MD5, null);
+            final String md5 = sharedPrefs.getString(BuildInfo.MD5, null);
             if (md5 != null) {
                 buildInfo = new BuildInfo(
-                    sharedPrefs.getString(BUILD_VERSION, null),
-                    sharedPrefs.getLong(BUILD_DATE, 0),
-                    sharedPrefs.getString(BUILD_URL, null),
-                    sharedPrefs.getString(BUILD_NAME, null),
-                    sharedPrefs.getLong(BUILD_SIZE, 0),
+                    sharedPrefs.getString(BuildInfo.VERSION, null),
+                    sharedPrefs.getLong(BuildInfo.DATE, 0),
+                    sharedPrefs.getString(BuildInfo.URL, null),
+                    sharedPrefs.getString(BuildInfo.FILE_NAME, null),
+                    sharedPrefs.getLong(BuildInfo.FILE_SIZE, 0),
                     md5
                 );
             }
@@ -83,12 +77,12 @@ public final class DataStore {
     public void updateBuildInfo(BuildInfo buildInfo) {
         this.buildInfo = buildInfo;
         sharedPrefs.edit()
-            .putString(BUILD_VERSION, buildInfo.getVersion())
-            .putLong(BUILD_DATE, buildInfo.getDate())
-            .putString(BUILD_URL, buildInfo.getUrl())
-            .putString(BUILD_NAME, buildInfo.getFileName())
-            .putLong(BUILD_SIZE, buildInfo.getFileSize())
-            .putString(BUILD_MD5, buildInfo.getMd5())
+            .putString(BuildInfo.VERSION, buildInfo.getVersion())
+            .putLong(BuildInfo.DATE, buildInfo.getDate())
+            .putString(BuildInfo.URL, buildInfo.getUrl())
+            .putString(BuildInfo.FILE_NAME, buildInfo.getFileName())
+            .putLong(BuildInfo.FILE_SIZE, buildInfo.getFileSize())
+            .putString(BuildInfo.MD5, buildInfo.getMd5())
             .commit();
     }
 
@@ -97,12 +91,12 @@ public final class DataStore {
             buildInfo = null;
         }
         sharedPrefs.edit()
-            .remove(BUILD_VERSION)
-            .remove(BUILD_DATE)
-            .remove(BUILD_URL)
-            .remove(BUILD_NAME)
-            .remove(BUILD_SIZE)
-            .remove(BUILD_MD5)
+            .remove(BuildInfo.VERSION)
+            .remove(BuildInfo.DATE)
+            .remove(BuildInfo.URL)
+            .remove(BuildInfo.FILE_NAME)
+            .remove(BuildInfo.FILE_SIZE)
+            .remove(BuildInfo.MD5)
             .commit();
     }
 
@@ -126,7 +120,7 @@ public final class DataStore {
             downloadStatus = new DownloadStatus();
         }
         if (downloadStatus.getFileSize() == 0) {
-            downloadStatus.setFileSize(sharedPrefs.getLong(BUILD_SIZE, 0));
+            downloadStatus.setFileSize(sharedPrefs.getLong(BuildInfo.FILE_SIZE, 0));
         }
         downloadStatus.setStatusCode(status);
         downloadStatusProcessor.onNext(downloadStatus);

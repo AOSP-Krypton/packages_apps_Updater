@@ -16,12 +16,6 @@
 
 package com.krypton.updater.model.data;
 
-import static com.krypton.updater.util.Constants.BUILD_DATE;
-import static com.krypton.updater.util.Constants.BUILD_NAME;
-import static com.krypton.updater.util.Constants.BUILD_SIZE;
-import static com.krypton.updater.util.Constants.BUILD_MD5;
-import static com.krypton.updater.util.Constants.BUILD_URL;
-import static com.krypton.updater.util.Constants.BUILD_VERSION;
 import static com.krypton.updater.util.Constants.CHANGELOG_UNAVAILABLE;
 import static com.krypton.updater.util.Constants.CHANGELOG_UP_TO_DATE;
 import static com.krypton.updater.util.Constants.FETCH_CHANGELOG_FAILED;
@@ -68,17 +62,17 @@ public class GithubApiHelper {
         if (json != null) {
             try {
                 final JSONObject jsonObj = new JSONObject(json);
-                date = jsonObj.getLong(BUILD_DATE) * 1000; // Convert to millis here
-                final String version = jsonObj.getString(BUILD_VERSION);
+                date = jsonObj.getLong(BuildInfo.DATE) * 1000; // Convert to millis here
+                final String version = jsonObj.getString(BuildInfo.VERSION);
                 final float currVersion = Float.parseFloat(Utils.getVersion());
                 if (Float.parseFloat(version) > currVersion || date > Utils.getBuildDate()) {
                     return new Response(new BuildInfo(
                         version,
                         date,
-                        jsonObj.getString(BUILD_URL),
-                        jsonObj.getString(BUILD_NAME),
-                        jsonObj.getLong(BUILD_SIZE),
-                        jsonObj.getString(BUILD_MD5)
+                        jsonObj.getString(BuildInfo.URL),
+                        jsonObj.getString(BuildInfo.FILE_NAME),
+                        jsonObj.getLong(BuildInfo.FILE_SIZE),
+                        jsonObj.getString(BuildInfo.MD5)
                     ), NEW_UPDATE);
                 } else {
                     return new Response(UP_TO_DATE);

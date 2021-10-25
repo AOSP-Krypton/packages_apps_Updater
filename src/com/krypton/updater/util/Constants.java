@@ -22,14 +22,6 @@ public class Constants {
     public static final String GIT_BRANCH = "A12";
     public static final String OTA_JSON_FILE_NAME = "ota.json";
 
-    // For build info
-    public static final String BUILD_VERSION = "version";
-    public static final String BUILD_DATE = "date";
-    public static final String BUILD_NAME = "filename";
-    public static final String BUILD_URL = "url";
-    public static final String BUILD_SIZE = "filesize";
-    public static final String BUILD_MD5 = "md5";
-
     // GithubApiHelper status codes
     public static final int UP_TO_DATE = 200;
     public static final int NEW_UPDATE = 201;

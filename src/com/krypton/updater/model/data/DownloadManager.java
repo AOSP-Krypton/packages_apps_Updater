@@ -19,10 +19,6 @@ package com.krypton.updater.model.data;
 import static androidx.work.BackoffPolicy.LINEAR;
 import static androidx.work.NetworkType.CONNECTED;
 import static androidx.work.OneTimeWorkRequest.MIN_BACKOFF_MILLIS;
-import static com.krypton.updater.util.Constants.BUILD_MD5;
-import static com.krypton.updater.util.Constants.BUILD_NAME;
-import static com.krypton.updater.util.Constants.BUILD_SIZE;
-import static com.krypton.updater.util.Constants.BUILD_URL;
 import static com.krypton.updater.util.Constants.DOWNLOADING;
 import static com.krypton.updater.util.Constants.INDETERMINATE;
 import static com.krypton.updater.util.Constants.PAUSED;
@@ -37,6 +33,7 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
+import com.krypton.updater.model.data.BuildInfo;
 import com.krypton.updater.model.data.DataStore;
 import com.krypton.updater.workers.DownloadWorker;
 
@@ -117,10 +114,10 @@ public class DownloadManager {
         return new OneTimeWorkRequest.Builder(DownloadWorker.class)
             .setConstraints(constraints)
             .setInputData(new Data.Builder()
-                .putString(BUILD_URL, buildInfo.getUrl())
-                .putString(BUILD_NAME, buildInfo.getFileName())
-                .putString(BUILD_MD5, buildInfo.getMd5())
-                .putLong(BUILD_SIZE, buildInfo.getFileSize())
+                .putString(BuildInfo.URL, buildInfo.getUrl())
+                .putString(BuildInfo.FILE_NAME, buildInfo.getFileName())
+                .putString(BuildInfo.MD5, buildInfo.getMd5())
+                .putLong(BuildInfo.FILE_SIZE, buildInfo.getFileSize())
                 .build())
             .setBackoffCriteria(LINEAR, MIN_BACKOFF_MILLIS, MILLISECONDS)
             .build();

@@ -21,10 +21,6 @@ import static androidx.work.NetworkType.CONNECTED;
 import static androidx.work.OneTimeWorkRequest.MIN_BACKOFF_MILLIS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static com.krypton.updater.util.Constants.MB;
-import static com.krypton.updater.util.Constants.BUILD_MD5;
-import static com.krypton.updater.util.Constants.BUILD_NAME;
-import static com.krypton.updater.util.Constants.BUILD_SIZE;
-import static com.krypton.updater.util.Constants.BUILD_URL;
 import static com.krypton.updater.util.Constants.DOWNLOADING;
 import static com.krypton.updater.util.Constants.INDETERMINATE;
 import static com.krypton.updater.util.Constants.PAUSED;
@@ -45,6 +41,7 @@ import androidx.work.WorkInfo.State;
 import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
 
+import com.krypton.updater.model.data.BuildInfo;
 import com.krypton.updater.model.data.DataStore;
 import com.krypton.updater.model.data.DownloadStatus;
 import com.krypton.updater.model.data.ProgressInfo;

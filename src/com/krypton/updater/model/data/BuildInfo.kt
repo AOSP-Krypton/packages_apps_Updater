@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2021 AOSP-Krypton Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -23,4 +23,13 @@ data class BuildInfo(
     val fileName: String,
     val fileSize: Long,
     val md5: String,
-)
+) {
+    companion object {
+        const val VERSION = "version"
+        const val DATE = "date"
+        const val URL = "url"
+        const val FILE_NAME = "fileName"
+        const val FILE_SIZE = "fileSize"
+        const val MD5 = "md5"
+    }
+}

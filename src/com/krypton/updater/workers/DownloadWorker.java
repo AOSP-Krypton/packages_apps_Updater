@@ -18,10 +18,6 @@ package com.krypton.updater.workers;
 
 import static android.os.Process.THREAD_PRIORITY_BACKGROUND;
 import static com.krypton.updater.util.Constants.UPDATE_PENDING;
-import static com.krypton.updater.util.Constants.BUILD_SIZE;
-import static com.krypton.updater.util.Constants.BUILD_MD5;
-import static com.krypton.updater.util.Constants.BUILD_URL;
-import static com.krypton.updater.util.Constants.BUILD_NAME;
 import static com.krypton.updater.util.Constants.DOWNLOADING;
 import static com.krypton.updater.util.Constants.FINISHED;
 import static com.krypton.updater.util.Constants.FAILED;
@@ -39,6 +35,7 @@ import androidx.work.ListenableWorker.Result;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.krypton.updater.model.data.BuildInfo;
 import com.krypton.updater.model.data.DataStore;
 import com.krypton.updater.model.data.DownloadStatus;
 import com.krypton.updater.model.data.OTAFileManager;
@@ -91,9 +88,9 @@ public class DownloadWorker extends Worker {
     @Override
     public Result doWork() {
         final Data inputData = getInputData();
-        totalSize = inputData.getLong(BUILD_SIZE, 0);
-        int exitCode = download(inputData.getString(BUILD_URL),
-            inputData.getString(BUILD_NAME), inputData.getString(BUILD_MD5));
+        totalSize = inputData.getLong(BuildInfo.FILE_SIZE, 0);
+        int exitCode = download(inputData.getString(BuildInfo.URL),
+            inputData.getString(BuildInfo.FILE_NAME), inputData.getString(BuildInfo.MD5));
         final Result result;
         switch (exitCode) {
             case -1:
