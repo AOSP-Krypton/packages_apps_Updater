@@ -149,7 +149,7 @@ public class UpdateProgressFragment extends Fragment implements VisibilityContro
     }
 
     private void updateProgress(ProgressInfo progressInfo) {
-        progressBar.setIndeterminate(progressInfo.isIndeterminate());
+        progressBar.setIndeterminate(progressInfo.getIndeterminate());
         updateStatus.setText(progressInfo.getStatus());
         progressBar.setProgress(progressInfo.getProgress());
         progressValue.setText(progressInfo.getProgress() + "%");

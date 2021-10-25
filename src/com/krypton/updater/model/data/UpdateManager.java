@@ -69,8 +69,8 @@ public class UpdateManager {
                 if (getCurrentStatusCode() != UPDATING) {
                     updateStatus.setStatusCode(UPDATING);
                 }
-                updateStatusProcessor.onNext(updateStatus.setStep(
-                    status == DOWNLOADING ? 1 : 2));
+                updateStatus.setStep(status == DOWNLOADING ? 1 : 2);
+                updateStatusProcessor.onNext(updateStatus);
             }
             switch (status) {
                 case IDLE:
@@ -83,7 +83,8 @@ public class UpdateManager {
                 case DOWNLOADING:
                     isUpdating = true;
                 case FINALIZING:
-                    updateStatusProcessor.onNext(updateStatus.setProgress((int) (percent*100)));
+                    updateStatus.setProgress((int) (percent*100));
+                    updateStatusProcessor.onNext(updateStatus);
                     break;
                 case UPDATED_NEED_REBOOT:
                     isUpdating = false;
@@ -104,7 +105,8 @@ public class UpdateManager {
             isUpdating = false;
             switch (errorCode) {
                 case SUCCESS:
-                    updateStatusProcessor.onNext(updateStatus.setStatusCode(FINISHED));
+                    updateStatus.setStatusCode(FINISHED);
+                    updateStatusProcessor.onNext(updateStatus);
                     break;
                 case DOWNLOAD_INVALID_METADATA_MAGIC_STRING:
                 case DOWNLOAD_METADATA_SIGNATURE_MISMATCH:
@@ -171,7 +173,8 @@ public class UpdateManager {
             resetAndNotify(R.string.invalid_zip_file);
             return;
         }
-        updateStatusProcessor.onNext(updateStatus.setStatusCode(INDETERMINATE));
+        updateStatus.setStatusCode(INDETERMINATE);
+        updateStatusProcessor.onNext(updateStatus);
         updateEngine.bind(updateEngineCallback, bgHandler);
         try {
             updateEngine.applyPayload(payloadInfo.getFilePath(),
@@ -187,14 +190,16 @@ public class UpdateManager {
         try {
             if (pause) {
                 updateEngine.suspend();
-                updateStatusProcessor.onNext(updateStatus.setStatusCode(PAUSED));
+                updateStatus.setStatusCode(PAUSED);
+                updateStatusProcessor.onNext(updateStatus);
             } else {
                 if (!batteryMonitor.isBatteryOkay()) {
                     notifyBatteryIsLow();
                     return;
                 }
                 updateEngine.resume();
-                updateStatusProcessor.onNext(updateStatus.setStatusCode(INDETERMINATE));
+                updateStatus.setStatusCode(INDETERMINATE);
+                updateStatusProcessor.onNext(updateStatus);
             }
         } catch (ServiceSpecificException e) {
             // No ongoing update to suspend or resume, there is no need to log this
@@ -205,7 +210,8 @@ public class UpdateManager {
     public void cancel() {
         isUpdating = false;
         updateEngineReset();
-        updateStatusProcessor.onNext(updateStatus.setStatusCode(CANCELLED));
+        updateStatus.setStatusCode(CANCELLED);
+        updateStatusProcessor.onNext(updateStatus);
         thread.quitSafely();
     }
 
@@ -249,7 +255,8 @@ public class UpdateManager {
     }
 
     private void resetAndNotify(int msgId) {
-        updateStatusProcessor.onNext(updateStatus.setStatusCode(FAILED));
+        updateStatus.setStatusCode(FAILED);
+        updateStatusProcessor.onNext(updateStatus);
         setGlobalStatus(UPDATE_PENDING);
         reset();
         helper.notifyOrToast(R.string.update_failed, msgId, mainHandler);
@@ -259,6 +266,7 @@ public class UpdateManager {
     private void notifyBatteryIsLow() {
         helper.notifyOrToast(R.string.battery_low,
             R.string.plug_in_charger, mainHandler);
-        updateStatusProcessor.onNext(updateStatus.setStatusCode(BATTERY_LOW));
+        updateStatus.setStatusCode(BATTERY_LOW);
+        updateStatusProcessor.onNext(updateStatus);
     }
 }
