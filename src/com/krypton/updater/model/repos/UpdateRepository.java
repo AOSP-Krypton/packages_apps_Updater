@@ -127,11 +127,13 @@ public class UpdateRepository {
             case FAILED:
                 status = getString(R.string.update_failed);
         }
-        return new ProgressInfo()
-            .setProgress(updateStatus.getProgress())
-            .setIndeterminate(updateStatus.getStatusCode() == INDETERMINATE)
-            .setExtras(String.format("%s %d/2", getString(R.string.step), updateStatus.getStep()))
-            .setStatus(status);
+        final String extras = String.format("%s %d/2", getString(R.string.step), updateStatus.getStep());
+        return new ProgressInfo(
+            status,
+            extras,
+            updateStatus.getStatusCode() == INDETERMINATE,
+            updateStatus.getProgress()
+        );
     }
 
     private String getString(int id) {

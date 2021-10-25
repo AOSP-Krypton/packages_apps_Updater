@@ -103,7 +103,7 @@ public class DownloadProgressFragment extends Fragment implements VisibilityCont
     }
 
     private void updateProgress(ProgressInfo progressInfo) {
-        progressBar.setIndeterminate(progressInfo.isIndeterminate());
+        progressBar.setIndeterminate(progressInfo.getIndeterminate());
         downloadStatus.setText(progressInfo.getStatus());
         progressBar.setProgress(progressInfo.getProgress());
         progressValue.setText(progressInfo.getProgress() + "%");

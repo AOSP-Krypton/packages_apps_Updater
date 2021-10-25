@@ -133,20 +133,25 @@ public class DownloadRepository {
                 status = getString(R.string.download_failed);
                 break;
         }
-        return new ProgressInfo()
-            .setProgress(downloadStatus.getProgress())
-            .setIndeterminate(statusCode == INDETERMINATE)
-            .setExtras(String.format("%d/%d MB", (int) (downloadStatus.getDownloadedSize() / MB),
-                (int) downloadStatus.getFileSize() / MB))
-            .setStatus(status);
+        final String extras = String.format("%d/%d MB", (int) (downloadStatus.getDownloadedSize() / MB),
+                (int) downloadStatus.getFileSize() / MB);
+        return new ProgressInfo(
+            status,
+            extras,
+            statusCode == INDETERMINATE,
+            downloadStatus.getProgress()
+        );
     }
 
     public ProgressInfo getProgressInfo(State state) {
         switch (state) {
             case ENQUEUED:
-                return new ProgressInfo()
-                    .setIndeterminate(state == State.ENQUEUED)
-                    .setStatus(getString(R.string.waiting));
+                return new ProgressInfo(
+                    getString(R.string.waiting),
+                    null,
+                    state == State.ENQUEUED,
+                    0
+                );
             case CANCELLED:
                 executor.execute(() -> {
                     if (!downloadManager.isPaused()) {
