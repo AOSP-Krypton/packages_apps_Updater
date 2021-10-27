@@ -26,16 +26,7 @@ import static android.provider.OpenableColumns.DISPLAY_NAME;
 import static android.view.HapticFeedbackConstants.KEYBOARD_PRESS;
 import static android.widget.Toast.LENGTH_SHORT;
 import static com.krypton.updater.util.Constants.ACION_START_UPDATE;
-import static com.krypton.updater.util.Constants.CHANGELOG_UNAVAILABLE;
-import static com.krypton.updater.util.Constants.CHANGELOG_UP_TO_DATE;
-import static com.krypton.updater.util.Constants.FETCH_CHANGELOG_FAILED;
-import static com.krypton.updater.util.Constants.FETCHING_CHANGELOG;
-import static com.krypton.updater.util.Constants.REFRESH_FAILED;
-import static com.krypton.updater.util.Constants.REFRESHING;
-import static com.krypton.updater.util.Constants.NEW_CHANGELOG;
-import static com.krypton.updater.util.Constants.NEW_UPDATE;
 import static com.krypton.updater.util.Constants.THEME_KEY;
-import static com.krypton.updater.util.Constants.UP_TO_DATE;
 
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
@@ -68,6 +59,7 @@ import com.android.internal.util.krypton.KryptonUtils;
 import com.krypton.updater.model.data.BatteryMonitor;
 import com.krypton.updater.model.data.BuildInfo;
 import com.krypton.updater.model.data.Response;
+import com.krypton.updater.model.data.ResponseCode;
 import com.krypton.updater.R;
 import com.krypton.updater.services.UpdateInstallerService;
 import com.krypton.updater.ui.fragment.*;
@@ -303,18 +295,18 @@ public class UpdaterActivity extends AppCompatActivity implements VisibilityCont
     }
 
     private void handleOTAResponse(Response response) {
-        int status = response.getStatus();
-        refreshButton.setClickable(status != REFRESHING);
+        ResponseCode status = response.getStatus();
+        refreshButton.setClickable(status != ResponseCode.FETCHING);
         switch (status) {
-            case 0:
+            case EMPTY_RESPONSE:
                 setBuildFetchResult(R.string.hit_refresh);
                 setGroupVisibility(false, latestBuildGroup);
                 break;
-            case REFRESHING:
+            case FETCHING:
                 setBuildFetchResult(R.string.fetching_build_status_text);
                 setGroupVisibility(true, refreshProgress);
                 break;
-            case REFRESH_FAILED:
+            case FAILED:
                 setBuildFetchResult(R.string.unable_to_fetch_details);
                 setGroupVisibility(false, refreshProgress);
                 break;
@@ -322,36 +314,36 @@ public class UpdaterActivity extends AppCompatActivity implements VisibilityCont
                 setBuildFetchResult(R.string.current_is_latest);
                 setGroupVisibility(false, refreshProgress);
                 break;
-            case NEW_UPDATE:
+            case NEW_DATA:
+                viewModel.fetchChangelog();
                 setBuildFetchResult(R.string.new_update);
                 setGroupVisibility(false, refreshProgress);
-                setNewBuildInfo((BuildInfo) response.getResponseBody());
+                setNewBuildInfo((BuildInfo) response.getBody());
                 break;
         }
     }
 
     private void handleChaneglogResponse(Response response) {
         switch (response.getStatus()) {
-            case 0:
+            case EMPTY_RESPONSE:
                 setGroupVisibility(false, changelogView);
                 changelogText.setText(null);
                 break;
-            case FETCHING_CHANGELOG:
+            case FETCHING:
                 setGroupVisibility(true, changelogView, refreshProgress);
                 changelogText.setText(R.string.fetching_changelog);
                 break;
-            case FETCH_CHANGELOG_FAILED:
+            case FAILED:
                 setGroupVisibility(false, refreshProgress);
                 changelogText.setText(R.string.unable_to_fetch_changelog);
                 break;
-            case CHANGELOG_UNAVAILABLE:
-            case CHANGELOG_UP_TO_DATE:
+            case DATA_UNAVAILABLE:
                 setGroupVisibility(false, refreshProgress);
                 changelogText.setText(R.string.changelog_unavailable);
                 break;
-            case NEW_CHANGELOG:
+            case NEW_DATA:
                 setGroupVisibility(false, refreshProgress);
-                changelogText.setText((SpannableStringBuilder) response.getResponseBody(),
+                changelogText.setText((SpannableStringBuilder) response.getBody(),
                     TextView.BufferType.SPANNABLE);
         }
     }
@@ -359,7 +351,6 @@ public class UpdaterActivity extends AppCompatActivity implements VisibilityCont
     public void refreshStatus(View v) {
         v.performHapticFeedback(KEYBOARD_PRESS);
         viewModel.fetchBuildInfo();
-        viewModel.fetchChangelog();
     }
 
     public void startDownload(View v) {

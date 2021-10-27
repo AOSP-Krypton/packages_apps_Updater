@@ -14,30 +14,26 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.model.room
+package com.krypton.updater.model.retrofit
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.Fts4
-import androidx.room.Ignore
-import androidx.room.PrimaryKey
+import com.krypton.updater.model.retrofit.data.*
 
-import java.util.Date
+import retrofit2.http.GET
+import retrofit2.http.Path
+import retrofit2.http.Query
+import retrofit2.http.Url
+import retrofit2.Call
 
-@Fts4
-@Entity(tableName = DatabaseDetails.CHANGELOG_TABLE_NAME)
-class ChangelogEntity {
+interface GithubApiService {
+    @GET("contents/{device}")
+    fun getContents(
+        @Path("device") device: String,
+        @Query("ref") branch: String,
+    ): Call<List<Content>>
 
-    @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = "rowid")
-    @Ignore
-    var rowId: Int = 0
+    @GET
+    fun getOTAJsonContent(@Url url: String): Call<OTAJsonContent>
 
-    lateinit var date: Date
-
-    lateinit var sha: String
-
-    // TODO : remove this annotation once everything is in kotlin
-    @JvmField
-    var changelog: String? = null
+    @GET
+    fun getChangelog(@Url url: String): Call<String?>
 }

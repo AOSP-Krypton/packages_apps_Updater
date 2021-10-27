@@ -14,25 +14,26 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.model.room
+package com.krypton.updater.model.retrofit.data
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy.REPLACE
-import androidx.room.Query
+import com.google.gson.annotations.SerializedName
 
-import com.krypton.updater.model.room.DatabaseDetails.CHANGELOG_TABLE_NAME
+class OTAJsonContent {
+    @SerializedName("version")
+    var version: String = ""
 
-import java.util.List
+    @SerializedName("date")
+    var date: Long = 0
 
-@Dao
-interface ChangelogDao {
-    @Query("SELECT * FROM " + CHANGELOG_TABLE_NAME)
-    fun getChangelogList(): List<ChangelogEntity> 
+    @SerializedName("url")
+    var url: String = ""
 
-    @Insert(onConflict = REPLACE)
-    fun insert(list: List<ChangelogEntity> )
+    @SerializedName("filename")
+    var fileName: String = ""
 
-    @Query("DELETE FROM " + CHANGELOG_TABLE_NAME)
-    fun clear()
+    @SerializedName("filesize")
+    var fileSize: Long = 0
+
+    @SerializedName("md5")
+    var md5: String = ""
 }

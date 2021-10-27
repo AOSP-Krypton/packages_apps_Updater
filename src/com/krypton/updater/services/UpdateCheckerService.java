@@ -16,14 +16,11 @@
 
 package com.krypton.updater.services;
 
-import static com.krypton.updater.util.Constants.NEW_UPDATE;
-import static com.krypton.updater.util.Constants.REFRESHING;
-import static com.krypton.updater.util.Constants.REFRESH_FAILED;
-
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 
+import com.krypton.updater.model.data.ResponseCode;
 import com.krypton.updater.model.repos.AppRepository;
 import com.krypton.updater.R;
 import com.krypton.updater.util.NotificationHelper;
@@ -50,12 +47,13 @@ public class UpdateCheckerService extends Service {
         ((UpdaterApplication) getApplication()).getComponent().inject(this);
         disposable = repository.getOTAResponsePublisher()
             .map(response -> response.getStatus())
-            .filter(status -> status != 0 && status != REFRESHING)
+            .filter(status -> status != ResponseCode.EMPTY_RESPONSE &&
+                status != ResponseCode.FETCHING)
             .subscribe(status -> {
-                if (status == NEW_UPDATE) {
+                if (status == ResponseCode.NEW_DATA) {
                     notifyUser(R.string.notify_new_update,
                         R.string.notify_new_update_desc);
-                } else if (status == REFRESH_FAILED) {
+                } else if (status == ResponseCode.FAILED) {
                     notifyUser(R.string.notify_refresh_failed,
                         R.string.notify_refresh_failed_desc);
                 }

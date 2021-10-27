@@ -22,11 +22,7 @@ import android.os.UpdateEngine
 
 import androidx.annotation.NonNull
 import androidx.preference.PreferenceManager
-import androidx.room.Room
 import androidx.work.WorkManager
-
-import com.krypton.updater.model.room.AppDatabase
-import com.krypton.updater.model.room.DatabaseDetails.DATABASE_NAME
 
 import dagger.Module
 import dagger.Provides
@@ -37,18 +33,9 @@ import java.util.concurrent.ExecutorService
 import javax.inject.Singleton
 
 @Module
-class UpdaterModule(ctx: Context) {
-    val context = ctx
-    
+class UpdaterModule(private val context: Context) {
     @Provides
     fun provideContext() = context
-
-    @Singleton
-    @Provides
-    fun provideAppDatabase(): AppDatabase = Room.databaseBuilder(
-        context, AppDatabase::class.java, DATABASE_NAME)
-            .fallbackToDestructiveMigration()
-            .build()
 
     @Singleton
     @Provides

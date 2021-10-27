@@ -58,7 +58,7 @@ class Utils private constructor() {
         @JvmStatic
         fun getVersion() = SystemProperties.get(PROP_VERSION, "unavailable")
 
-        // Get build date (milliseconds since epoch)
+        // Get build date (seconds since epoch)
         @JvmStatic
         fun getBuildDate(): Long = SystemProperties.get(PROP_DATE, "0").toLong() * 1000L
 
@@ -94,17 +94,6 @@ class Utils private constructor() {
                 return String(md5Digest.digest())
             } catch (e: IOException) {
                 Log.e(TAG, "IOException while computing md5 of file ${file.getAbsolutePath()}")
-            }
-            return null
-        }
-
-        // Reads the content from a url and returns a string representation of it
-        @JvmStatic
-        fun parseRawContent(url: URL): String? {
-            try {
-                return url.readText()
-            } catch (e: IOException) {
-                Log.e(TAG, "IOException while parsing content of ${url.toString()}")
             }
             return null
         }

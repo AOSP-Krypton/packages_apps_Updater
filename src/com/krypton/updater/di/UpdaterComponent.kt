@@ -17,7 +17,6 @@
 package com.krypton.updater.di
 
 import com.krypton.updater.model.repos.*
-import com.krypton.updater.model.room.AppDatabase
 import com.krypton.updater.services.*
 import com.krypton.updater.ui.activity.UpdaterActivity
 import com.krypton.updater.ui.fragment.SettingsFragment

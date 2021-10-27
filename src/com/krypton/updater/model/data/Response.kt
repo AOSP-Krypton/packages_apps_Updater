@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2021 AOSP-Krypton Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License")
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -14,18 +14,9 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.model.room
+package com.krypton.updater.model.data
 
-import androidx.room.Database
-import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
-
-@Database(
-    entities = arrayOf(ChangelogEntity::class),
-    version = 5,
-    exportSchema = false,
+data class Response(
+    val body: Any?,
+    val status: ResponseCode,
 )
-@TypeConverters(Converters::class)
-abstract class AppDatabase(): RoomDatabase() {
-    abstract fun getChangelogDao(): ChangelogDao
-}

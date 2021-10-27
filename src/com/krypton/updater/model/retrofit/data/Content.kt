@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.model.room
+package com.krypton.updater.model.retrofit.data
 
-import androidx.room.TypeConverter
+import com.google.gson.annotations.SerializedName
 
-import java.util.Date
+class Content {
+    @SerializedName("name")
+    var name: String = ""
 
-class Converters {
-    @TypeConverter
-    fun fromTimeToDate(time: Long) = Date(time)
+    @SerializedName("sha")
+    var sha: String = ""
 
-    @TypeConverter
-    fun dateToTime(date: Date) = date.getTime()
+    @SerializedName("download_url")
+    var url: String = ""
 }

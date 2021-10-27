@@ -22,17 +22,6 @@ public class Constants {
     public static final String GIT_BRANCH = "A12";
     public static final String OTA_JSON_FILE_NAME = "ota.json";
 
-    // GithubApiHelper status codes
-    public static final int UP_TO_DATE = 200;
-    public static final int NEW_UPDATE = 201;
-    public static final int REFRESH_FAILED = 202;
-    public static final int REFRESHING = 203;
-    public static final int FETCH_CHANGELOG_FAILED = 204;
-    public static final int FETCHING_CHANGELOG = 205;
-    public static final int CHANGELOG_UNAVAILABLE = 206;
-    public static final int CHANGELOG_UP_TO_DATE = 207;
-    public static final int NEW_CHANGELOG = 208;
-
     // SharedPreferences keys
     public static final String DOWNLOAD_ID = "download_id";
     public static final String DOWNLOAD_STATUS = "download_status";

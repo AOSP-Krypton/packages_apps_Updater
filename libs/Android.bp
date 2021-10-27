@@ -40,6 +40,7 @@ android_library {
     static_libs: [
         "androidx.work_work-runtime-latest-nodeps",
         "androidx.paging_paging-common",
+        "androidx.room_room-runtime",
         "guava",
     ],
     min_sdk_version: "14",
@@ -72,5 +73,35 @@ java_import {
 java_import {
     name: "reactivestreams",
     jars: ["rx/reactive-streams-1.0.3.jar"],
+    sdk_version: "current",
+}
+
+java_import {
+    name: "retrofit",
+    jars: ["retrofit/retrofit-2.9.0.jar"],
+    sdk_version: "current",
+}
+
+java_import {
+    name: "retrofit_converter-gson",
+    jars: ["retrofit/converter-gson-2.9.0.jar"],
+    sdk_version: "current",
+}
+
+java_import {
+    name: "retrofit_converter-scalars",
+    jars: ["retrofit/converter-scalars-2.9.0.jar"],
+    sdk_version: "current",
+}
+
+java_import {
+    name: "okhttp-4.9.2",
+    jars: ["okhttp/okhttp-4.9.2.jar"],
+    sdk_version: "current",
+}
+
+java_import {
+    name: "okhttp_logging-interceptor",
+    jars: ["okhttp/logging-interceptor-4.9.2.jar"],
     sdk_version: "current",
 }

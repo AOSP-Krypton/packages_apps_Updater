@@ -37,11 +37,16 @@ android_app {
         "androidx.lifecycle_lifecycle-reactivestreams",
         "androidx.lifecycle_lifecycle-service",
         "androidx.preference_preference",
-        "androidx.room_room-runtime",
         "androidx.work_work-runtime-latest",
         "dagger2",
+        "gson-prebuilt-jar",
         "jsr330",
+        "okhttp-4.9.2",
+        "okhttp_logging-interceptor",
         "reactivestreams",
+        "retrofit",
+        "retrofit_converter-gson",
+        "retrofit_converter-scalars",
         "rxandroid",
         "rxjava3",
     ],
@@ -50,7 +55,6 @@ android_app {
     ],
     plugins: [
         "dagger2-compiler",
-        "androidx.room_room-compiler-plugin",
     ],
 }
 

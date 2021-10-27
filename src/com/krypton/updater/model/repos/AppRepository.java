@@ -23,12 +23,8 @@ import static android.graphics.Typeface.BOLD;
 import static android.os.PowerManager.REBOOT_REQUESTED_BY_DEVICE_OWNER;
 import static android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE;
 import static com.krypton.updater.util.Constants.DOWNLOAD_PENDING;
-import static com.krypton.updater.util.Constants.FETCHING_CHANGELOG;
 import static com.krypton.updater.util.Constants.FINISHED;
-import static com.krypton.updater.util.Constants.NEW_CHANGELOG;
-import static com.krypton.updater.util.Constants.NEW_UPDATE;
 import static com.krypton.updater.util.Constants.REBOOT_PENDING;
-import static com.krypton.updater.util.Constants.REFRESHING;
 import static com.krypton.updater.util.Constants.UPDATE_PENDING;
 import static java.util.concurrent.TimeUnit.DAYS;
 
@@ -42,14 +38,11 @@ import android.text.SpannableStringBuilder;
 import android.text.style.StyleSpan;
 import android.util.Log;
 
-import com.krypton.updater.model.room.AppDatabase;
-import com.krypton.updater.model.room.ChangelogDao;
-import com.krypton.updater.model.room.ChangelogEntity;
 import com.krypton.updater.model.data.BuildInfo;
-import com.krypton.updater.model.data.ChangelogFactory;
 import com.krypton.updater.model.data.ChangelogInfo;
 import com.krypton.updater.model.data.DataStore;
 import com.krypton.updater.model.data.DownloadManager;
+import com.krypton.updater.model.data.ResponseCode;
 import com.krypton.updater.model.data.GithubApiHelper;
 import com.krypton.updater.model.data.Response;
 import com.krypton.updater.model.data.UpdateManager;
@@ -61,12 +54,11 @@ import io.reactivex.rxjava3.processors.BehaviorProcessor;
 
 import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.Date;
 import java.util.stream.Collectors;
-import java.util.TreeMap;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -74,42 +66,43 @@ import javax.inject.Singleton;
 @Singleton
 public class AppRepository {
     private static final String TAG = "AppRepository";
+    private static final boolean DEBUG = false;
     private static final int REQUEST_CODE_CHECK_UPDATE = 1003;
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yy");
+
     private final AlarmManager alarmManager;
     private final Context context;
     private final ExecutorService executor;
-    private final AppDatabase database;
-    private final ChangelogDao changelogDao;
-    private final BehaviorProcessor<Response> otaResponsePublisher,
-        changelogResponsePublisher;
+    private final BehaviorProcessor<Response> otaResponsePublisher, changelogResponsePublisher;
     private final DownloadManager downloadManager;
     private final UpdateManager updateManager;
     private final GithubApiHelper githubApiHelper;
     private final DataStore dataStore;
     private final String changelogPrefix;
-    private final SpannableStringBuilder stringBuilder;
-    private Future<Boolean> fetching;
+
+    private Future fetchingBuildInfo, fetchingChangelog;
 
     @Inject
-    public AppRepository(Context context, AppDatabase database,
-            ExecutorService executor, DownloadManager downloadManager,
-            UpdateManager updateManager, GithubApiHelper githubApiHelper,
-            DataStore dataStore) {
+    public AppRepository(
+        Context context,
+        ExecutorService executor,
+        DownloadManager downloadManager,
+        UpdateManager updateManager,
+        GithubApiHelper githubApiHelper,
+        DataStore dataStore
+    ) {
         this.context = context;
-        this.database = database;
         this.executor = executor;
         this.downloadManager = downloadManager;
         this.updateManager = updateManager;
         this.githubApiHelper = githubApiHelper;
         this.dataStore = dataStore;
-        changelogDao = database.getChangelogDao();
         alarmManager = context.getSystemService(AlarmManager.class);
-        otaResponsePublisher = BehaviorProcessor.createDefault(new Response(0));
-        changelogResponsePublisher = BehaviorProcessor.createDefault(new Response(0));
+        otaResponsePublisher = BehaviorProcessor.createDefault(
+            new Response(null, ResponseCode.EMPTY_RESPONSE));
+        changelogResponsePublisher = BehaviorProcessor.createDefault(
+            new Response(null, ResponseCode.EMPTY_RESPONSE));
         changelogPrefix = context.getString(R.string.changelog).concat(" - ");
-        stringBuilder = new SpannableStringBuilder();
-        updateFromDataStore();
     }
 
     public BehaviorProcessor<Response> getOTAResponsePublisher() {
@@ -129,59 +122,53 @@ public class AppRepository {
     }
 
     public void fetchBuildInfo() {
-        if (fetching != null && !fetching.isDone()) {
-            return;
+        if (fetchingBuildInfo != null && !fetchingBuildInfo.isDone()) {
+            fetchingBuildInfo.cancel(true);
         }
-        otaResponsePublisher.onNext(new Response(REFRESHING));
-        fetching = executor.submit(() -> {
-            final Response response = githubApiHelper.parseOTAInfo();
-            otaResponsePublisher.onNext(response);
-            final BuildInfo buildInfo = (BuildInfo) response.getResponseBody();
+        logD("fetching build info");
+        otaResponsePublisher.onNext(new Response(null, ResponseCode.FETCHING));
+        logD("submitting job to the executor");
+        fetchingBuildInfo = executor.submit(() -> {
+            logD("started fetching build info");
+            final BuildInfo buildInfo = githubApiHelper.getBuildInfo(Utils.getDevice());
+            logD("buildInfo = " + buildInfo);
+            ResponseCode code = ResponseCode.EMPTY_RESPONSE;
             if (buildInfo != null) {
-                final long date = buildInfo.getDate();
-                dataStore.updateBuildInfo(buildInfo);
-                dataStore.setEntryDate(System.currentTimeMillis());
-                dataStore.setGlobalStatus(DOWNLOAD_PENDING);
+                if (buildInfo.getDate() > Utils.getBuildDate()) {
+                    dataStore.updateBuildInfo(buildInfo);
+                    dataStore.setEntryDate(System.currentTimeMillis());
+                    dataStore.setGlobalStatus(DOWNLOAD_PENDING);
+                    code = ResponseCode.NEW_DATA;
+                } else {
+                    code = ResponseCode.UP_TO_DATE;
+                }
+            } else {
+                code = ResponseCode.FAILED;
             }
+            logD("code = " + code);
             setAlarm(DAYS.toMillis(getRefreshInterval()));
-            return response.getStatus() == NEW_UPDATE;
+            otaResponsePublisher.onNext(new Response(buildInfo, code));
         });
     }
 
     public void fetchChangelog() {
-        executor.execute(() -> {
-            try {
-                if (fetching == null || !fetching.get()) {
-                    return;
-                }
-            } catch(InterruptedException|ExecutionException e) {
-                Log.e(TAG, "Exception when getting ota response status", e);
-                return;
-            }
-            changelogResponsePublisher.onNext(new Response(FETCHING_CHANGELOG));
-            final Response response = githubApiHelper.parseChangelogInfo(
-                new TreeMap<>(changelogDao.getChangelogList().stream()
-                    .collect(Collectors.toMap(entity -> entity.date,
-                        ChangelogFactory::toChangelogInfo))
-                )
-            );
-            final int status = response.getStatus();
-            if (status == NEW_CHANGELOG) {
-                final TreeMap<Date, ChangelogInfo> mappedChangelog = (TreeMap) response.getResponseBody();
-                if (status == NEW_CHANGELOG) {
-                    changelogDao.clear();
-                    final Collection<ChangelogInfo> collection = mappedChangelog.values();
-                    changelogDao.insert(collection.stream()
-                        .map(ChangelogFactory::toChangelogEntity)
-                        .collect(Collectors.toList()));
-                    stringBuilder.clear();
-                    collection.stream().forEach(changelog -> addChangelogToBuilder(
-                        stringBuilder, changelog.getDate(), changelog.getChangelog()));
-                    changelogResponsePublisher.onNext(new Response(stringBuilder, NEW_CHANGELOG));
-                }
-
+        if (fetchingChangelog != null && !fetchingChangelog.isDone()) {
+            fetchingChangelog.cancel(true);
+        }
+        logD("fetching changelog");
+        changelogResponsePublisher.onNext(new Response(null, ResponseCode.FETCHING));
+        fetchingChangelog = executor.submit(() -> {
+            final List<ChangelogInfo> fetchedList = githubApiHelper.getChangelogs(
+                Utils.getDevice(), Utils.getBuildDate()/** dateLowerBound in millis */);
+            if (fetchedList != null) {
+                final SpannableStringBuilder stringBuilder = new SpannableStringBuilder();
+                fetchedList.forEach(changelog -> addChangelogToBuilder(
+                    stringBuilder, changelog.getDate(), changelog.getChangelog()));
+                changelogResponsePublisher.onNext(new Response(stringBuilder,
+                    ResponseCode.NEW_DATA));
             } else {
-                changelogResponsePublisher.onNext(response);
+                changelogResponsePublisher.onNext(new Response(null,
+                    ResponseCode.FAILED));
             }
         });
     }
@@ -190,10 +177,10 @@ public class AppRepository {
         executor.execute(() -> {
             // Only delete data if no ongoing downloads or updates are there
             if (!downloadManager.isDownloading() && !updateManager.isUpdating()) {
-                final Response empty = new Response(0);
-                otaResponsePublisher.onNext(empty);
-                changelogResponsePublisher.onNext(empty);
-                changelogDao.clear();
+                otaResponsePublisher.onNext(new Response(null,
+                    ResponseCode.EMPTY_RESPONSE));
+                changelogResponsePublisher.onNext(new Response(null,
+                    ResponseCode.EMPTY_RESPONSE));
                 dataStore.setLocalUpgradeFileName("");
                 dataStore.deleteBuildInfo();
                 dataStore.deleteDownloadStatus();
@@ -247,28 +234,6 @@ public class AppRepository {
         dataStore.updateThemeMode(mode);
     }
 
-    private void updateFromDataStore() {
-        executor.execute(() -> {
-            final BuildInfo buildInfo = dataStore.getBuildInfo();
-            if (buildInfo == null) {
-                return;
-            }
-            if (buildInfo.getDate() > Utils.getBuildDate()) {
-                long timeSinceUpdate = System.currentTimeMillis() - dataStore.getEntryDate();
-                if (timeSinceUpdate < DAYS.toMillis(getRefreshInterval())) {
-                    otaResponsePublisher.onNext(new Response(buildInfo, NEW_UPDATE));
-                    changelogDao.getChangelogList().stream()
-                        .forEach(cgEntity -> addChangelogToBuilder(stringBuilder,
-                            cgEntity.date, cgEntity.changelog));
-                    changelogResponsePublisher.onNext(new Response(stringBuilder, NEW_CHANGELOG));
-                }
-            } else {
-                // Stored data is too old, reset to prompt user to do a manual refresh
-                resetStatus();
-            }
-        });
-    }
-
     private void setAlarm(long interval) {
         final PendingIntent alarmIntent = PendingIntent.getService(
             context, REQUEST_CODE_CHECK_UPDATE, new Intent(context, UpdateCheckerService.class),
@@ -287,5 +252,9 @@ public class AppRepository {
         builder.append("\n\n");
         builder.append(changelog);
         builder.append("\n");
+    }
+
+    private static void logD(String msg) {
+        if (DEBUG) Log.d(TAG, msg);
     }
 }

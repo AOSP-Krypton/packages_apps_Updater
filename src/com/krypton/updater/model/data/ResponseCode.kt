@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2021 AOSP-Krypton Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License")
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.model.room
+package com.krypton.updater.model.data
 
-object DatabaseDetails {
-    const val DATABASE_NAME = "updater_database"
-    const val CHANGELOG_TABLE_NAME = "changelog_table"
+enum class ResponseCode {
+    EMPTY_RESPONSE,
+    FETCHING,
+    NEW_DATA,
+    UP_TO_DATE,
+    DATA_UNAVAILABLE,
+    FAILED,
 }
