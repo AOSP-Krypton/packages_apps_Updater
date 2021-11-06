@@ -159,7 +159,7 @@ class GithubApiHelper @Inject constructor() {
         private const val DEBUG = false
 
         // Git branch to fetch contents from
-        private const val GIT_BRANCH = "A12-test"
+        private const val GIT_BRANCH = "A12"
 
         // File name of the ota json
         private const val OTA_JSON_FILE_NAME = "ota.json"
