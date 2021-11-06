@@ -60,6 +60,7 @@ public class UpdateManager {
     private HandlerThread thread;
     private Handler bgHandler, mainHandler;
     private UpdateStatus updateStatus;
+    private boolean updateQueued;
     private boolean isUpdating;
 
     private final UpdateEngineCallback updateEngineCallback = new UpdateEngineCallback() {
@@ -102,6 +103,7 @@ public class UpdateManager {
 
         @Override
         public void onPayloadApplicationComplete(int errorCode) {
+            updateQueued = false;
             isUpdating = false;
             switch (errorCode) {
                 case SUCCESS:
@@ -155,6 +157,10 @@ public class UpdateManager {
 
     @WorkerThread
     public void start() {
+        if (updateQueued) {
+            return;
+        }
+        updateQueued = true;
         if (!batteryMonitor.isBatteryOkay()) {
             notifyBatteryIsLow();
             return;
@@ -208,6 +214,7 @@ public class UpdateManager {
 
     @WorkerThread
     public void cancel() {
+        updateQueued = false;
         isUpdating = false;
         updateEngineReset();
         updateStatus.setStatusCode(CANCELLED);
