@@ -91,7 +91,11 @@ class Utils private constructor() {
                         bytesRead = it.read(buffer)
                     }
                 }
-                return String(md5Digest.digest())
+                var builder = StringBuilder()
+                md5Digest.digest().forEach({
+                    builder.append(String.format("%02x", it))
+                })
+                return builder.toString()
             } catch (e: IOException) {
                 Log.e(TAG, "IOException while computing md5 of file ${file.getAbsolutePath()}")
             }
