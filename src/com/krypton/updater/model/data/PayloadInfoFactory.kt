@@ -64,9 +64,9 @@ class PayloadInfoFactory private constructor() {
             zipFile: ZipFile,
             payloadInfo: PayloadInfo
         ) {
-            zipFile.getEntry(METADATA_FILE).let { metadata ->
+            zipFile.getEntry(METADATA_FILE)?.let { metadata ->
                 try {
-                    zipFile.getInputStream(metadata).bufferedReader().use { reader ->
+                    zipFile.getInputStream(metadata)?.bufferedReader()?.use { reader ->
                         reader.readLine()?.let { line ->
                             logD("metadata line = $line")
                             val indexOfDelimiter = line.indexOf('=') + 1
@@ -100,7 +100,7 @@ class PayloadInfoFactory private constructor() {
         ) {
             zipFile.getEntry(PAYLOAD_PROPERTIES_FILE)?.let { payloadProps ->
                 try {
-                    zipFile.getInputStream(payloadProps).bufferedReader().use { reader ->
+                    zipFile.getInputStream(payloadProps)?.bufferedReader()?.use { reader ->
                         payloadInfo.headerKeyValuePairs =
                             Array<String?>(4) { reader.readLine() }
                     }
