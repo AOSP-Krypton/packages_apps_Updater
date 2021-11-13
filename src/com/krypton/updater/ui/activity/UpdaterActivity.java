@@ -268,7 +268,7 @@ public class UpdaterActivity extends AppCompatActivity implements VisibilityCont
         viewModel.getLocalUpgradeButtonVisibility().observe(this,
             visibility -> setGroupVisibility(visibility, localUpgradeButton));
         viewModel.getDownloadButtonVisibility().observe(this,
-            visibility -> setGroupVisibility(visibility, changelogView, downloadButton));
+            visibility -> setGroupVisibility(visibility, downloadButton));
         viewModel.getUpdateButtonVisibility().observe(this,
             visibility -> {
                 setGroupVisibility(visibility, updateButton);

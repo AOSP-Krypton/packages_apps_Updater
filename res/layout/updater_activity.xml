@@ -149,25 +149,6 @@
             app:barrierDirection="bottom"
             app:constraint_referenced_ids="current_status, local_upgrade_file_name, latest_build_md5" />
 
-        <androidx.core.widget.NestedScrollView
-            android:id="@+id/changelog"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginTop="@dimen/section_margin"
-            android:layout_marginBottom="@dimen/section_margin"
-            android:visibility="gone"
-            app:layout_constraintBottom_toTopOf="@id/download_button"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/barrier">
-            <TextView
-                style="@style/SelectableTextStyle"
-                android:id="@+id/changelog_text"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:singleLine="false" />
-        </androidx.core.widget.NestedScrollView>
-
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/download_progress_container"
             android:layout_width="0dp"
@@ -185,6 +166,32 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/download_progress_container" />
+
+        <androidx.constraintlayout.widget.Barrier
+            android:id="@+id/fragment_barrier"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:barrierDirection="bottom"
+            app:constraint_referenced_ids="download_progress_container, update_progress_container" />
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/changelog"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="@dimen/section_margin"
+            android:layout_marginBottom="@dimen/section_margin"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/download_button"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/fragment_barrier">
+            <TextView
+                style="@style/SelectableTextStyle"
+                android:id="@+id/changelog_text"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:singleLine="false" />
+        </androidx.core.widget.NestedScrollView>
 
         <Button
             style="@style/PrimaryButtonStyle"
