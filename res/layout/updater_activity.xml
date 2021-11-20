@@ -168,11 +168,11 @@
             app:layout_constraintTop_toBottomOf="@id/download_progress_container" />
 
         <androidx.constraintlayout.widget.Barrier
-            android:id="@+id/fragment_barrier"
+            android:id="@+id/changelog_barrier"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:barrierDirection="bottom"
-            app:constraint_referenced_ids="download_progress_container, update_progress_container" />
+            app:constraint_referenced_ids="download_progress_container, update_progress_container, post_update_info" />
 
         <androidx.core.widget.NestedScrollView
             android:id="@+id/changelog"
@@ -184,7 +184,7 @@
             app:layout_constraintBottom_toTopOf="@id/download_button"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/fragment_barrier">
+            app:layout_constraintTop_toBottomOf="@id/changelog_barrier">
             <TextView
                 style="@style/SelectableTextStyle"
                 android:id="@+id/changelog_text"
