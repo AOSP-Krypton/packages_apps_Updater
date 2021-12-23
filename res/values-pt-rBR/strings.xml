@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2021 AOSP-Krypton Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<resources>
+    <!-- App name -->
+    <string name="app_name">Atualizador KOSP</string>
+
+    <!-- Menu -->
+    <string name="settings">Configurações</string>
+    <string name="reset">Reiniciar</string>
+
+    <!-- Build info -->
+    <string name="refresh">Atualizar</string>
+    <string name="build_info_title">Informações sobre a compilação atual</string>
+    <string name="device">Dispositivo</string>
+    <string name="version">Versão</string>
+    <string name="date">Data</string>
+    <string name="file">Arquivo</string>
+    <string name="md5">MD5</string>
+    <string name="hit_refresh">Aperte o botão Atualizar!</string>
+    <string name="new_update">Nova atualização</string>
+    <string name="current_is_latest">A compilação atual é a mais recente!</string>
+    <string name="fetching_build_status_text">Buscando informações de compilação do github</string>
+    <string name="unable_to_fetch_details">Incapaz de buscar detalhes, tente novamente mais tarde</string>
+    <string name="notify_refresh_failed">Falha na verificação automática de atualização</string>
+    <string name="notify_refresh_failed_desc">Por favor, verifique as atualizações manualmente</string>
+    <string name="notify_new_update">Nova atualização do sistema detectada</string>
+    <string name="notify_new_update_desc">Instale a atualização para uma melhor experiência</string>
+    <string name="changelog">Registro de alterações</string>
+    <string name="fetching_changelog">Buscando o registro de alterações...</string>
+    <string name="changelog_unavailable">O registro de alterações não está disponível no momento</string>
+    <string name="unable_to_fetch_changelog">Incapaz de obter o registro de alterações</string>
+
+    <!-- Local Upgrade -->
+    <string name="local">Local</string>
+    <string name="confirm_selection">Confirme a seleção</string>
+
+    <!-- Download -->
+    <string name="download">Download</string>
+    <string name="starting_download">Iniciando o download</string>
+    <string name="pause">Pausa</string>
+    <string name="cancel">Cancelar</string>
+    <string name="resume">Retomar</string>
+    <string name="waiting">Esperando...</string>
+    <string name="downloading">Baixando</string>
+    <string name="download_paused">Download pausado</string>
+    <string name="download_failed">O download falhou</string>
+    <string name="download_finished">Download concluído</string>
+    <string name="download_cancelled">Download cancelado</string>
+    <string name="invalid_url">O URL analisado da json é inválido</string>
+    <string name="click_to_update">Clique aqui para prosseguir com a instalação da atualização</string>
+    <string name="copy_failed">Cópia para Downloads falhou</string>
+    <string name="md5_check_failed">A verificação Md5 falhou, o arquivo está corrompido</string>
+
+    <!-- Updater -->
+    <string name="update">Atualização</string>
+    <string name="applying_update">Aplicando a atualização</string>
+    <string name="processing_payload">Processando payload</string>
+    <string name="update_paused">Atualização pausada</string>
+    <string name="update_finished">Atualização concluída</string>
+    <string name="update_failed">Falha ao aplicar a atualização</string>
+    <string name="invalid_zip_file">Não é um arquivo zip válido</string>
+    <string name="step">Passo</string>
+    <string name="reboot">Reiniciar</string>
+    <string name="magisk">Magisk</string>
+    <string name="sure_to_reboot">Você tem certeza de que quer reiniciar?</string>
+    <string name="post_update_tips">
+        A atualização agora está completa, a próxima reinicialização será para o slot atualizado.
+        Agora é realmente um bom momento para ir em frente e flashar o Magisk para o novo slot.
+        Se você não tem o magisk instalado ou não se importa em perder o magisk após a atualização, então aperte o botão de reiniciar.
+    </string>
+    <string name="metadata_verification_failed">A verificação dos metadados falhou</string>
+    <string name="payload_transfer_error_retry">Erro de transferência do payload, por favor, tente novamente</string>
+    <string name="attempting_downgrade">Tentativa de downgrade do sistema negado</string>
+    <string name="ota_transfer_error">Erro de transferência OTA, tente novamente</string>
+    <string name="rootfs_verification_failed">Novo erro de verificação rootfs, você pode tentar novamente</string>
+    <string name="copying">Copiando o arquivo para o diretório interno</string>
+    <string name="do_not_close">Por favor, não feche o aplicativo até que isso tenha terminado.</string>
+    <string name="magisk_not_installed">O Magisk não está instalado ou está escondido</string>
+    <string name="update_finished_notif_desc">Toque para finalizar a atualização</string>
+
+    <!-- Updater Settings -->
+    <string name="updater_settings_title">Configurações de Atualização</string>
+    <string name="theme_settings_title">Tema</string>
+    <string name="theme_settings_summary">Selecione o tema para o aplicativo</string>
+    <string name="theme_chooser_dialog_title">Selecione o tema</string>
+    <string name="refresh_interval_settings_title">Intervalo de verificação de atualização (dias)</string>
+
+    <!-- Low battery message -->
+    <string name="battery_low">A bateria está com pouca carga</string>
+    <string name="plug_in_charger">Conecte o carregador para prosseguir</string>
+</resources>
