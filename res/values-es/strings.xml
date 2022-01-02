@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2021 AOSP-Krypton Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<resources>
+    <!-- App name -->
+    <string name="app_name">Actualizador KOSP</string>
+
+    <!-- Menu -->
+    <string name="settings">Ajustes</string>
+    <string name="reset">Reiniciar</string>
+
+    <!-- Build info -->
+    <string name="refresh">Refrescar</string>
+    <string name="build_info_title">Información sobre la versión actual</string>
+    <string name="device">Dispositivo</string>
+    <string name="version">Version</string>
+    <string name="date">Fecha</string>
+    <string name="file">Archivo</string>
+    <string name="md5">MD5</string>
+    <string name="hit_refresh">Pulsa el botón de refrescar!</string>
+    <string name="new_update">Nueva actualización</string>
+    <string name="current_is_latest">La versión actual es la más reciente!</string>
+    <string name="fetching_build_status_text">Obtención de información de github</string>
+    <string name="unable_to_fetch_details">No se han podido obtener los detalles, inténtelo de nuevo más tarde</string>
+    <string name="notify_refresh_failed">Fallo en la comprobación de la actualización automática</string>
+    <string name="notify_refresh_failed_desc">Compruebe las actualizaciones manualmente</string>
+    <string name="notify_new_update">Se ha detectado una nueva actualización del sistema</string>
+    <string name="notify_new_update_desc">Instale la actualización para una mejor experiencia</string>
+    <string name="changelog">Registro de cambios</string>
+    <string name="fetching_changelog">Obteniendo el registro de cambios...</string>
+    <string name="changelog_unavailable">El registro de cambios no está disponible en este momento</string>
+    <string name="unable_to_fetch_changelog">No se pudo obtener el registro de cambios</string>
+
+    <!-- Local Upgrade -->
+    <string name="local">Local</string>
+    <string name="confirm_selection">Confirmar la selección</string>
+
+    <!-- Download -->
+    <string name="download">Descargar</string>
+    <string name="starting_download">Iniciando la descarga</string>
+    <string name="pause">Pausar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="resume">Continuar</string>
+    <string name="waiting">Esperando...</string>
+    <string name="downloading">Descargando</string>
+    <string name="download_paused">Descarga en pausa</string>
+    <string name="download_failed">Descarga fallida</string>
+    <string name="download_finished">Descarga terminada</string>
+    <string name="download_cancelled">Descarga cancelada</string>
+    <string name="invalid_url">La URL parseada desde el json no es válida</string>
+    <string name="click_to_update">Haga clic aquí para proceder a la instalación de la actualización</string>
+    <string name="copy_failed">Fallo en la copia a descargas</string>
+    <string name="md5_check_failed">La verificación Md5 ha fallado, el archivo está corrupto</string>
+
+    <!-- Updater -->
+    <string name="update">Actualizar</string>
+    <string name="applying_update">Aplicando la actualización</string>
+    <string name="processing_payload">Procesando el payload</string>
+    <string name="update_paused">Actualización pausada</string>
+    <string name="update_finished">Actualización terminada</string>
+    <string name="update_failed">No se ha podido aplicar la actualización</string>
+    <string name="invalid_zip_file">No es un archivo zip válido</string>
+    <string name="step">Paso</string>
+    <string name="reboot">Reiniciar</string>
+    <string name="magisk">Magisk</string>
+    <string name="sure_to_reboot">Are you sure you want to reboot?</string>
+    <string name="post_update_tips">
+        La actualización se ha completado, el próximo reinicio será al slot actualizado.
+        Ahora es un buen momento para seguir adelante y flashear magisk al nuevo slot.
+        Si no tiene magisk instalado o no le importa perderlo después de la actualización, entonces pulse el botón de reiniciar.
+    </string>
+    <string name="metadata_verification_failed">Fallo en la verificación de los metadatos</string>
+    <string name="payload_transfer_error_retry">Error de transferencia de payload, por favor reintente</string>
+    <string name="attempting_downgrade">Intento de bajar el nivel del sistema denegado</string>
+    <string name="ota_transfer_error">Error de transferencia OTA, reintentar</string>
+    <string name="rootfs_verification_failed">Nuevo error de verificación de rootfs, puede reintentar</string>
+    <string name="copying">Copiando el archivo en el directorio interno</string>
+    <string name="do_not_close">Por favor, no cierre la aplicación hasta que esto termine</string>
+    <string name="magisk_not_installed">Magisk no está instalado o está oculto</string>
+    <string name="update_finished_notif_desc">Pulse para finalizar la actualización</string>
+
+    <!-- Updater Settings -->
+    <string name="updater_settings_title">Ajustes del actualizador</string>
+    <string name="theme_settings_title">Tema</string>
+    <string name="theme_settings_summary">Seleccione el tema de la aplicación</string>
+    <string name="theme_chooser_dialog_title">Seleccione el tema</string>
+    <string name="refresh_interval_settings_title">Intervalo de comprobación de la actualización (días)</string>
+
+    <!-- Low battery message -->
+    <string name="battery_low">La batería tiene poca carga</string>
+    <string name="plug_in_charger">Enchufa el cargador para continuar</string>
+</resources>
