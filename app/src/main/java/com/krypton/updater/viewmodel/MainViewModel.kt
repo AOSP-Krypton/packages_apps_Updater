@@ -16,11 +16,44 @@
 
 package com.krypton.updater.viewmodel
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+
+import com.krypton.updater.data.Event
+import com.krypton.updater.data.MainRepository
+import com.krypton.updater.data.UpdateInfo
 
 import dagger.hilt.android.lifecycle.HiltViewModel
+
+import kotlinx.coroutines.launch
 
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor(): ViewModel()
+class MainViewModel @Inject constructor(
+    private val mainRepository: MainRepository,
+): ViewModel() {
+
+    private val _updateLiveData = MutableLiveData<UpdateInfo>()
+    val updateLiveData: LiveData<UpdateInfo> = _updateLiveData
+
+    private val _updateFailedEventLiveData = MutableLiveData<Event<String?>>()
+    val updateFailedEventLiveData: LiveData<Event<String?>> = _updateFailedEventLiveData
+
+    /**
+     * Check for updates and post result in [updateLiveData] (if successful) or
+     * [updateFailedEventLiveData] (if failed).
+     */
+    fun checkForUpdates() {
+        viewModelScope.launch {
+            val result = mainRepository.getUpdateInfo()
+            if (result.isSuccess) {
+                _updateLiveData.value = result.getOrThrow()
+            } else {
+                _updateFailedEventLiveData.value = Event(result.exceptionOrNull()?.message)
+            }
+        }
+    }
+}

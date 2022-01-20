@@ -16,24 +16,13 @@
 
 package com.krypton.updater.data
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-
-@Singleton
-class MainRepository @Inject constructor(
-    private val updateChecker: UpdateChecker,
+data class UpdateInfo(
+    val buildInfo: BuildInfo,
+    val changelog: Map<Long, String?>?,
+    val type: Type = Type.NO_UPDATE,
 ) {
-    /**
-     * Check for updates in github.
-     *
-     * @return the fetch result as a [Result] of type [UpdateInfo].
-     *   [UpdateInfo.Type] will indicate whether there is a new update or not.
-     */
-    suspend fun getUpdateInfo(): Result<UpdateInfo> =
-        withContext(Dispatchers.IO) {
-            updateChecker.checkForUpdate()
-        }
+    enum class Type {
+        NO_UPDATE,
+        NEW_UPDATE,
+    }
 }
