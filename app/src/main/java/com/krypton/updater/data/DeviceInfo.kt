@@ -16,24 +16,16 @@
 
 package com.krypton.updater.data
 
-import javax.inject.Inject
-import javax.inject.Singleton
+import android.os.SystemProperties
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+object DeviceInfo {
+    private const val PROP_DEVICE = "ro.krypton.build.device"
+    private const val PROP_DATE = "ro.build.date.utc"
 
-@Singleton
-class MainRepository @Inject constructor(
-    private val updateChecker: UpdateChecker,
-) {
     /**
-     * Check for updates in github.
-     *
-     * @return the fetch result as a [Result] of type [UpdateInfo].
-     *   [UpdateInfo.Type] will indicate whether there is a new update or not.
+     * Get device code name.
      */
-    suspend fun getUpdateInfo(): Result<UpdateInfo> =
-        withContext(Dispatchers.IO) {
-            updateChecker.checkForUpdate()
-        }
+    fun getDevice(): String = SystemProperties.get(PROP_DEVICE, "Unknown")
+
+    fun getBuildDate(): Long = SystemProperties.get(PROP_DATE, "0").toLong()
 }

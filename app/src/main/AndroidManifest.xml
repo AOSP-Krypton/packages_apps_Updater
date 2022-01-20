@@ -16,7 +16,8 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.krypton.updater">
+    package="com.krypton.updater"
+    android:sharedUserId="android.uid.system">
 
     <application
         android:name=".UpdaterApp"
@@ -33,5 +34,4 @@
             </intent-filter>
         </activity>
     </application>
-
 </manifest>
