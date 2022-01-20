@@ -16,4 +16,10 @@
 -->
 <resources>
     <string name="app_name">Updater</string>
+
+    <!-- Update checker -->
+    <string name="new_system_update">New system update detected</string>
+    <string name="new_system_update_description">Click here to download and install the update</string>
+    <string name="update_check_failed">Automatic update check failed</string>
+    <string name="update_check_failed_description">Please check for updates manually</string>
 </resources>
