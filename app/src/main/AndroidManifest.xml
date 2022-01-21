@@ -19,6 +19,10 @@
     package="com.krypton.updater"
     android:sharedUserId="android.uid.system">
 
+    <protected-broadcast android:name="com.krypton.updater.ACTION_CANCEL_DOWNLOAD" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:name=".UpdaterApp"
         android:label="@string/app_name"
@@ -35,6 +39,10 @@
         </activity>
 
         <service android:name=".services.PeriodicUpdateCheckerService"
+            android:exported="false" />
+
+        <service android:name=".services.UpdateDownloadService"
+            android:permission="android.permission.BIND_JOB_SERVICE"
             android:exported="false" />
     </application>
 </manifest>

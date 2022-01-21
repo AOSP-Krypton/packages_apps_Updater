@@ -22,4 +22,10 @@
     <string name="new_system_update_description">Click here to download and install the update</string>
     <string name="update_check_failed">Automatic update check failed</string>
     <string name="update_check_failed_description">Please check for updates manually</string>
+
+    <!-- Download -->
+    <string name="download_started">Download started</string>
+    <string name="downloading_update">Downloading update</string>
+    <string name="downloading_failed">Download failed</string>
+    <string name="downloading_finished">Download finished</string>
 </resources>

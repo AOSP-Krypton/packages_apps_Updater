@@ -26,4 +26,11 @@ data class BuildInfo(
     val fileName: String,
     val fileSize: Long,
     val sha512: String,
-)
+) {
+    companion object {
+        const val URL = "url"
+        const val FILE_NAME = "file_name"
+        const val FILE_SIZE = "file_size"
+        const val SHA_512 = "sha_512"
+    }
+}

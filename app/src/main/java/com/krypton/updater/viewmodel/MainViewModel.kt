@@ -50,7 +50,8 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val result = mainRepository.getUpdateInfo()
             if (result.isSuccess) {
-                _updateLiveData.value = result.getOrThrow()
+                val data = result.getOrThrow()
+                _updateLiveData.value = data
             } else {
                 _updateFailedEventLiveData.value = Event(result.exceptionOrNull()?.message)
             }
