@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2021 AOSP-Krypton Project
+ * Copyright (C) 2021-2022 AOSP-Krypton Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -14,11 +14,20 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+package com.krypton.updater.data.room
 
-option java_package = "com.krypton.updater.data";
-option java_multiple_files = true;
+import androidx.room.Entity
+import androidx.room.Fts4
+import androidx.room.Ignore
+import androidx.room.PrimaryKey
 
-message SavedState {
-  int64 last_checked_time = 1;
+@Entity(tableName = "changelog_table")
+@Fts4
+data class ChangelogEntity(
+    var date: Long,
+    var changelog: String?,
+) {
+    @PrimaryKey(autoGenerate = true)
+    @Ignore
+    var rowid: Int? = null
 }

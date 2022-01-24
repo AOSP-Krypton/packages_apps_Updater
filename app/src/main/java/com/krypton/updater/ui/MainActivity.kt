@@ -17,7 +17,6 @@
 package com.krypton.updater.ui
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.view.View
@@ -30,7 +29,6 @@ import androidx.databinding.DataBindingUtil
 
 import com.krypton.updater.R
 import com.krypton.updater.databinding.ActivityMainBinding
-import com.krypton.updater.viewmodel.DownloadViewModel
 import com.krypton.updater.viewmodel.MainViewModel
 
 import dagger.hilt.android.AndroidEntryPoint
@@ -38,7 +36,6 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private val mainViewModel: MainViewModel by viewModels()
-    private val downloadViewModel: DownloadViewModel by viewModels()
 
     private lateinit var binding: ActivityMainBinding
 
@@ -56,6 +53,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        binding.cardFragment.background.alpha = 120
         mainViewModel.updateFailedEvent.observe(this) {
             if (!it.hasBeenHandled) {
                 Toast.makeText(this, it.getOrNull(), Toast.LENGTH_LONG).show()
@@ -70,13 +68,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun refreshUpdateStatusVisibilityAndText() {
         when {
-            mainViewModel.isCheckingForUpdate.value!! -> {
+            mainViewModel.isCheckingForUpdate.value == true ->
                 binding.updateStatus.apply {
                     text = getString(R.string.checking_for_update)
                     visibility = View.VISIBLE
                 }
-            }
-            mainViewModel.lastCheckedTime.value != null -> {
+            mainViewModel.lastCheckedTime.value != null ->
                 binding.updateStatus.apply {
                     text = getString(
                         R.string.last_checked_time_format,
@@ -84,10 +81,7 @@ class MainActivity : AppCompatActivity() {
                     )
                     visibility = View.VISIBLE
                 }
-            }
-            else -> {
-                binding.updateStatus.visibility = View.GONE
-            }
+            else -> binding.updateStatus.visibility = View.GONE
         }
     }
 

@@ -37,7 +37,6 @@ import java.util.Date
 import javax.inject.Inject
 
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -50,12 +49,8 @@ class ChangelogViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            mainRepository.updateInfo.filterNotNull().collect {
-                if (it.isSuccess) {
-                    _changelog.value = joinChangelog(it.getOrThrow().changelog)
-                } else {
-                    _changelog.value = null
-                }
+            mainRepository.getUpdateInfo().collect {
+                _changelog.value = joinChangelog(it.changelog)
             }
         }
     }

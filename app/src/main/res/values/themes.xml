@@ -19,7 +19,6 @@
     <style name="Theme.Updater.Base" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="colorPrimaryDark">?attr/colorPrimary</item>
         <item name="buttonStyle">@style/ButtonTheme</item>
-        <item name="cardViewStyle">@style/CardViewStyle</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:textSize">15sp</item>
@@ -29,6 +28,7 @@
     <style name="Theme.Updater" parent="Theme.Updater.Base">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@android:color/system_neutral1_50</item>
+        <item name="colorPrimaryDark">@android:color/system_neutral1_300</item>
         <item name="colorPrimaryVariant">@android:color/system_neutral1_900</item>
         <item name="colorAccent">@android:color/system_accent1_700</item>
         <item name="colorPrimaryInverse">@color/text_color_light</item>
@@ -46,9 +46,5 @@
 
     <style name="ButtonTheme" parent="BaseButtonTheme">
         <item name="android:backgroundTint">@android:color/system_neutral1_200</item>
-    </style>
-
-    <style name="CardViewStyle" parent="CardView">
-        <item name="background">@android:color/system_neutral1_300</item>
     </style>
 </resources>

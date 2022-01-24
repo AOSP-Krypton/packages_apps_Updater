@@ -29,101 +29,95 @@
             type="com.krypton.updater.viewmodel.DownloadViewModel" />
     </data>
 
-    <androidx.cardview.widget.CardView
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:cardCornerRadius="@dimen/card_corner_radius">
+        android:padding="24dp">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="24dp">
+        <TextView
+            android:id="@+id/card_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text='@{mainViewModel.updateAvailable ? @string/new_update_available : @string/up_to_date}'
+            android:textSize="24sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="New update available" />
 
-            <TextView
-                android:id="@+id/card_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text='@{mainViewModel.updateAvailable ? @string/new_update_available : @string/up_to_date}'
-                android:textSize="24sp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:text="New update available" />
+        <TextView
+            android:id="@+id/card_description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text='@{mainViewModel.updateAvailable ? @string/new_update_description_format(mainViewModel.updateVersion, mainViewModel.updateDate, mainViewModel.updateSize) : @string/come_back_later}'
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/card_title"
+            tools:text="v2.3 | 12-11-2021 | 1.3GB" />
 
-            <TextView
-                android:id="@+id/card_description"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text='@{mainViewModel.updateAvailable ? @string/new_update_description_format(mainViewModel.updateVersion, mainViewModel.updateDate, mainViewModel.updateSize) : @string/come_back_later}'
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/card_title"
-                tools:text="v2.3 | 12-11-2021 | 1.3GB" />
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/start_guide_line"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_begin="16dp" />
 
-            <androidx.constraintlayout.widget.Guideline
-                android:id="@+id/start_guide_line"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                app:layout_constraintGuide_begin="16dp" />
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/end_guide_line"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_end="16dp" />
 
-            <androidx.constraintlayout.widget.Guideline
-                android:id="@+id/end_guide_line"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                app:layout_constraintGuide_end="16dp" />
+        <TextView
+            android:id="@+id/download_progress_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:layout_constraintBottom_toTopOf="@id/download_progress"
+            app:layout_constraintEnd_toEndOf="@id/end_guide_line"
+            app:layout_constraintStart_toStartOf="@id/start_guide_line"
+            app:layout_constraintTop_toBottomOf="@id/card_description"
+            app:layout_constraintVertical_chainStyle="packed"
+            tools:text="Downloading - 1159/1159 MB" />
 
-            <TextView
-                android:id="@+id/download_progress_text"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                app:layout_constraintBottom_toTopOf="@id/download_progress"
-                app:layout_constraintEnd_toEndOf="@id/end_guide_line"
-                app:layout_constraintStart_toStartOf="@id/start_guide_line"
-                app:layout_constraintTop_toBottomOf="@id/card_description"
-                app:layout_constraintVertical_chainStyle="packed"
-                tools:text="Downloading - 1159/1159 MB" />
+        <ProgressBar
+            android:id="@+id/download_progress"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toTopOf="@id/changelog_button"
+            app:layout_constraintEnd_toEndOf="@id/end_guide_line"
+            app:layout_constraintStart_toStartOf="@id/start_guide_line"
+            app:layout_constraintTop_toBottomOf="@+id/download_progress_text"
+            app:layout_constraintVertical_chainStyle="packed"
+            tools:progress="100"
+            tools:progressTint="#FF0000" />
 
-            <ProgressBar
-                android:id="@+id/download_progress"
-                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                app:layout_constraintBottom_toTopOf="@id/changelog_button"
-                app:layout_constraintEnd_toEndOf="@id/end_guide_line"
-                app:layout_constraintStart_toStartOf="@id/start_guide_line"
-                app:layout_constraintTop_toBottomOf="@+id/download_progress_text"
-                app:layout_constraintVertical_chainStyle="packed"
-                tools:progress="100"
-                tools:progressTint="#FF0000" />
+        <androidx.constraintlayout.widget.Group
+            android:id="@+id/download_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:constraint_referenced_ids="download_progress_text, download_progress" />
 
-            <androidx.constraintlayout.widget.Group
-                android:id="@+id/download_group"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:constraint_referenced_ids="download_progress_text, download_progress" />
+        <Button
+            android:id="@+id/changelog_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="@string/changelog"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/action_button"
+            app:layout_constraintStart_toStartOf="@id/start_guide_line" />
 
-            <Button
-                android:id="@+id/changelog_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:text="@string/changelog"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/action_button"
-                app:layout_constraintStart_toStartOf="@id/start_guide_line" />
-
-            <Button
-                android:id="@+id/action_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                app:layout_constraintBottom_toBottomOf="@id/changelog_button"
-                app:layout_constraintEnd_toEndOf="@id/end_guide_line"
-                app:layout_constraintStart_toEndOf="@id/changelog_button"
-                app:layout_constraintTop_toTopOf="@id/changelog_button"
-                tools:text="Cancel" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.cardview.widget.CardView>
+        <Button
+            android:id="@+id/action_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            app:layout_constraintBottom_toBottomOf="@id/changelog_button"
+            app:layout_constraintEnd_toEndOf="@id/end_guide_line"
+            app:layout_constraintStart_toEndOf="@id/changelog_button"
+            app:layout_constraintTop_toTopOf="@id/changelog_button"
+            tools:text="Cancel" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
