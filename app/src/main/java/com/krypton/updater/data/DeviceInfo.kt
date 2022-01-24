@@ -21,11 +21,20 @@ import android.os.SystemProperties
 object DeviceInfo {
     private const val PROP_DEVICE = "ro.krypton.build.device"
     private const val PROP_DATE = "ro.build.date.utc"
+    private const val PROP_VERSION = "ro.krypton.build.version"
 
     /**
      * Get device code name.
      */
     fun getDevice(): String = SystemProperties.get(PROP_DEVICE, "Unknown")
 
+    /**
+     * Get build date as unix timestamp (seconds since epoch).
+     */
     fun getBuildDate(): Long = SystemProperties.get(PROP_DATE, "0").toLong()
+
+    /**
+     * Get build version.
+     */
+    fun getBuildVersion(): String = SystemProperties.get(PROP_VERSION, "0.0")
 }

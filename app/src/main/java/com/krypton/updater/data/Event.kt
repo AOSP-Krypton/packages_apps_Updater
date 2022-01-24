@@ -3,7 +3,8 @@ package com.krypton.updater.data
 class Event<out T>(
     private val data: T
 ) {
-    private var hasBeenHandled = false
+    var hasBeenHandled = false
+        private set
 
     fun getOrNull(): T? =
         if (hasBeenHandled) null

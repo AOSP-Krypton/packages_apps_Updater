@@ -27,16 +27,22 @@
         android:name=".UpdaterApp"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.KOSPUpdater"
+        android:theme="@style/Theme.Updater"
         tools:ignore="AllowBackup,MissingApplicationIcon">
         <activity
             android:name=".ui.MainActivity"
-            android:exported="true">
+            android:resizeableActivity="false"
+            android:exported="true"
+            tools:ignore="NonResizeableActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".ui.ChangelogActivity"
+            android:parentActivityName=".ui.MainActivity"
+            android:exported="false" />
 
         <service android:name=".services.PeriodicUpdateCheckerService"
             android:exported="false" />

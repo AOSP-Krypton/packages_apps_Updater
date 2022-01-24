@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.data
+package com.krypton.updater.data.download
 
 import android.os.Bundle
+import com.krypton.updater.data.BuildInfo
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -29,8 +30,20 @@ class DownloadRepository @Inject constructor(
     private val downloadManager: DownloadManager,
 ) {
 
-    val downloadEventChannel: Channel<DownloadResult> = downloadManager.eventChannel
-    val downloadProgressFlow: StateFlow<Long> = downloadManager.progressFlow
+    val downloadState: StateFlow<DownloadState>
+        get() = downloadManager.downloadState
+
+    val downloadEventChannel: Channel<DownloadResult>
+        get() = downloadManager.eventChannel
+
+    val downloadProgressFlow: StateFlow<Long>
+        get() = downloadManager.progressFlow
+
+    val downloadSize: Long
+        get() = downloadManager.downloadSize
+
+    val downloadFileName: String?
+        get() = downloadManager.downloadFileName
 
     /**
      * Schedule a download via [DownloadManager]
@@ -51,20 +64,6 @@ class DownloadRepository @Inject constructor(
     suspend fun startDownload(downloadConfig: Bundle) {
         downloadManager.runWorker(downloadConfig)
     }
-
-    /**
-     * Get size of the file downloading.
-     *
-     * @return size of the download file if any, 0 otherwise.
-     */
-    fun getDownloadSize(): Long = downloadManager.downloadSize
-
-    /**
-     * Get name of the file downloading.
-     *
-     * @return the name of the download file if any, null otherwise.
-     */
-    fun getDownloadFileName(): String? = downloadManager.downloadFileName
 
     /**
      * Cancel any ongoing download.

@@ -14,7 +14,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name">Updater</string>
 
     <!-- Update checker -->
@@ -24,8 +24,35 @@
     <string name="update_check_failed_description">Please check for updates manually</string>
 
     <!-- Download -->
-    <string name="download_started">Download started</string>
+    <string name="downloading">Downloading</string>
     <string name="downloading_update">Downloading update</string>
     <string name="downloading_failed">Download failed</string>
     <string name="downloading_finished">Download finished</string>
+
+    <!-- Main activity -->
+    <string name="updater_logo_description">Updater logo</string>
+    <string name="system_build_info_format" translatable="false">
+        <xliff:g example="12-11-2021" id="date">%1$s</xliff:g>\u0020\u0020|\u0020\u0020KOSP v<xliff:g example="2.3" id="version">%2$s</xliff:g>
+    </string>
+    <string name="check_for_updates">Check for updates</string>
+    <string name="checking_for_update">Checking for updates…</string>
+    <string name="last_checked_time_format">
+        Last checked at <xliff:g example="11:02 AM" id="time">%1$s</xliff:g>
+    </string>
+    <string name="up_to_date">Your device is up-to-date</string>
+    <string name="come_back_later">Come back later…</string>
+    <string name="new_update_available">New update available</string>
+    <string name="new_update_description_format">
+        v<xliff:g example="2.3" id="version">%1$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="12-11-2021" id="date">%2$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="1.3GB" id="size">%3$s</xliff:g>
+    </string>
+    <string name="download">Download</string>
+    <string name="update">Update</string>
+    <string name="download_text_format">
+        Downloading - <xliff:g example="100" id="percent">%1$d%%</xliff:g>
+    </string>
+    <string name="waiting">Waiting</string>
+
+    <!-- Changelog -->
+    <string name="changelog">Changelog</string>
+    <string name="changelog_unavailable">Changelog unavailable</string>
 </resources>

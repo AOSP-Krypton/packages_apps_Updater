@@ -16,18 +16,82 @@
 
 package com.krypton.updater.ui
 
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.os.Bundle
+import android.view.View
+import android.widget.Toast
 
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.motion.widget.MotionLayout
+import androidx.databinding.DataBindingUtil
 
 import com.krypton.updater.R
+import com.krypton.updater.databinding.ActivityMainBinding
+import com.krypton.updater.viewmodel.DownloadViewModel
+import com.krypton.updater.viewmodel.MainViewModel
 
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+    private val mainViewModel: MainViewModel by viewModels()
+    private val downloadViewModel: DownloadViewModel by viewModels()
+
+    private lateinit var binding: ActivityMainBinding
+
+    @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        binding = DataBindingUtil.setContentView<ActivityMainBinding>(
+            this, R.layout.activity_main,
+        ).also {
+            it.mainViewModel = mainViewModel
+            it.lifecycleOwner = this
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        mainViewModel.updateFailedEvent.observe(this) {
+            if (!it.hasBeenHandled) {
+                Toast.makeText(this, it.getOrNull(), Toast.LENGTH_LONG).show()
+            }
+        }
+        mainViewModel.lastCheckedTime.observe(this) { refreshUpdateStatusVisibilityAndText() }
+        mainViewModel.isCheckingForUpdate.observe(this) { refreshUpdateStatusVisibilityAndText() }
+        mainViewModel.updateInfo.observe(this) {
+            showUpdateCardView()
+        }
+    }
+
+    private fun refreshUpdateStatusVisibilityAndText() {
+        when {
+            mainViewModel.isCheckingForUpdate.value!! -> {
+                binding.updateStatus.apply {
+                    text = getString(R.string.checking_for_update)
+                    visibility = View.VISIBLE
+                }
+            }
+            mainViewModel.lastCheckedTime.value != null -> {
+                binding.updateStatus.apply {
+                    text = getString(
+                        R.string.last_checked_time_format,
+                        mainViewModel.lastCheckedTime.value
+                    )
+                    visibility = View.VISIBLE
+                }
+            }
+            else -> {
+                binding.updateStatus.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun showUpdateCardView() {
+        (binding.root as MotionLayout).transitionToEnd()
     }
 }

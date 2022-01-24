@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.data
+package com.krypton.updater.data.download
 
 class DownloadResult private constructor(
     private val exception: Throwable? = null,

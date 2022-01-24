@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.data
+package com.krypton.updater.data.download
 
 import android.app.job.JobInfo
 import android.app.job.JobScheduler
@@ -24,6 +24,7 @@ import android.os.Bundle
 import android.util.Log
 
 import com.krypton.updater.R
+import com.krypton.updater.data.BuildInfo
 
 import dagger.hilt.android.qualifiers.ApplicationContext
 
@@ -60,18 +61,20 @@ class DownloadManager @Inject constructor(
     private var jobInfo: JobInfo? = null
     private var jobExtras: Bundle? = null
 
-    var downloading = false
-        private set
-
     private var downloadFile: File? = null
     val downloadFileName: String?
         get() = downloadFile?.name
     val downloadSize: Long
         get() = buildInfo?.fileSize ?: 0
 
+    private val _downloadState = MutableStateFlow(DownloadState.idle())
+    val downloadState: StateFlow<DownloadState>
+        get() = _downloadState
+
     val eventChannel = Channel<DownloadResult>()
     private val _progressFlow = MutableStateFlow<Long>(0)
-    val progressFlow: StateFlow<Long> = _progressFlow
+    val progressFlow: StateFlow<Long>
+        get() = _progressFlow
 
     /**
      * Initiates the download by scheduling a job with [JobScheduler].
@@ -80,17 +83,21 @@ class DownloadManager @Inject constructor(
      *   the file to download.
      */
     fun download(buildInfo: BuildInfo) {
-        logD("download, downloadInitiated = $downloading")
-        if (downloading) return
+        logD("download, downloadInitiated = ${downloadState.value}")
+        if (downloadState.value.downloading) return
+        _downloadState.value = DownloadState.idle()
+        _progressFlow.value = 0
         if (this.buildInfo != buildInfo) {
             this.buildInfo = buildInfo
             jobExtras = buildExtras(buildInfo)
             jobInfo = buildJobInfo(buildInfo, jobExtras!!)
         }
-        downloading =
-            jobScheduler.schedule(jobInfo!!) == JobScheduler.RESULT_SUCCESS
-        logD("download scheduled successfully = $downloading")
-        _progressFlow.value = 0
+        if (jobScheduler.schedule(jobInfo!!) == JobScheduler.RESULT_SUCCESS) {
+            _downloadState.value = DownloadState.waiting()
+            logD("download scheduled successfully")
+        } else {
+            logD("failed to schedule download")
+        }
     }
 
     /**
@@ -100,8 +107,8 @@ class DownloadManager @Inject constructor(
      *   necessary to download the file.
      */
     suspend fun runWorker(downloadInfo: Bundle) {
-        logD("runWorker, downloadInitiated = $downloading")
-        if (!downloading) downloading = true
+        logD("runWorker, downloadState = $downloadState")
+        _downloadState.value = DownloadState.downloading()
 
         downloadFile = File(cacheDir, downloadInfo.getString(BuildInfo.FILE_NAME)!!)
 
@@ -131,26 +138,30 @@ class DownloadManager @Inject constructor(
             launch {
                 logD("starting worker")
                 val result = downloadWorker.run()
+                if (result.isSuccess) {
+                    _downloadState.value = DownloadState.finished()
+                } else {
+                    _downloadState.value = DownloadState.failed()
+                }
                 logD("sending result $result")
                 withContext(Dispatchers.Main) {
                     eventChannel.send(result)
                 }
             }
         }
-        downloading = false
     }
 
     /**
      * Cancels the download if any in progress.
      */
     fun cancelDownload() {
-        logD("cancelDownload")
-        if (downloading) {
+        logD("cancelDownload, downloadState = $downloadState")
+        if (downloadState.value.waiting || downloadState.value.downloading) {
             jobScheduler.cancel(JOB_ID)
             buildInfo = null
             jobExtras = null
             jobInfo = null
-            downloading = false
+            _downloadState.value = DownloadState.idle()
         }
     }
 
