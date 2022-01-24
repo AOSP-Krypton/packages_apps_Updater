@@ -15,6 +15,7 @@
      limitations under the License.
 -->
 <resources>
-    <color name="text_color_dark">#FFF7F7F7</color>
-    <color name="text_color_light">#FF282C35</color>
+    <dimen name="updater_logo_size">200dp</dimen>
+    <dimen name="default_view_margin_vertical">32dp</dimen>
+    <dimen name="card_corner_radius">32dp</dimen>
 </resources>

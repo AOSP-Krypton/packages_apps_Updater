@@ -31,7 +31,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 
 import com.krypton.updater.R
-import com.krypton.updater.data.DownloadRepository
+import com.krypton.updater.data.download.DownloadRepository
 import com.krypton.updater.ui.MainActivity
 
 import dagger.hilt.android.AndroidEntryPoint
@@ -117,7 +117,8 @@ class UpdateDownloadService : JobService() {
                 .setContentIntent(activityIntent)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(R.drawable.ic_baseline_system_update_24)
-                .setContentTitle(getString(R.string.download_started))
+                .setContentTitle(getString(R.string.downloading))
+                .setProgress(100, 0, true)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
                 .addAction(
@@ -193,7 +194,7 @@ class UpdateDownloadService : JobService() {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setSmallIcon(R.drawable.ic_baseline_system_update_24)
                 .setContentTitle(getString(R.string.downloading_finished))
-                .setContentText(downloadRepository.getDownloadFileName())
+                .setContentText(downloadRepository.downloadFileName)
                 .setProgress(100, 100, false)
                 .setAutoCancel(true)
                 .build()
@@ -208,7 +209,7 @@ class UpdateDownloadService : JobService() {
     }
 
     private fun updateProgressNotification(downloadedBytes: Long) {
-        val size = downloadRepository.getDownloadSize()
+        val size = downloadRepository.downloadSize
         val progress = if (size > 0) ((downloadedBytes * 100) / size).toInt() else 0
         notificationManager.notify(
             DOWNLOAD_NOTIFICATION_ID,
@@ -217,7 +218,7 @@ class UpdateDownloadService : JobService() {
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(R.drawable.ic_baseline_system_update_24)
                 .setContentTitle(getString(R.string.downloading_update))
-                .setContentText(downloadRepository.getDownloadFileName())
+                .setContentText(downloadRepository.downloadFileName)
                 .setProgress(100, progress, false)
                 .setOngoing(true)
                 .setSilent(true)

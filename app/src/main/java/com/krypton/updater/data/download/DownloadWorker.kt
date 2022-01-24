@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.data
+package com.krypton.updater.data.download
 
 import android.util.DataUnit
 import android.util.Log

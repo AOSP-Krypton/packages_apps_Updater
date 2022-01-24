@@ -32,7 +32,7 @@ class UpdateChecker @Inject constructor(
     private val githubApiHelper: GithubApiHelper,
 ) {
 
-    private val systemBuildDate = DeviceInfo.getBuildDate()
+    private val systemBuildDate = DeviceInfo.getBuildDate() * 1000 /* convert to millis */
     private var updateBuildDate = 0L
 
     /**
@@ -54,11 +54,11 @@ class UpdateChecker @Inject constructor(
                 fileSize = otaJsonContent.fileSize,
                 sha512 = otaJsonContent.sha512,
             )
-            updateBuildDate = buildInfo.date
+            updateBuildDate = buildInfo.date * 1000 /* convert to millis */
             val newUpdate = updateBuildDate > systemBuildDate
             Result.success(
                 UpdateInfo(
-                    buildInfo = buildInfo,
+                    buildInfo = buildInfo.copy(date = updateBuildDate),
                     changelog = if (newUpdate) getChangelog() else null,
                     type = if (newUpdate) UpdateInfo.Type.NEW_UPDATE else UpdateInfo.Type.NO_UPDATE
                 )
@@ -76,8 +76,8 @@ class UpdateChecker @Inject constructor(
             val filteredMap = mutableMapOf<Long, String?>()
             changelogMap.forEach { (name, content) ->
                 val date = getDateFromChangelogFileName(name) ?: return@forEach
-                if (compareTillDay(date, systemBuildDate * 1000) < 0 /* Changelog is older than current build */
-                        || compareTillDay(date, updateBuildDate * 1000) > 0 /* Changelog is newer than OTA (wtf?) */) {
+                if (compareTillDay(date, systemBuildDate) < 0 /* Changelog is older than current build */
+                        || compareTillDay(date, updateBuildDate) > 0 /* Changelog is newer than OTA (wtf?) */) {
                     return@forEach
                 }
                 filteredMap[date.time] = content

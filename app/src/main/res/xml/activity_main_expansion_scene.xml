@@ -14,28 +14,17 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools">
+<MotionScene xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <data>
+    <Transition
+        app:constraintSetStart="@+id/start"
+        app:constraintSetEnd="@+id/end"
+        app:duration="500" />
 
-        <variable
-            name="mainViewModel"
-            type="com.krypton.updater.viewmodel.MainViewModel" />
+    <ConstraintSet android:id="@+id/start">
 
-        <variable
-            name="downloadViewModel"
-            type="com.krypton.updater.viewmodel.DownloadViewModel" />
-    </data>
-
-    <androidx.constraintlayout.motion.widget.MotionLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layoutDescription="@xml/activity_main_expansion_scene"
-        tools:context=".ui.MainActivity">
-
-        <ImageView
+        <Constraint
             android:id="@+id/updater_logo"
             android:layout_width="@dimen/updater_logo_size"
             android:layout_height="@dimen/updater_logo_size"
@@ -43,76 +32,111 @@
             android:contentDescription="@string/updater_logo_description"
             android:scaleType="centerCrop"
             android:src="@drawable/ic_updater_logo"
+            app:layout_constraintVertical_bias="0.45"
             app:layout_constraintBottom_toTopOf="@id/system_build_info"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_chainStyle="packed" />
 
-        <TextView
+        <Constraint
             android:id="@+id/system_build_info"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/default_view_margin_vertical"
-            android:text="@{@string/system_build_info_format(mainViewModel.systemBuildDate, mainViewModel.systemBuildVersion)}"
             app:layout_constraintBottom_toTopOf="@id/check_updates_button"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/updater_logo"
             app:layout_constraintVertical_chainStyle="packed" />
 
-        <Button
+        <Constraint
             android:id="@+id/check_updates_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/default_view_margin_vertical"
-            android:onClick="@{() -> mainViewModel.checkForUpdates()}"
-            android:text="@string/check_for_updates"
-            android:enabled="@{!downloadViewModel.downloadState.downloading}"
             app:layout_constraintBottom_toTopOf="@id/update_status"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/system_build_info"
             app:layout_constraintVertical_chainStyle="packed" />
 
-        <TextView
+        <Constraint
             android:id="@+id/update_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/default_view_margin_vertical"
-            android:visibility="gone"
-            android:textStyle="normal"
             app:layout_constraintBottom_toTopOf="@id/card_guideline_top"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/check_updates_button"
             app:layout_constraintVertical_chainStyle="packed" />
 
-        <androidx.constraintlayout.widget.Guideline
+        <Constraint
             android:id="@+id/card_guideline_top"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             app:layout_constraintGuide_percent="1.00" />
 
-        <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/card_fragment"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginBottom="16dp"
-            android:name="com.krypton.updater.ui.CardFragment"
-            app:layout_constraintBottom_toTopOf="@id/card_guideline_bottom"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/card_guideline_top" />
-
-        <androidx.constraintlayout.widget.Guideline
+        <Constraint
             android:id="@+id/card_guideline_bottom"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             app:layout_constraintGuide_percent="1.35" />
+    </ConstraintSet>
 
-    </androidx.constraintlayout.motion.widget.MotionLayout>
-</layout>
+    <ConstraintSet android:id="@+id/end">
+
+        <Constraint
+            android:id="@+id/updater_logo"
+            android:layout_width="@dimen/updater_logo_size"
+            android:layout_height="@dimen/updater_logo_size"
+            android:layout_marginBottom="@dimen/default_view_margin_vertical"
+            app:layout_constraintBottom_toTopOf="@id/system_build_info"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <Constraint
+            android:id="@+id/system_build_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/default_view_margin_vertical"
+            app:layout_constraintBottom_toTopOf="@id/check_updates_button"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <Constraint
+            android:id="@+id/check_updates_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/default_view_margin_vertical"
+            app:layout_constraintBottom_toTopOf="@id/update_status"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <Constraint
+            android:id="@+id/update_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/default_view_margin_vertical"
+            app:layout_constraintBottom_toTopOf="@id/card_guideline_top"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <Constraint
+            android:id="@+id/card_guideline_top"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.65" />
+
+        <Constraint
+            android:id="@+id/card_guideline_bottom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="1.00" />
+    </ConstraintSet>
+</MotionScene>

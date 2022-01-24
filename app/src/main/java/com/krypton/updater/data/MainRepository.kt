@@ -16,24 +16,54 @@
 
 package com.krypton.updater.data
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+
+import java.util.Date
 
 @Singleton
 class MainRepository @Inject constructor(
+    @ApplicationContext context: Context,
     private val updateChecker: UpdateChecker,
 ) {
+
+    private val savedStateDataStore = context.savedStateDataStore
+
+    val systemBuildDate: Date = Date(DeviceInfo.getBuildDate() * 1000)
+
+    val systemBuildVersion: String = DeviceInfo.getBuildVersion()
+
+    fun getLastCheckedTime(): Flow<Date> =
+        savedStateDataStore.data.map {
+            Date(it.lastCheckedTime)
+        }
+
+    private val _updateInfo = MutableStateFlow<Result<UpdateInfo>?>(null)
+    val updateInfo: StateFlow<Result<UpdateInfo>?> = _updateInfo
+
     /**
-     * Check for updates in github.
-     *
-     * @return the fetch result as a [Result] of type [UpdateInfo].
-     *   [UpdateInfo.Type] will indicate whether there is a new update or not.
+     * Check for updates in github. The fetch result as a [Result] of type [UpdateInfo]
+     * will be emitted from [updateInfo]. [UpdateInfo.Type] will indicate whether
+     * there is a new update or not.
      */
-    suspend fun getUpdateInfo(): Result<UpdateInfo> =
-        withContext(Dispatchers.IO) {
+    suspend fun fetchUpdateInfo() {
+        val result = withContext(Dispatchers.IO) {
             updateChecker.checkForUpdate()
         }
+        savedStateDataStore.updateData {
+            it.toBuilder()
+                .setLastCheckedTime(System.currentTimeMillis())
+                .build()
+        }
+        _updateInfo.emit(result)
+    }
 }

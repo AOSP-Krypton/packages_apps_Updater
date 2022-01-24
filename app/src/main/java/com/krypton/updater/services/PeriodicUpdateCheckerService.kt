@@ -33,14 +33,15 @@ import com.krypton.updater.ui.MainActivity
 
 import dagger.hilt.android.AndroidEntryPoint
 
+import javax.inject.Inject
+
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class PeriodicUpdateCheckerService : Service() {
@@ -57,7 +58,7 @@ class PeriodicUpdateCheckerService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        serviceScope = CoroutineScope(Dispatchers.IO)
+        serviceScope = CoroutineScope(Dispatchers.Main)
         notificationManager = NotificationManagerCompat.from(this)
         getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(
@@ -78,9 +79,9 @@ class PeriodicUpdateCheckerService : Service() {
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         updateCheckerJob = serviceScope.launch {
-            val result = mainRepository.getUpdateInfo()
-            withContext(Dispatchers.Main) {
-                if (result.isSuccess) {
+            mainRepository.fetchUpdateInfo()
+            mainRepository.updateInfo.filterNotNull().collect {
+                if (it.isSuccess) {
                     notifyUser(R.string.new_system_update, R.string.new_system_update_description)
                 } else {
                     notifyUser(
@@ -89,6 +90,7 @@ class PeriodicUpdateCheckerService : Service() {
                     )
                 }
                 stopSelf()
+                cancel()
             }
         }
         return START_STICKY
