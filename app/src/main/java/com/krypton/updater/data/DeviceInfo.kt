@@ -31,7 +31,7 @@ object DeviceInfo {
     /**
      * Get build date as unix timestamp (seconds since epoch).
      */
-    fun getBuildDate(): Long = SystemProperties.get(PROP_DATE, "0").toLong()
+    fun getBuildDate(): Long = SystemProperties.get(PROP_DATE, "0").toLong() * 1000 /* convert to millis */
 
     /**
      * Get build version.

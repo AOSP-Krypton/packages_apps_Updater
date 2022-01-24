@@ -77,18 +77,13 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            mainRepository.getLastCheckedTime().collect {
+            mainRepository.lastCheckedTime.collect {
                 _lastCheckedTime.value = if (it.time > 0) TIME_FORMAT.format(it) else null
             }
         }
         viewModelScope.launch {
-            mainRepository.updateInfo.filterNotNull().collect {
-                if (it.isSuccess) {
-                    val data = it.getOrThrow()
-                    _updateInfo.value = data
-                } else {
-                    _updateFailedEvent.value = Event(it.exceptionOrNull()?.message)
-                }
+            mainRepository.getUpdateInfo().collect {
+                _updateInfo.value = it
             }
         }
     }
@@ -103,8 +98,9 @@ class MainViewModel @Inject constructor(
         }
         updateCheckJob = viewModelScope.launch {
             _isCheckingForUpdate.value = true
-            mainRepository.fetchUpdateInfo()
+            val result = mainRepository.fetchUpdateInfo()
             _isCheckingForUpdate.value = false
+            if (!result.first) _updateFailedEvent.value = Event(result.second?.message)
         }
     }
 

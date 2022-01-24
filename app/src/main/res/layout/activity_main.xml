@@ -102,6 +102,7 @@
             android:layout_marginHorizontal="16dp"
             android:layout_marginBottom="16dp"
             android:name="com.krypton.updater.ui.CardFragment"
+            android:background="@drawable/card_background"
             app:layout_constraintBottom_toTopOf="@id/card_guideline_bottom"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

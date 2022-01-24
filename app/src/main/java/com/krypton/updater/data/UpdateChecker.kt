@@ -32,7 +32,7 @@ class UpdateChecker @Inject constructor(
     private val githubApiHelper: GithubApiHelper,
 ) {
 
-    private val systemBuildDate = DeviceInfo.getBuildDate() * 1000 /* convert to millis */
+    private val systemBuildDate = DeviceInfo.getBuildDate()
     private var updateBuildDate = 0L
 
     /**

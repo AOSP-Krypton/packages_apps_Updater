@@ -14,5 +14,3 @@ buildscript {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
-
-ext.compiled_framework_dir = '../../../../out/soong/.intermediates'

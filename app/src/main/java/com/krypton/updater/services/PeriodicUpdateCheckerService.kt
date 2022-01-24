@@ -40,7 +40,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -79,16 +78,14 @@ class PeriodicUpdateCheckerService : Service() {
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         updateCheckerJob = serviceScope.launch {
-            mainRepository.fetchUpdateInfo()
-            mainRepository.updateInfo.filterNotNull().collect {
-                if (it.isSuccess) {
-                    notifyUser(R.string.new_system_update, R.string.new_system_update_description)
-                } else {
-                    notifyUser(
-                        R.string.update_check_failed,
-                        R.string.update_check_failed_description
-                    )
-                }
+            val result = mainRepository.fetchUpdateInfo()
+            if (!result.first)
+                notifyUser(
+                    R.string.update_check_failed,
+                    R.string.update_check_failed_description
+                )
+            mainRepository.getUpdateInfo().collect {
+                notifyUser(R.string.new_system_update, R.string.new_system_update_description)
                 stopSelf()
                 cancel()
             }
