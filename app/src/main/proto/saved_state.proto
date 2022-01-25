@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2021-2022 AOSP-Krypton Project
  *
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,19 +15,12 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.data.room
+syntax = "proto3";
 
-import androidx.room.Dao
-import androidx.room.Query
+option java_package = "com.krypton.updater.data";
+option java_multiple_files = true;
 
-import kotlinx.coroutines.flow.Flow
-
-@Dao
-interface SavedStateDao {
-
-    @Query("SELECT last_checked_time FROM saved_state_table ORDER BY last_checked_time DESC")
-    fun getLastCheckedTime(): Flow<Long?>
-
-    @Query("INSERT INTO saved_state_table (last_checked_time) VALUES (:time)")
-    fun setLastCheckedTime(time: Long)
+message SavedState {
+  int64 last_checked_time = 1;
+  bool download_finished = 2;
 }

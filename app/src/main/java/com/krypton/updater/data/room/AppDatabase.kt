@@ -22,13 +22,10 @@ import androidx.room.RoomDatabase
 @Database(
     entities = [
         BuildInfoEntity::class,
-        SavedStateEntity::class,
         ChangelogEntity::class
     ],
     version = 1,
-    exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun updateInfoDao(): UpdateInfoDao
-    abstract fun savedStateDao(): SavedStateDao
 }

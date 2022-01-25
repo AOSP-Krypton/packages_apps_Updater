@@ -20,5 +20,10 @@ import android.app.Application
 
 import dagger.hilt.android.HiltAndroidApp
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+
 @HiltAndroidApp
-class UpdaterApp: Application()
+class UpdaterApp: Application() {
+    val applicationScope = CoroutineScope(Dispatchers.Main)
+}
