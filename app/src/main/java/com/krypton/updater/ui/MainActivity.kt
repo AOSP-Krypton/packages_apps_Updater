@@ -29,6 +29,7 @@ import androidx.databinding.DataBindingUtil
 
 import com.krypton.updater.R
 import com.krypton.updater.databinding.ActivityMainBinding
+import com.krypton.updater.viewmodel.DownloadViewModel
 import com.krypton.updater.viewmodel.MainViewModel
 
 import dagger.hilt.android.AndroidEntryPoint
@@ -36,6 +37,7 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private val mainViewModel: MainViewModel by viewModels()
+    private val downloadViewModel: DownloadViewModel by viewModels()
 
     private lateinit var binding: ActivityMainBinding
 
@@ -47,6 +49,7 @@ class MainActivity : AppCompatActivity() {
             this, R.layout.activity_main,
         ).also {
             it.mainViewModel = mainViewModel
+            it.downloadViewModel = downloadViewModel
             it.lifecycleOwner = this
         }
     }

@@ -66,7 +66,7 @@ class CardFragment : Fragment(R.layout.card_view_layout) {
 
     private fun performAction() {
         downloadViewModel.downloadState.value?.let { state ->
-            if (state.idle) {
+            if (state.idle || state.failed) {
                 mainViewModel.updateInfo.value?.let {
                     downloadViewModel.startDownload(it.buildInfo)
                 }

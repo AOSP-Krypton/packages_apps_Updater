@@ -22,6 +22,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.SystemClock
 
+import com.krypton.updater.data.download.DownloadManager
 import com.krypton.updater.data.room.AppDatabase
 import com.krypton.updater.data.room.BuildInfoEntity
 import com.krypton.updater.data.room.ChangelogEntity
@@ -39,6 +40,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
@@ -47,6 +49,7 @@ class MainRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     appDatabase: AppDatabase,
     private val updateChecker: UpdateChecker,
+    private val downloadManager: DownloadManager,
 ) {
 
     private val alarmManager: AlarmManager by lazy {
@@ -87,6 +90,9 @@ class MainRepository @Inject constructor(
      *    second representing any exception thrown while fetching.
      */
     suspend fun fetchUpdateInfo(): Pair<Boolean, Throwable?> {
+        val currentBuildInfoEntity = withContext(Dispatchers.Default) {
+            updateInfoDao.getBuildInfo(DeviceInfo.getBuildDate()).firstOrNull()
+        }
         deleteSavedUpdateInfo()
         val result = withContext(Dispatchers.IO) {
             updateChecker.checkForUpdate()
@@ -97,7 +103,16 @@ class MainRepository @Inject constructor(
                 .build()
         }
         return if (result.isSuccess) {
-            saveUpdateInfo(result.getOrThrow())
+            val updateInfo = result.getOrThrow()
+            if (currentBuildInfoEntity != null &&
+                ((currentBuildInfoEntity.sha512 != updateInfo.buildInfo.sha512)
+                        || updateInfo.type == UpdateInfo.Type.NO_UPDATE)
+            ) {
+                // A different update has been pushed / existing ota was pulled,
+                // reset state of managers.
+                downloadManager.reset()
+            }
+            saveUpdateInfo(updateInfo)
             setRecheckAlarm()
             Pair(true, null)
         } else {
