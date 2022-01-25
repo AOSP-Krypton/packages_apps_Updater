@@ -86,7 +86,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:indeterminate="@{downloadViewModel.downloadState.waiting}"
-            app:layout_constraintBottom_toTopOf="@id/changelog_button"
+            app:layout_constraintBottom_toTopOf="@id/button_barrier"
             app:layout_constraintEnd_toEndOf="@id/end_guide_line"
             app:layout_constraintStart_toStartOf="@id/start_guide_line"
             app:layout_constraintTop_toBottomOf="@+id/download_progress_text"
@@ -100,6 +100,21 @@
             android:layout_height="wrap_content"
             android:visibility="gone"
             app:constraint_referenced_ids="download_progress_text, download_progress" />
+
+        <androidx.constraintlayout.widget.Barrier
+            android:id="@+id/button_barrier"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:constraint_referenced_ids="changelog_button, action_button"
+            app:barrierDirection="top"
+            app:barrierAllowsGoneWidgets="true" />
+
+        <androidx.constraintlayout.widget.Group
+            android:id="@+id/button_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:constraint_referenced_ids="changelog_button, action_button" />
 
         <Button
             android:id="@+id/changelog_button"

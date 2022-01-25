@@ -54,20 +54,16 @@ class GithubApiHelper @Inject constructor() {
      *
      * @param device the device to fetch OTA json for.
      * @return the OTA json file parsed as a [Result] of type [OTAJsonContent].
-     *   [Result] will represent a failure if [GithubApiService] returned null
-     *   content or if an exception was thrown.
+     *   (Maybe null if OTA info is not available).
+     *   [Result] will represent a failure if an exception was thrown.
      */
-    fun getBuildInfo(device: String): Result<OTAJsonContent> =
+    fun getBuildInfo(device: String): Result<OTAJsonContent?> =
         try {
             val otaJsonContent: OTAJsonContent? = githubApiService
                 .getOTAJsonContent(getUrlForDevice(device))
                 .execute()
                 .body()
-            if (otaJsonContent != null) {
-                Result.success(otaJsonContent)
-            } else {
-                Result.failure(Exception("GithubApiService returned null JSON response"))
-            }
+            Result.success(otaJsonContent)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -78,11 +74,11 @@ class GithubApiHelper @Inject constructor() {
      *
      * @param device the device to fetch changelogs for.
      * @return the changelogs parsed as a [Result] with type as a [Map] of
-     *   file name with it's content as a [String]. [Result] will represent a
-     *   failure if [GithubApiService] returned null content or if an exception
+     *   file name with it's content as a [String]. (Maybe empty id changelog
+     *   is not available). [Result] will represent a failure if an exception
      *   was thrown.
      */
-    fun getChangelogs(device: String): Result<Map<String, String?>> =
+    fun getChangelogs(device: String): Result<Map<String, String?>?> =
         try {
             val contentList: List<Content>? = githubApiService
                 .getContents(device, GIT_BRANCH)
@@ -91,7 +87,7 @@ class GithubApiHelper @Inject constructor() {
                 ?.filter { it.name != OTA_JSON_FILE_NAME }
             when {
                 contentList == null -> {
-                    Result.failure(Exception("GithubApiService returned null content list"))
+                    Result.success(null)
                 }
                 contentList.isEmpty() -> {
                     Result.success(emptyMap())

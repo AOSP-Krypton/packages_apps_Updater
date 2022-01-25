@@ -39,7 +39,6 @@ import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -67,18 +66,22 @@ class MainRepository @Inject constructor(
         get() = savedStateDatastore.data.map { Date(it.lastCheckedTime) }
 
     fun getUpdateInfo(): Flow<UpdateInfo> {
-        return updateInfoDao.getBuildInfo(DeviceInfo.getBuildDate()).filterNotNull().combine(
-            updateInfoDao.getChangelogs().filterNotNull()
+        return updateInfoDao.getBuildInfo(DeviceInfo.getBuildDate()).combine(
+            updateInfoDao.getChangelogs()
         ) { buildInfo, changelogs ->
             UpdateInfo(
-                buildInfo = BuildInfo(
-                    buildInfo.version,
-                    buildInfo.date,
-                    buildInfo.url,
-                    buildInfo.fileName,
-                    buildInfo.fileSize,
-                    buildInfo.sha512,
-                ), changelogs, UpdateInfo.Type.NEW_UPDATE
+                buildInfo = buildInfo?.let {
+                    BuildInfo(
+                        it.version,
+                        it.date,
+                        it.url,
+                        it.fileName,
+                        it.fileSize,
+                        it.sha512,
+                    )
+                },
+                changelogs,
+                if (buildInfo == null) UpdateInfo.Type.NO_UPDATE else UpdateInfo.Type.NEW_UPDATE
             )
         }
     }
@@ -105,14 +108,16 @@ class MainRepository @Inject constructor(
         return if (result.isSuccess) {
             val updateInfo = result.getOrThrow()
             if (currentBuildInfoEntity != null &&
-                ((currentBuildInfoEntity.sha512 != updateInfo.buildInfo.sha512)
+                ((currentBuildInfoEntity.sha512 != updateInfo?.buildInfo?.sha512)
                         || updateInfo.type == UpdateInfo.Type.NO_UPDATE)
             ) {
                 // A different update has been pushed / existing ota was pulled,
                 // reset state of managers.
                 downloadManager.reset()
             }
-            saveUpdateInfo(updateInfo)
+            if (updateInfo?.type == UpdateInfo.Type.NEW_UPDATE) {
+                saveUpdateInfo(updateInfo)
+            }
             setRecheckAlarm()
             Pair(true, null)
         } else {
@@ -130,18 +135,19 @@ class MainRepository @Inject constructor(
     }
 
     private suspend fun saveUpdateInfo(updateInfo: UpdateInfo) {
-        val buildInfo = updateInfo.buildInfo
         withContext(Dispatchers.Default) {
-            updateInfoDao.insertBuildInfo(
-                BuildInfoEntity(
-                    version = buildInfo.version,
-                    date = buildInfo.date,
-                    url = buildInfo.url,
-                    fileName = buildInfo.fileName,
-                    fileSize = buildInfo.fileSize,
-                    sha512 = buildInfo.sha512
+            updateInfo.buildInfo?.let {
+                updateInfoDao.insertBuildInfo(
+                    BuildInfoEntity(
+                        version = it.version,
+                        date = it.date,
+                        url = it.url,
+                        fileName = it.fileName,
+                        fileSize = it.fileSize,
+                        sha512 = it.sha512
+                    )
                 )
-            )
+            }
             updateInfo.changelog?.map {
                 ChangelogEntity(
                     date = it.key,

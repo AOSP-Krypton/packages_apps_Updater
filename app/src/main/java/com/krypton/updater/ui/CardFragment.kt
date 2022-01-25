@@ -52,6 +52,9 @@ class CardFragment : Fragment(R.layout.card_view_layout) {
 
     override fun onStart() {
         super.onStart()
+        mainViewModel.updateAvailable.observe(this) {
+            binding.buttonGroup.visibility = if (it) View.VISIBLE else View.GONE
+        }
         downloadViewModel.downloadState.observe(this) {
             updateActionButtonText(it)
             binding.downloadGroup.post {
@@ -67,8 +70,8 @@ class CardFragment : Fragment(R.layout.card_view_layout) {
     private fun performAction() {
         downloadViewModel.downloadState.value?.let { state ->
             if (state.idle || state.failed) {
-                mainViewModel.updateInfo.value?.let {
-                    downloadViewModel.startDownload(it.buildInfo)
+                mainViewModel.updateInfo.value?.let { updateInfo ->
+                    updateInfo.buildInfo?.let { downloadViewModel.startDownload(it) }
                 }
             } else if (state.downloading) {
                 downloadViewModel.cancelDownload()

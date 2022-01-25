@@ -42,10 +42,10 @@ class UpdateChecker @Inject constructor(
      * @return the fetch result as a [Result] of type [UpdateInfo].
      *   [UpdateInfo.Type] will indicate whether there is a new update or not.
      */
-    fun checkForUpdate(): Result<UpdateInfo> {
+    fun checkForUpdate(): Result<UpdateInfo?> {
         val result = githubApiHelper.getBuildInfo(DeviceInfo.getDevice())
         return if (result.isSuccess) {
-            val otaJsonContent = result.getOrThrow()
+            val otaJsonContent = result.getOrNull() ?: return Result.success(null)
             val buildInfo = BuildInfo(
                 version = otaJsonContent.version,
                 date = otaJsonContent.date,
@@ -71,8 +71,7 @@ class UpdateChecker @Inject constructor(
     private fun getChangelog(): Map<Long, String?>? {
         val result = githubApiHelper.getChangelogs(DeviceInfo.getDevice())
         if (result.isSuccess) {
-            val changelogMap = result.getOrThrow()
-            if (changelogMap.isEmpty()) return null
+            val changelogMap = result.getOrNull()?.takeIf { it.isNotEmpty() } ?: return null
             val filteredMap = mutableMapOf<Long, String?>()
             changelogMap.forEach { (name, content) ->
                 val date = getDateFromChangelogFileName(name) ?: return@forEach
