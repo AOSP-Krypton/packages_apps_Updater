@@ -18,7 +18,12 @@ package com.krypton.updater.viewmodel
 
 import android.annotation.SuppressLint
 import android.util.DataUnit
-import androidx.lifecycle.*
+
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 
 import com.krypton.updater.data.Event
 import com.krypton.updater.data.MainRepository
@@ -27,14 +32,13 @@ import com.krypton.updater.data.UpdateInfo
 import dagger.hilt.android.lifecycle.HiltViewModel
 
 import java.text.SimpleDateFormat
+import java.util.Date
 
 import javax.inject.Inject
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
-import java.util.*
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -66,14 +70,26 @@ class MainViewModel @Inject constructor(
     val updateAvailable: LiveData<Boolean>
         get() = Transformations.map(updateInfo) { it.type == UpdateInfo.Type.NEW_UPDATE }
 
-    val updateVersion: LiveData<String>
-        get() = Transformations.map(updateInfo) { it.buildInfo.version }
+    val updateVersion: LiveData<String?>
+        get() = Transformations.map(updateInfo) { it.buildInfo?.version }
 
-    val updateDate: LiveData<String>
-        get() = Transformations.map(updateInfo) { BUILD_DATE_FORMAT.format(Date(it.buildInfo.date)) }
+    val updateDate: LiveData<String?>
+        get() = Transformations.map(updateInfo) {
+            it.buildInfo?.date?.let { date ->
+                BUILD_DATE_FORMAT.format(
+                    Date(date)
+                )
+            }
+        }
 
-    val updateSize: LiveData<String>
-        get() = Transformations.map(updateInfo) { bytesToBigFormat(it.buildInfo.fileSize) }
+    val updateSize: LiveData<String?>
+        get() = Transformations.map(updateInfo) {
+            it.buildInfo?.fileSize?.let { size ->
+                bytesToBigFormat(
+                    size
+                )
+            }
+        }
 
     init {
         viewModelScope.launch {
