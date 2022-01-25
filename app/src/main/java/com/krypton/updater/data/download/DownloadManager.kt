@@ -183,6 +183,32 @@ class DownloadManager @Inject constructor(
             putLong(BuildInfo.FILE_SIZE, buildInfo.fileSize)
         }
 
+    suspend fun restoreDownloadState(buildInfo: BuildInfo) {
+        logD( "restoring state, buildInfo = $buildInfo")
+        val file = File(cacheDir, buildInfo.fileName)
+        if (file.isFile) {
+            if (file.length() != buildInfo.fileSize) {
+                logD("file size does not match, deleting")
+                file.delete()
+                return
+            }
+            val hashMatch = withContext(Dispatchers.IO) {
+                DownloadWorker.checkFileIntegrity(file, buildInfo.sha512)
+            }
+            if (!hashMatch) {
+                logD("file hash does not match, deleting")
+                file.delete()
+                return
+            } else {
+                logD("updating state")
+                this.buildInfo = buildInfo
+                downloadFile = file
+                _downloadState.emit(DownloadState.finished())
+                _progressFlow.emit(buildInfo.fileSize)
+            }
+        }
+    }
+
     companion object {
         private const val JOB_ID = 2568346
 

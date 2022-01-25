@@ -4,6 +4,7 @@ import android.content.Context
 
 import androidx.room.Room
 
+import com.krypton.updater.UpdaterApp
 import com.krypton.updater.data.room.AppDatabase
 
 import dagger.Module
@@ -21,4 +22,8 @@ object AppModule {
         AppDatabase::class.java,
         "updater_database"
     ).build()
+
+    @Provides
+    fun provideApplicationScope(@ApplicationContext context: Context) =
+        (context as UpdaterApp).applicationScope
 }

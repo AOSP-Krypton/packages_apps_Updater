@@ -85,6 +85,7 @@
             style="@style/Widget.AppCompat.ProgressBar.Horizontal"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:indeterminate="@{downloadViewModel.downloadState.waiting}"
             app:layout_constraintBottom_toTopOf="@id/changelog_button"
             app:layout_constraintEnd_toEndOf="@id/end_guide_line"
             app:layout_constraintStart_toStartOf="@id/start_guide_line"

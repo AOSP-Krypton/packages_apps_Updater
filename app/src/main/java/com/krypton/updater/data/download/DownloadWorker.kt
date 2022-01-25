@@ -65,7 +65,7 @@ class DownloadWorker(
             downloadedBytes = downloadFile.length()
             if (downloadedBytes == fileSize) {
                 logD("file already downloaded, verifying hash")
-                if (computeHash(downloadFile) == fileHash) {
+                if (checkFileIntegrity(downloadFile, fileHash)) {
                     channel.send(downloadedBytes)
                     return DownloadResult.success()
                 }
@@ -155,6 +155,11 @@ class DownloadWorker(
                 builder.append(String.format("%02x", it))
             }
             return builder.toString()
+        }
+
+        fun checkFileIntegrity(file: File, hash: String): Boolean {
+            if (!file.isFile) return false
+            return computeHash(file) == hash
         }
     }
 }

@@ -16,12 +16,19 @@
 
 package com.krypton.updater.data.room
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.MapInfo
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
 
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface UpdateInfoDao {
+    @Query("SELECT COUNT(*) FROM build_info_table")
+    fun entityCount(): Int
+
     @Query("SELECT * FROM build_info_table WHERE date >= :fromDate ORDER BY date DESC LIMIT 1")
     fun getBuildInfo(fromDate: Long): Flow<BuildInfoEntity?>
 

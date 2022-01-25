@@ -29,6 +29,7 @@ import com.krypton.updater.services.PeriodicUpdateCheckerService
 
 import dagger.hilt.android.qualifiers.ApplicationContext
 
+import java.util.concurrent.TimeUnit
 import java.util.Date
 
 import javax.inject.Inject
@@ -40,7 +41,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import java.util.concurrent.TimeUnit
 
 @Singleton
 class MainRepository @Inject constructor(
@@ -53,7 +53,7 @@ class MainRepository @Inject constructor(
         context.getSystemService(AlarmManager::class.java)
     }
 
-    private val savedStateDao = appDatabase.savedStateDao()
+    private val savedStateDatastore = context.savedStateDataStore
     private val updateInfoDao = appDatabase.updateInfoDao()
 
     val systemBuildDate = Date(DeviceInfo.getBuildDate())
@@ -61,7 +61,7 @@ class MainRepository @Inject constructor(
     val systemBuildVersion: String = DeviceInfo.getBuildVersion()
 
     val lastCheckedTime: Flow<Date>
-        get() = savedStateDao.getLastCheckedTime().filterNotNull().map { Date(it) }
+        get() = savedStateDatastore.data.map { Date(it.lastCheckedTime) }
 
     fun getUpdateInfo(): Flow<UpdateInfo> {
         return updateInfoDao.getBuildInfo(DeviceInfo.getBuildDate()).filterNotNull().combine(
@@ -91,8 +91,10 @@ class MainRepository @Inject constructor(
         val result = withContext(Dispatchers.IO) {
             updateChecker.checkForUpdate()
         }
-        withContext(Dispatchers.Default) {
-            savedStateDao.setLastCheckedTime(System.currentTimeMillis())
+        savedStateDatastore.updateData {
+            it.toBuilder()
+                .setLastCheckedTime(System.currentTimeMillis())
+                .build()
         }
         return if (result.isSuccess) {
             saveUpdateInfo(result.getOrThrow())

@@ -54,9 +54,10 @@ class CardFragment : Fragment(R.layout.card_view_layout) {
         super.onStart()
         downloadViewModel.downloadState.observe(this) {
             updateActionButtonText(it)
-            binding.downloadGroup.visibility = if (it.idle) View.GONE else View.VISIBLE
+            binding.downloadGroup.post {
+                binding.downloadGroup.visibility = if (it.idle) View.GONE else View.VISIBLE
+            }
             updateDownloadText(it)
-            binding.downloadProgress.isIndeterminate = it.waiting
         }
         downloadViewModel.downloadProgress.observe(this) {
             updateDownloadProgress(it)
