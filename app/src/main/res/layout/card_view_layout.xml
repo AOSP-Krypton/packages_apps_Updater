@@ -98,6 +98,7 @@
             android:id="@+id/download_group"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:visibility="gone"
             app:constraint_referenced_ids="download_progress_text, download_progress" />
 
         <Button

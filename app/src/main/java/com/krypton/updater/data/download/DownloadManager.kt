@@ -165,6 +165,20 @@ class DownloadManager @Inject constructor(
         }
     }
 
+    /**
+     * Resets the manager to initial state.
+     * Deletes any completed download as well.
+     */
+    suspend fun reset() {
+        _progressFlow.emit(0)
+        _downloadState.emit(DownloadState.idle())
+        downloadFile?.delete()
+        downloadFile = null
+        buildInfo = null
+        jobInfo = null
+        jobExtras = null
+    }
+
     private fun buildJobInfo(buildInfo: BuildInfo, jobExtras: Bundle) =
         JobInfo.Builder(JOB_ID, downloadServiceComponent)
             .setTransientExtras(jobExtras)
