@@ -15,6 +15,6 @@
      limitations under the License.
 -->
 <resources>
-    <color name="text_color_dark">#FFF7F7F7</color>
-    <color name="text_color_light">#FF282C35</color>
+    <color name="primary_color_inverse_dark">#FFF7F7F7</color>
+    <color name="primary_color_inverse_light">#FF282C35</color>
 </resources>

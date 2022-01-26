@@ -28,6 +28,10 @@ import androidx.lifecycle.viewModelScope
 import com.krypton.updater.data.Event
 import com.krypton.updater.data.MainRepository
 import com.krypton.updater.data.UpdateInfo
+import com.krypton.updater.data.download.DownloadRepository
+import com.krypton.updater.data.download.DownloadState
+import com.krypton.updater.data.update.UpdateRepository
+import com.krypton.updater.data.update.UpdateState
 
 import dagger.hilt.android.lifecycle.HiltViewModel
 
@@ -38,11 +42,15 @@ import javax.inject.Inject
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import java.text.DecimalFormat
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val mainRepository: MainRepository,
+    private val downloadRepository: DownloadRepository,
+    private val updateRepository: UpdateRepository,
 ) : ViewModel() {
 
     private val _updateInfo = MutableLiveData<UpdateInfo>()
@@ -67,8 +75,17 @@ class MainViewModel @Inject constructor(
     val isCheckingForUpdate: LiveData<Boolean>
         get() = _isCheckingForUpdate
 
-    val updateAvailable: LiveData<Boolean>
-        get() = Transformations.map(updateInfo) { it.type == UpdateInfo.Type.NEW_UPDATE }
+    private val _updateInfoUnavailable = MutableLiveData<Boolean>()
+    val updateInfoUnavailable: LiveData<Boolean>
+        get() = _updateInfoUnavailable
+
+    private val _newUpdateAvailable = MutableLiveData<Boolean>()
+    val newUpdateAvailable: LiveData<Boolean>
+        get() = _newUpdateAvailable
+
+    private val _noUpdateAvailable = MutableLiveData<Boolean>()
+    val noUpdateAvailable: LiveData<Boolean>
+        get() = _noUpdateAvailable
 
     val updateVersion: LiveData<String?>
         get() = Transformations.map(updateInfo) { it.buildInfo?.version }
@@ -85,11 +102,13 @@ class MainViewModel @Inject constructor(
     val updateSize: LiveData<String?>
         get() = Transformations.map(updateInfo) {
             it.buildInfo?.fileSize?.let { size ->
-                bytesToBigFormat(
-                    size
-                )
+                formatBytes(size)
             }
         }
+
+    private val _allowUpdateCheck = MutableLiveData(true)
+    val allowUpdateCheck: LiveData<Boolean>
+        get() = _allowUpdateCheck
 
     init {
         viewModelScope.launch {
@@ -100,6 +119,21 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             mainRepository.getUpdateInfo().collect {
                 _updateInfo.value = it
+                _updateInfoUnavailable.value = it.type == UpdateInfo.Type.UNKNOWN
+                _newUpdateAvailable.value = it.type == UpdateInfo.Type.NEW_UPDATE
+                _noUpdateAvailable.value = it.type == UpdateInfo.Type.NO_UPDATE
+            }
+        }
+        viewModelScope.launch {
+            downloadRepository.downloadState.combine(
+                updateRepository.updateState
+            ) { downloadState, updateState ->
+                !downloadState.waiting &&
+                        !downloadState.downloading &&
+                        !updateState.initializing &&
+                        !updateState.updating
+            }.collect {
+                _allowUpdateCheck.value = it
             }
         }
     }
@@ -114,6 +148,8 @@ class MainViewModel @Inject constructor(
         }
         updateCheckJob = viewModelScope.launch {
             _isCheckingForUpdate.value = true
+            downloadRepository.resetState()
+            updateRepository.resetState()
             val result = mainRepository.fetchUpdateInfo()
             _isCheckingForUpdate.value = false
             if (!result.first) _updateFailedEvent.value = Event(result.second?.message)
@@ -127,19 +163,36 @@ class MainViewModel @Inject constructor(
         @SuppressLint("SimpleDateFormat")
         private val TIME_FORMAT = SimpleDateFormat("dd/MM/yy h:mm a")
 
-        private val byteSizeArray = arrayOf("KiB", "MiB", "GiB")
+        private val units = arrayOf("KiB", "MiB", "GiB")
+        private val singleDecimalFmt = DecimalFormat("00.0")
+        private val doubleDecimalFmt = DecimalFormat("0.00")
+        private val KiB: Long = DataUnit.KIBIBYTES.toBytes(1)
 
-        private fun bytesToBigFormat(bytes: Long): String {
-            var convertedBytes = bytes
-            val kib = DataUnit.KIBIBYTES.toBytes(1)
-            if ((convertedBytes / kib) == 0L) return "$convertedBytes ${byteSizeArray[0]}"
-            for (i in 0..3) {
-                convertedBytes /= kib
-                if (convertedBytes < kib) {
-                    return if (i < byteSizeArray.size) "$convertedBytes ${byteSizeArray[i]}" else ""
+        fun formatBytes(bytes: Long): String {
+            val unit: String
+            var rate = (bytes / KiB).toFloat()
+            var i = 0
+            while (true) {
+                rate /= KiB
+                if (rate >= 0.9f && rate < 1) {
+                    unit = units[i + 1]
+                    break
+                } else if (rate < 0.9f) {
+                    rate *= KiB
+                    unit = units[i]
+                    break
                 }
+                i++
             }
-            return ""
+            val formattedSize = when {
+                rate < 10 -> doubleDecimalFmt.format(rate)
+                rate < 100 -> singleDecimalFmt.format(rate)
+                rate < 1000 -> rate.toInt().toString()
+                else -> rate.toString()
+            }
+            return "$formattedSize $unit"
         }
+
+
     }
 }

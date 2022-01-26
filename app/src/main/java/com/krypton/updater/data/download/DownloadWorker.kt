@@ -18,6 +18,8 @@ package com.krypton.updater.data.download
 
 import android.util.DataUnit
 import android.util.Log
+import com.krypton.updater.data.HashVerifier
+import kotlinx.coroutines.*
 
 import java.io.File
 import java.io.FileInputStream
@@ -27,12 +29,9 @@ import java.security.MessageDigest
 
 import javax.net.ssl.HttpsURLConnection
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withContext
+import java.util.concurrent.TimeUnit
 
 /**
  * A worker whose job is to download the file from the given url.
@@ -63,9 +62,10 @@ class DownloadWorker(
         var resume = downloadFile.isFile
         if (resume) {
             downloadedBytes = downloadFile.length()
+            logD("downloadedBytes = $downloadedBytes")
             if (downloadedBytes == fileSize) {
                 logD("file already downloaded, verifying hash")
-                if (checkFileIntegrity(downloadFile, fileHash)) {
+                if (HashVerifier.verifyHash(downloadFile, fileHash)) {
                     channel.send(downloadedBytes)
                     return DownloadResult.success()
                 }
@@ -77,9 +77,7 @@ class DownloadWorker(
         }
         logD("resume = $resume")
         val connectionResult = withContext(Dispatchers.IO) {
-            runCatching {
-                url.openConnection() as HttpsURLConnection
-            }
+            openConnection()
         }
         if (connectionResult.isFailure) {
             return DownloadResult.failure(connectionResult.exceptionOrNull())
@@ -88,6 +86,7 @@ class DownloadWorker(
         if (resume) {
             connection.setRequestProperty("Range", "bytes=$downloadedBytes-")
         }
+        connection.responseCode
         logD("connection opened")
         val downloadResult = withContext(Dispatchers.IO) {
             runCatching {
@@ -103,6 +102,7 @@ class DownloadWorker(
                             channel.send(downloadedBytes)
                             bytesRead = inStream.read(buffer)
                         }
+                        logD("isActive = ${currentCoroutineContext().isActive}")
                         outStream.flush()
                     }
                 }
@@ -116,11 +116,8 @@ class DownloadWorker(
         if (downloadResult.isFailure) {
             return DownloadResult.failure(downloadResult.exceptionOrNull())
         }
-        val hash = computeHash(downloadFile)
-        logD("computed hash = $hash")
-        logD("file hash = $fileHash")
         return if (downloadedBytes == fileSize) {
-            if (hash == fileHash)
+            if (HashVerifier.verifyHash(downloadFile, fileHash))
                 DownloadResult.success()
             else
                 DownloadResult.failure(Throwable("SHA-512 hash doesn't match. Possible download corruption!"))
@@ -129,37 +126,35 @@ class DownloadWorker(
         }
     }
 
+    private suspend fun openConnection(): Result<HttpsURLConnection> {
+        val connection: HttpsURLConnection? = withTimeoutOrNull(CONNECTION_RETRY_TIMEOUT) {
+            while (isActive) {
+                val connectionResult = runCatching {
+                    url.openConnection() as HttpsURLConnection
+                }
+                if (connectionResult.isSuccess) {
+                    val conn = connectionResult.getOrThrow()
+                    if (conn.responseCode == 200) {
+                        return@withTimeoutOrNull conn
+                    }
+                }
+            }
+            return@withTimeoutOrNull null
+        }
+        return connection?.let { Result.success(it) }
+            ?: Result.failure(Throwable("Failed to establish a connection with the url"))
+    }
+
     companion object {
         private const val TAG = "DownloadWorker"
         private const val DEBUG = false
 
+        private val DOWNLOAD_BUFFER_SIZE = DataUnit.KIBIBYTES.toBytes(256).toInt()
+
+        private val CONNECTION_RETRY_TIMEOUT = TimeUnit.SECONDS.toMillis(5)
+
         private fun logD(msg: String) {
             if (DEBUG) Log.d(TAG, msg)
-        }
-
-        private val DOWNLOAD_BUFFER_SIZE = DataUnit.KIBIBYTES.toBytes(256).toInt()
-        private val HASH_BUFFER_SIZE = DataUnit.MEBIBYTES.toBytes(1).toInt()
-
-        private fun computeHash(file: File): String {
-            val messageDigest = MessageDigest.getInstance("SHA-512")
-            val buffer = ByteArray(HASH_BUFFER_SIZE)
-            FileInputStream(file).use {
-                var bytesRead = it.read(buffer)
-                while (bytesRead > 0) {
-                    messageDigest.update(buffer, 0, bytesRead)
-                    bytesRead = it.read(buffer)
-                }
-            }
-            val builder = StringBuilder()
-            messageDigest.digest().forEach {
-                builder.append(String.format("%02x", it))
-            }
-            return builder.toString()
-        }
-
-        fun checkFileIntegrity(file: File, hash: String): Boolean {
-            if (!file.isFile) return false
-            return computeHash(file) == hash
         }
     }
 }

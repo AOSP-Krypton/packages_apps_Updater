@@ -36,17 +36,21 @@ import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Singleton
 class MainRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     appDatabase: AppDatabase,
+    private val applicationScope: CoroutineScope,
     private val updateChecker: UpdateChecker,
     private val downloadManager: DownloadManager,
 ) {
@@ -68,20 +72,29 @@ class MainRepository @Inject constructor(
     fun getUpdateInfo(): Flow<UpdateInfo> {
         return updateInfoDao.getBuildInfo(DeviceInfo.getBuildDate()).combine(
             updateInfoDao.getChangelogs()
-        ) { buildInfo, changelogs ->
+        ) { buildInfoEntity, changelogs ->
+            val buildInfo = buildInfoEntity?.let {
+                BuildInfo(
+                    it.version,
+                    it.date,
+                    it.url,
+                    it.fileName,
+                    it.fileSize,
+                    it.sha512,
+                )
+            }
             UpdateInfo(
-                buildInfo = buildInfo?.let {
-                    BuildInfo(
-                        it.version,
-                        it.date,
-                        it.url,
-                        it.fileName,
-                        it.fileSize,
-                        it.sha512,
-                    )
-                },
+                buildInfo = buildInfo,
                 changelogs,
-                if (buildInfo == null) UpdateInfo.Type.NO_UPDATE else UpdateInfo.Type.NEW_UPDATE
+                if (buildInfo == null) {
+                    UpdateInfo.Type.UNKNOWN
+                } else {
+                    if (UpdateChecker.isNewUpdate(buildInfo)) {
+                        UpdateInfo.Type.NEW_UPDATE
+                    } else {
+                        UpdateInfo.Type.UNKNOWN
+                    }
+                }
             )
         }
     }
@@ -115,9 +128,7 @@ class MainRepository @Inject constructor(
                 // reset state of managers.
                 downloadManager.reset()
             }
-            if (updateInfo?.type == UpdateInfo.Type.NEW_UPDATE) {
-                saveUpdateInfo(updateInfo)
-            }
+            updateInfo?.let { saveUpdateInfo(it) }
             setRecheckAlarm()
             Pair(true, null)
         } else {
@@ -126,7 +137,7 @@ class MainRepository @Inject constructor(
     }
 
     private suspend fun deleteSavedUpdateInfo() {
-        withContext(Dispatchers.Default) {
+        withContext(Dispatchers.IO) {
             updateInfoDao.apply {
                 clearBuildInfo()
                 clearChangelogs()
@@ -135,7 +146,7 @@ class MainRepository @Inject constructor(
     }
 
     private suspend fun saveUpdateInfo(updateInfo: UpdateInfo) {
-        withContext(Dispatchers.Default) {
+        withContext(Dispatchers.IO) {
             updateInfo.buildInfo?.let {
                 updateInfoDao.insertBuildInfo(
                     BuildInfoEntity(
@@ -173,6 +184,14 @@ class MainRepository @Inject constructor(
             alarmIntent
         )
     }
+
+    fun prepareForReboot(): Job =
+        applicationScope.launch {
+            savedStateDatastore.updateData {
+                it.toBuilder().clearLastCheckedTime().build()
+            }
+            deleteSavedUpdateInfo()
+        }
 
     companion object {
         private const val REQUEST_CODE_CHECK_UPDATE = 2001

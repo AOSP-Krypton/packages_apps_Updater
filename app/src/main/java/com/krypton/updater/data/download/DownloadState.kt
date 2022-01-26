@@ -16,34 +16,49 @@
 
 package com.krypton.updater.data.download
 
+import java.util.Objects
+
 class DownloadState private constructor(
-    val idle: Boolean = false,
-    val waiting: Boolean = false,
-    val downloading: Boolean = false,
-    val finished: Boolean = false,
-    val failed: Boolean = false,
+    private val statusCode: Int,
+    val exception: Throwable? = null,
 ) {
+    val idle: Boolean
+        get() = statusCode == IDLE
+    val waiting: Boolean
+        get() = statusCode == WAITING
+    val downloading: Boolean
+        get() = statusCode == DOWNLOADING
+    val finished: Boolean
+        get() = statusCode == FINISHED
+    val failed: Boolean
+        get() = statusCode == FAILED
+
     override fun toString(): String =
         "DownloadState[ idle = $idle, " +
                 "waiting = $waiting, " +
                 "downloading = $downloading, " +
                 "finished = $finished, " +
-                "failed = $failed ]"
+                "failed = $failed, " +
+                "exception = $exception ]"
+
+    override fun equals(other: Any?): Boolean =
+        other is DownloadState &&
+                statusCode == other.statusCode &&
+                exception == other.exception
+
+    override fun hashCode(): Int = Objects.hash(statusCode, exception)
 
     companion object {
-        fun idle(): DownloadState =
-            DownloadState(idle = true)
+        private const val IDLE = 0
+        private const val WAITING = 1
+        private const val DOWNLOADING = 2
+        private const val FINISHED = 3
+        private const val FAILED = 4
 
-        fun waiting(): DownloadState =
-            DownloadState(waiting = true)
-
-        fun downloading(): DownloadState =
-            DownloadState(downloading = true)
-
-        fun finished(): DownloadState =
-            DownloadState(finished = true)
-
-        fun failed(): DownloadState =
-            DownloadState(failed = true)
+        fun idle() = DownloadState(statusCode = IDLE)
+        fun waiting() = DownloadState(statusCode = WAITING)
+        fun downloading() = DownloadState(statusCode = DOWNLOADING)
+        fun failed(e: Throwable?) = DownloadState(statusCode = FAILED, exception = e)
+        fun finished() = DownloadState(statusCode = FINISHED)
     }
 }

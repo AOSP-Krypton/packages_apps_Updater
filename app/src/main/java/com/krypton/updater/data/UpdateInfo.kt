@@ -19,10 +19,11 @@ package com.krypton.updater.data
 data class UpdateInfo(
     val buildInfo: BuildInfo?,
     val changelog: Map<Long, String?>?,
-    val type: Type = Type.NO_UPDATE,
+    val type: Type = Type.UNKNOWN,
 ) {
     enum class Type {
         NO_UPDATE,
         NEW_UPDATE,
+        UNKNOWN,
     }
 }

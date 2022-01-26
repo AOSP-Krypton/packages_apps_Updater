@@ -51,8 +51,36 @@
         Downloading - <xliff:g example="100" id="percent">%1$d%%</xliff:g>
     </string>
     <string name="waiting">Waiting</string>
+    <string name="restoring_state">Restoring state</string>
+    <string name="exporting_file">Exporting file to internal storage</string>
+    <string name="exporting_failed">Exporting file failed: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
 
     <!-- Changelog -->
     <string name="changelog">Changelog</string>
     <string name="changelog_unavailable">Changelog unavailable</string>
+
+    <!-- Update -->
+    <string name="low_battery_plug_in">Low battery, plug in to continue</string>
+    <string name="payload_generation_failed">Payload info generation failed: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="metadata_verification_failed">Metadata verification failed</string>
+    <string name="not_enough_space">Not enough space in device</string>
+    <string name="applying_payload_failed">Applying payload failed: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="installing_update">Installing update</string>
+    <string name="installation_failed">Installation failed</string>
+    <string name="reboot">Reboot</string>
+    <string name="initializing">Initializing…</string>
+    <string name="installation_finished">Installation finished</string>
+    <string name="installation_paused">Installation paused</string>
+    <string name="installing_update_format">Installing update - <xliff:g example="100" id="percent">%1$d%%</xliff:g></string>
+    <string name="pause">Pause</string>
+    <string name="downgrading_not_allowed">Downgrading is not allowed</string>
+    <string name="rootfs_verification_failed">Rootfs verification failed, try again</string>
+    <string name="update_transfer_error">Update transfer failed</string>
+    <string name="resume">Resume</string>
+    <string name="local_upgrade">Local upgrade</string>
+    <string name="popup_menu">Popup menu</string>
+    <string name="copying_file">Copying file</string>
+    <string name="do_not_close">Do not close the app until this is over</string>
+    <string name="copying_failed">Copying failed: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="install_update">Install update</string>
 </resources>

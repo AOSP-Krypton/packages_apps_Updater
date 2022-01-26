@@ -25,6 +25,7 @@ import android.util.Log
 
 import com.krypton.updater.R
 import com.krypton.updater.data.BuildInfo
+import com.krypton.updater.data.HashVerifier
 
 import dagger.hilt.android.qualifiers.ApplicationContext
 
@@ -61,7 +62,8 @@ class DownloadManager @Inject constructor(
     private var jobInfo: JobInfo? = null
     private var jobExtras: Bundle? = null
 
-    private var downloadFile: File? = null
+    var downloadFile: File? = null
+        private set
     val downloadFileName: String?
         get() = downloadFile?.name
     val downloadSize: Long
@@ -107,7 +109,7 @@ class DownloadManager @Inject constructor(
      *   necessary to download the file.
      */
     suspend fun runWorker(downloadInfo: Bundle) {
-        logD("runWorker, downloadState = $downloadState")
+        logD("runWorker, downloadState = ${downloadState.value}")
         _downloadState.value = DownloadState.downloading()
 
         downloadFile = File(cacheDir, downloadInfo.getString(BuildInfo.FILE_NAME)!!)
@@ -141,7 +143,7 @@ class DownloadManager @Inject constructor(
                 if (result.isSuccess) {
                     _downloadState.value = DownloadState.finished()
                 } else {
-                    _downloadState.value = DownloadState.failed()
+                    _downloadState.value = DownloadState.failed(result.exceptionOrNull())
                 }
                 logD("sending result $result")
                 withContext(Dispatchers.Main) {
@@ -155,7 +157,7 @@ class DownloadManager @Inject constructor(
      * Cancels the download if any in progress.
      */
     fun cancelDownload() {
-        logD("cancelDownload, downloadState = $downloadState")
+        logD("cancelDownload, downloadState = ${downloadState.value}")
         if (downloadState.value.waiting || downloadState.value.downloading) {
             jobScheduler.cancel(JOB_ID)
             buildInfo = null
@@ -167,16 +169,23 @@ class DownloadManager @Inject constructor(
 
     /**
      * Resets the manager to initial state.
-     * Deletes any completed download as well.
      */
     suspend fun reset() {
         _progressFlow.emit(0)
         _downloadState.emit(DownloadState.idle())
-        downloadFile?.delete()
         downloadFile = null
         buildInfo = null
         jobInfo = null
         jobExtras = null
+    }
+
+    /**
+     * Clear out the cache.
+     */
+    fun cleanCache() {
+        cacheDir.listFiles()?.forEach {
+            it.delete()
+        }
     }
 
     private fun buildJobInfo(buildInfo: BuildInfo, jobExtras: Bundle) =
@@ -207,7 +216,7 @@ class DownloadManager @Inject constructor(
                 return
             }
             val hashMatch = withContext(Dispatchers.IO) {
-                DownloadWorker.checkFileIntegrity(file, buildInfo.sha512)
+                HashVerifier.verifyHash(file, buildInfo.sha512)
             }
             if (!hashMatch) {
                 logD("file hash does not match, deleting")

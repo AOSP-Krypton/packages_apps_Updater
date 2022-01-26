@@ -232,15 +232,7 @@ class UpdateDownloadService : JobService() {
     }
 
     override fun onStopJob(jobParameters: JobParameters): Boolean {
-        logD("onStopJob")
-        val stopReason = jobParameters.stopReason
-        logD("stopReason = $stopReason")
-        if (stopReason == JobParameters.STOP_REASON_USER
-            || stopReason == JobParameters.STOP_REASON_CANCELLED_BY_APP
-        ) {
-            notificationManager.cancelAll()
-            return false
-        }
+        logD("onStopJob, stopReason = ${jobParameters.stopReason}")
         return true
     }
 
@@ -248,6 +240,7 @@ class UpdateDownloadService : JobService() {
         logD("service destroyed")
         unregisterReceiver(cancelBroadcastReceiver)
         serviceScope.cancel()
+        notificationManager.cancel(DOWNLOAD_NOTIFICATION_ID)
         super.onDestroy()
     }
 

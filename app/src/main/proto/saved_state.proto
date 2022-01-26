@@ -23,4 +23,5 @@ option java_multiple_files = true;
 message SavedState {
   int64 last_checked_time = 1;
   bool download_finished = 2;
+  bool update_finished = 3;
 }

@@ -16,7 +16,9 @@
 
 package com.krypton.updater.data.download
 
-class DownloadResult private constructor(
+import java.util.*
+
+data class DownloadResult private constructor(
     private val exception: Throwable? = null,
     val isSuccess: Boolean = false,
     val isFailure: Boolean = false,
@@ -29,6 +31,15 @@ class DownloadResult private constructor(
                 "isFailure = $isFailure, " +
                 "shouldRetry = $shouldRetry, " +
                 "exception = $exception ]"
+
+    override fun equals(other: Any?): Boolean =
+        other is DownloadResult &&
+                isSuccess == other.isSuccess &&
+                isFailure == other.isFailure &&
+                shouldRetry == other.shouldRetry &&
+                exception == other.exception
+
+    override fun hashCode(): Int = Objects.hash(exception, isSuccess, isFailure, shouldRetry)
 
     companion object {
         fun success(): DownloadResult =

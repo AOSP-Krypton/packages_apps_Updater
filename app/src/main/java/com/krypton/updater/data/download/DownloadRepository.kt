@@ -22,6 +22,7 @@ import android.util.Log
 
 import com.krypton.updater.data.BuildInfo
 import com.krypton.updater.data.DeviceInfo
+import com.krypton.updater.data.FileCopier
 import com.krypton.updater.data.room.AppDatabase
 import com.krypton.updater.data.savedStateDataStore
 
@@ -33,10 +34,12 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -46,13 +49,15 @@ class DownloadRepository @Inject constructor(
     private val downloadManager: DownloadManager,
     @ApplicationContext context: Context,
     private val applicationScope: CoroutineScope,
+    private val fileCopier: FileCopier,
     appDatabase: AppDatabase,
 ) {
 
     private val savedStateDatastore = context.savedStateDataStore
     private val updateInfoDao = appDatabase.updateInfoDao()
 
-    val downloadState: Flow<DownloadState>
+    val downloadState: StateFlow<DownloadState>
+        get() = downloadManager.downloadState
 
     val downloadEventChannel: Channel<DownloadResult>
         get() = downloadManager.eventChannel
@@ -68,18 +73,40 @@ class DownloadRepository @Inject constructor(
 
     // To prevent state flow from download manager overwriting
     // saved state in database.
-    private var restoreStateFinished = false
+    private val _stateRestoreFinished = MutableStateFlow(false)
+    val stateRestoreFinished: StateFlow<Boolean>
+        get() = _stateRestoreFinished
+
+    val exportingFile = Channel<Boolean>(2, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val fileExportResult = Channel<Result<Unit>>(2, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     init {
         applicationScope.launch {
-            restoreDownloadState()
+            _stateRestoreFinished.value = restoreDownloadState()
         }
-        downloadState = downloadManager.downloadState.onEach {
-            if (restoreStateFinished) {
-                applicationScope.launch {
-                    saveStateToDatabase(it)
+        applicationScope.launch {
+            downloadState.collect {
+                if (stateRestoreFinished.value) {
+                    applicationScope.launch {
+                        saveStateToDatabase(it)
+                    }
+                }
+                if (it.finished) {
+                    exportFile()
                 }
             }
+        }
+    }
+
+    private suspend fun exportFile() {
+        downloadManager.downloadFile?.let { file ->
+            exportingFile.send(true)
+            fileExportResult.send(
+                withContext(Dispatchers.IO) {
+                    fileCopier.copyToExportDir(file)
+                }
+            )
+            exportingFile.send(false)
         }
     }
 
@@ -121,13 +148,12 @@ class DownloadRepository @Inject constructor(
         logD("state saved")
     }
 
-    private suspend fun restoreDownloadState() {
+    private suspend fun restoreDownloadState(): Boolean {
         logD("restoreDownloadState")
         val downloadFinished = savedStateDatastore.data.map { it.downloadFinished }.first()
         if (!downloadFinished) {
             logD("no saved state available")
-            restoreStateFinished = true
-            return
+            return true
         }
         withContext(Dispatchers.Default) {
             val count = updateInfoDao.entityCount()
@@ -135,19 +161,36 @@ class DownloadRepository @Inject constructor(
                 logD("Update info database is empty")
                 return@withContext
             }
-            val buildInfoEntity = updateInfoDao.getBuildInfo(DeviceInfo.getBuildDate()).first() ?: return@withContext
+            val buildInfoEntity =
+                updateInfoDao.getBuildInfo(DeviceInfo.getBuildDate()).first() ?: return@withContext
             logD("restoring state")
-            downloadManager.restoreDownloadState(BuildInfo(
-                buildInfoEntity.version,
-                buildInfoEntity.date,
-                buildInfoEntity.url,
-                buildInfoEntity.fileName,
-                buildInfoEntity.fileSize,
-                buildInfoEntity.sha512,
-            ))
+            downloadManager.restoreDownloadState(
+                BuildInfo(
+                    buildInfoEntity.version,
+                    buildInfoEntity.date,
+                    buildInfoEntity.url,
+                    buildInfoEntity.fileName,
+                    buildInfoEntity.fileSize,
+                    buildInfoEntity.sha512,
+                )
+            )
         }
-        restoreStateFinished = true
+        return true
     }
+
+    suspend fun resetState() {
+        downloadManager.reset()
+    }
+
+    fun prepareForReboot(): Job =
+        applicationScope.launch {
+            savedStateDatastore.updateData {
+                it.toBuilder()
+                    .clearDownloadFinished()
+                    .build()
+            }
+            downloadManager.cleanCache()
+        }
 
     companion object {
         private const val TAG = "DownloadRepository"
