@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2021-2022 AOSP-Krypton Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License")
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.data
+package com.krypton.updater.data.update
 
-data class UpdateInfo(
-    val buildInfo: BuildInfo?,
-    val changelog: Map<Long, String?>?,
-    val type: Type = Type.UNKNOWN,
-) {
-    enum class Type {
-        NO_UPDATE,
-        NEW_UPDATE,
-        UNKNOWN,
-    }
-}
+class PayloadInfo(
+    val filePath: String,
+    val offset: Long,
+    val size: Long,
+    val headerKeyValuePairs: Array<String>,
+)

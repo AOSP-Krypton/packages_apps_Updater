@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 AOSP-Krypton Project
+ * Copyright (C) 2021-2022 AOSP-Krypton Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,74 +18,95 @@ package com.krypton.updater.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.widget.Toast
 
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 
-import com.krypton.updater.R
 import com.krypton.updater.data.download.DownloadState
-import com.krypton.updater.databinding.CardViewLayoutBinding
+import com.krypton.updater.databinding.FragmentDownloadBinding
+import com.krypton.updater.R
+import com.krypton.updater.services.UpdateInstallerService
 import com.krypton.updater.viewmodel.DownloadViewModel
 import com.krypton.updater.viewmodel.MainViewModel
 
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class CardFragment : Fragment(R.layout.card_view_layout) {
+class DownloadFragment : Fragment(R.layout.fragment_download) {
     private val mainViewModel: MainViewModel by activityViewModels()
     private val downloadViewModel: DownloadViewModel by activityViewModels()
-    private lateinit var binding: CardViewLayoutBinding
+
+    private lateinit var binding: FragmentDownloadBinding
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding = CardViewLayoutBinding.bind(view).also {
+        binding = FragmentDownloadBinding.bind(view).also {
             it.lifecycleOwner = viewLifecycleOwner
             it.mainViewModel = mainViewModel
             it.downloadViewModel = downloadViewModel
             it.changelogButton.setOnClickListener {
                 startActivity(Intent(context, ChangelogActivity::class.java))
             }
-            it.actionButton.setOnClickListener { performAction() }
         }
     }
 
     override fun onStart() {
         super.onStart()
-        mainViewModel.updateAvailable.observe(this) {
-            binding.buttonGroup.visibility = if (it) View.VISIBLE else View.GONE
-        }
         downloadViewModel.downloadState.observe(this) {
-            updateActionButtonText(it)
-            binding.downloadGroup.post {
-                binding.downloadGroup.visibility = if (it.idle) View.GONE else View.VISIBLE
-            }
+            logD("downloadState = $it")
+            updateRightActionButton()
+            binding.downloadProgressGroup.visibility = if (it.idle) View.GONE else View.VISIBLE
             updateDownloadText(it)
+        }
+        downloadViewModel.downloadFailed.observe(this) { message ->
+            message.getOrNull()?.let {
+                Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            }
         }
         downloadViewModel.downloadProgress.observe(this) {
             updateDownloadProgress(it)
         }
     }
 
-    private fun performAction() {
-        downloadViewModel.downloadState.value?.let { state ->
-            if (state.idle || state.failed) {
-                mainViewModel.updateInfo.value?.let { updateInfo ->
-                    updateInfo.buildInfo?.let { downloadViewModel.startDownload(it) }
+    private fun updateRightActionButton() {
+        downloadViewModel.downloadState.value?.let { downloadState ->
+            when {
+                downloadState.idle || downloadState.failed -> binding.actionButton.apply {
+                    setText(R.string.download)
+                    setOnClickListener { startDownload() }
                 }
-            } else if (state.downloading) {
-                downloadViewModel.cancelDownload()
+                downloadState.waiting || downloadState.downloading -> binding.actionButton.apply {
+                    setText(android.R.string.cancel)
+                    setOnClickListener {
+                        logD("cancelling download")
+                        downloadViewModel.cancelDownload()
+                    }
+                }
+                downloadState.finished ->
+                    binding.actionButton.apply {
+                        setText(R.string.update)
+                        setOnClickListener { startUpdate() }
+                    }
             }
             return@let
         }
     }
 
-    private fun updateActionButtonText(state: DownloadState) {
-        when {
-            state.idle || state.failed -> binding.actionButton.setText(R.string.download)
-            state.waiting || state.downloading -> binding.actionButton.setText(android.R.string.cancel)
-            state.finished -> binding.actionButton.setText(R.string.update)
+    private fun startDownload() {
+        logD("starting download")
+        mainViewModel.updateInfo.value?.let { updateInfo ->
+            updateInfo.buildInfo?.let { downloadViewModel.startDownload(it) }
         }
+    }
+
+    private fun startUpdate() {
+        logD("starting update")
+        context?.startService(Intent(context, UpdateInstallerService::class.java).apply {
+            action = UpdateInstallerService.ACTION_START_UPDATE
+        })
     }
 
     private fun updateDownloadText(state: DownloadState) {
@@ -106,6 +127,15 @@ class CardFragment : Fragment(R.layout.card_view_layout) {
                         getString(R.string.download_text_format, progress)
                 }
             }
+        }
+    }
+
+    companion object {
+        private const val TAG = "DownloadFragment"
+        private const val DEBUG = false
+
+        private fun logD(msg: String) {
+            if (DEBUG) Log.d(TAG, msg)
         }
     }
 }

@@ -19,4 +19,15 @@ android_app_import {
     system_ext_specific: true,
     privileged: true,
     apk: "build/outputs/apk/release/app-release*.apk",
+    required: [
+        "privapp_permissions_updater",
+    ],
+}
+
+prebuilt_etc {
+    name: "privapp_permissions_updater",
+    sub_dir: "permissions",
+    src: "privapp-permissions-updater.xml",
+    filename_from_src: true,
+    system_ext_specific: true,
 }

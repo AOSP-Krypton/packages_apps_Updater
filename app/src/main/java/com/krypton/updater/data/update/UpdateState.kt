@@ -14,35 +14,38 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.data.download
+package com.krypton.updater.data.update
 
 import java.util.Objects
 
-class DownloadState private constructor(
+class UpdateState private constructor(
     private val statusCode: Int,
     val exception: Throwable? = null,
 ) {
     val idle: Boolean
         get() = statusCode == IDLE
-    val waiting: Boolean
-        get() = statusCode == WAITING
-    val downloading: Boolean
-        get() = statusCode == DOWNLOADING
-    val finished: Boolean
-        get() = statusCode == FINISHED
+    val initializing: Boolean
+        get() = statusCode == INITIALIZING
+    val updating: Boolean
+        get() = statusCode == UPDATING
+    val paused: Boolean
+        get() = statusCode == PAUSED
     val failed: Boolean
         get() = statusCode == FAILED
+    val finished: Boolean
+        get() = statusCode == FINISHED
 
     override fun toString(): String =
-        "DownloadState[ idle = $idle, " +
-                "waiting = $waiting, " +
-                "downloading = $downloading, " +
-                "finished = $finished, " +
+        "UpdateState[ idle = $idle, " +
+                "initializing = $initializing, " +
+                "updating = $updating, " +
+                "paused = $paused, " +
                 "failed = $failed, " +
+                "finished = $finished," +
                 "exception = $exception ]"
 
     override fun equals(other: Any?): Boolean =
-        other is DownloadState &&
+        other is UpdateState &&
                 statusCode == other.statusCode &&
                 exception == other.exception
 
@@ -50,15 +53,17 @@ class DownloadState private constructor(
 
     companion object {
         private const val IDLE = 0
-        private const val WAITING = 1
-        private const val DOWNLOADING = 2
-        private const val FINISHED = 3
+        private const val INITIALIZING = 1
+        private const val UPDATING = 2
+        private const val PAUSED = 3
         private const val FAILED = 4
+        private const val FINISHED = 5
 
-        fun idle() = DownloadState(statusCode = IDLE)
-        fun waiting() = DownloadState(statusCode = WAITING)
-        fun downloading() = DownloadState(statusCode = DOWNLOADING)
-        fun failed(e: Throwable?) = DownloadState(statusCode = FAILED, exception = e)
-        fun finished() = DownloadState(statusCode = FINISHED)
+        fun idle() = UpdateState(statusCode = IDLE)
+        fun initializing() = UpdateState(statusCode = INITIALIZING)
+        fun updating() = UpdateState(statusCode = UPDATING)
+        fun paused() = UpdateState(statusCode = PAUSED)
+        fun failure(e: Throwable?) = UpdateState(statusCode = FAILED, exception = e)
+        fun finished() = UpdateState(statusCode = FINISHED)
     }
 }

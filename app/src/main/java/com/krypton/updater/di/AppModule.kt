@@ -1,6 +1,7 @@
 package com.krypton.updater.di
 
 import android.content.Context
+import android.os.UpdateEngine
 
 import androidx.room.Room
 
@@ -26,4 +27,7 @@ object AppModule {
     @Provides
     fun provideApplicationScope(@ApplicationContext context: Context) =
         (context as UpdaterApp).applicationScope
+
+    @Provides
+    fun provideUpdateEngine() = UpdateEngine()
 }

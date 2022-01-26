@@ -14,7 +14,8 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<resources>
-    <color name="primary_color_inverse_dark">#FFF7F7F7</color>
-    <color name="primary_color_inverse_light">#FF282C35</color>
-</resources>
+<permissions>
+    <privapp-permissions package="com.krypton.updater">
+        <permission name="android.permission.REBOOT" />
+    </privapp-permissions>
+</permissions>

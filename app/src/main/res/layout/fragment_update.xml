@@ -25,34 +25,33 @@
             type="com.krypton.updater.viewmodel.MainViewModel" />
 
         <variable
-            name="downloadViewModel"
-            type="com.krypton.updater.viewmodel.DownloadViewModel" />
+            name="updateViewModel"
+            type="com.krypton.updater.viewmodel.UpdateViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="24dp">
+        android:layout_height="match_parent">
 
         <TextView
-            android:id="@+id/card_title"
+            android:id="@+id/title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text='@{mainViewModel.updateAvailable ? @string/new_update_available : @string/up_to_date}'
+            android:text="@string/install_update"
             android:textSize="24sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="New update available" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/card_description"
+            android:id="@+id/subtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text='@{mainViewModel.updateAvailable ? @string/new_update_description_format(mainViewModel.updateVersion, mainViewModel.updateDate, mainViewModel.updateSize) : @string/come_back_later}'
+            android:singleLine="true"
+            android:ellipsize="middle"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/card_title"
-            tools:text="v2.3 | 12-11-2021 | 1.3GB" />
+            app:layout_constraintTop_toBottomOf="@id/title"
+            tools:text="KOSP-2.3-guacamole-user-OFFICIAL-GAPPS-20220127-1159.zip" />
 
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/start_guide_line"
@@ -69,72 +68,66 @@
             app:layout_constraintGuide_end="16dp" />
 
         <TextView
-            android:id="@+id/download_progress_text"
+            android:id="@+id/update_progress_text"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            app:layout_constraintBottom_toTopOf="@id/download_progress"
+            app:layout_constraintBottom_toTopOf="@id/update_progress"
             app:layout_constraintEnd_toEndOf="@id/end_guide_line"
             app:layout_constraintStart_toStartOf="@id/start_guide_line"
-            app:layout_constraintTop_toBottomOf="@id/card_description"
+            app:layout_constraintTop_toBottomOf="@id/subtitle"
             app:layout_constraintVertical_chainStyle="packed"
-            tools:text="Downloading - 1159/1159 MB" />
+            tools:text="Installing - 100%" />
 
         <ProgressBar
-            android:id="@+id/download_progress"
+            android:id="@+id/update_progress"
             style="@style/Widget.AppCompat.ProgressBar.Horizontal"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:indeterminate="@{downloadViewModel.downloadState.waiting}"
+            android:indeterminate="@{updateViewModel.updateState.initializing}"
             app:layout_constraintBottom_toTopOf="@id/button_barrier"
             app:layout_constraintEnd_toEndOf="@id/end_guide_line"
             app:layout_constraintStart_toStartOf="@id/start_guide_line"
-            app:layout_constraintTop_toBottomOf="@+id/download_progress_text"
+            app:layout_constraintTop_toBottomOf="@+id/update_progress_text"
             app:layout_constraintVertical_chainStyle="packed"
             tools:progress="100"
             tools:progressTint="#FF0000" />
 
         <androidx.constraintlayout.widget.Group
-            android:id="@+id/download_group"
+            android:id="@+id/update_progress_group"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="gone"
-            app:constraint_referenced_ids="download_progress_text, download_progress" />
+            app:constraint_referenced_ids="update_progress_text, update_progress"
+            tools:visibility="visible" />
 
         <androidx.constraintlayout.widget.Barrier
             android:id="@+id/button_barrier"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:constraint_referenced_ids="changelog_button, action_button"
-            app:barrierDirection="top"
-            app:barrierAllowsGoneWidgets="true" />
-
-        <androidx.constraintlayout.widget.Group
-            android:id="@+id/button_group"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            app:constraint_referenced_ids="changelog_button, action_button" />
+            app:constraint_referenced_ids="left_action_button, right_action_button"
+            app:barrierDirection="top" />
 
         <Button
-            android:id="@+id/changelog_button"
+            android:id="@+id/left_action_button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:text="@string/changelog"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/action_button"
-            app:layout_constraintStart_toStartOf="@id/start_guide_line" />
+            app:layout_constraintEnd_toStartOf="@id/right_action_button"
+            app:layout_constraintStart_toStartOf="@id/start_guide_line"
+            tools:text="Pause" />
 
         <Button
-            android:id="@+id/action_button"
+            android:id="@+id/right_action_button"
+            style="@style/ButtonThemeInverse"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
-            app:layout_constraintBottom_toBottomOf="@id/changelog_button"
+            app:layout_constraintBottom_toBottomOf="@id/left_action_button"
             app:layout_constraintEnd_toEndOf="@id/end_guide_line"
-            app:layout_constraintStart_toEndOf="@id/changelog_button"
-            app:layout_constraintTop_toTopOf="@id/changelog_button"
-            tools:text="Cancel" />
+            app:layout_constraintStart_toEndOf="@id/left_action_button"
+            app:layout_constraintTop_toTopOf="@id/left_action_button"
+            tools:text="Update" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

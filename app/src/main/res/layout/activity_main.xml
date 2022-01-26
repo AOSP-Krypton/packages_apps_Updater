@@ -23,17 +23,25 @@
         <variable
             name="mainViewModel"
             type="com.krypton.updater.viewmodel.MainViewModel" />
-
-        <variable
-            name="downloadViewModel"
-            type="com.krypton.updater.viewmodel.DownloadViewModel" />
     </data>
 
     <androidx.constraintlayout.motion.widget.MotionLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:padding="16dp"
         app:layoutDescription="@xml/activity_main_expansion_scene"
         tools:context=".ui.MainActivity">
+
+        <ImageButton
+            android:id="@+id/popup_menu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/popup_menu"
+            android:onClick="showPopupMenu"
+            android:src="@drawable/ic_baseline_menu_open_24"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView
             android:id="@+id/updater_logo"
@@ -66,7 +74,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/default_view_margin_vertical"
-            android:enabled="@{!downloadViewModel.downloadState.downloading &amp;&amp; !downloadViewModel.downloadState.waiting}"
+            android:enabled="@{mainViewModel.allowUpdateCheck}"
             android:onClick="@{() -> mainViewModel.checkForUpdates()}"
             android:text="@string/check_for_updates"
             app:layout_constraintBottom_toTopOf="@id/update_status"
@@ -96,13 +104,11 @@
             app:layout_constraintGuide_percent="1.00" />
 
         <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/card_fragment"
-            android:name="com.krypton.updater.ui.CardFragment"
+            android:id="@+id/card_fragment_container"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginBottom="16dp"
             android:background="@drawable/card_background"
+            android:padding="24dp"
             app:layout_constraintBottom_toTopOf="@id/card_guideline_bottom"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

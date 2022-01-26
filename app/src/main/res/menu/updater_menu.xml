@@ -14,7 +14,12 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<resources>
-    <color name="primary_color_inverse_dark">#FFF7F7F7</color>
-    <color name="primary_color_inverse_light">#FF282C35</color>
-</resources>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item android:id="@+id/local_upgrade"
+        android:title="@string/local_upgrade"
+        android:icon="@drawable/ic_baseline_folder_24"
+        app:showAsAction="ifRoom" />
+
+</menu>
