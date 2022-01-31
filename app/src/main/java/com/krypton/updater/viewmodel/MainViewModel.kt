@@ -29,9 +29,7 @@ import com.krypton.updater.data.Event
 import com.krypton.updater.data.MainRepository
 import com.krypton.updater.data.UpdateInfo
 import com.krypton.updater.data.download.DownloadRepository
-import com.krypton.updater.data.download.DownloadState
 import com.krypton.updater.data.update.UpdateRepository
-import com.krypton.updater.data.update.UpdateState
 
 import dagger.hilt.android.lifecycle.HiltViewModel
 
@@ -152,7 +150,7 @@ class MainViewModel @Inject constructor(
             updateRepository.resetState()
             val result = mainRepository.fetchUpdateInfo()
             _isCheckingForUpdate.value = false
-            if (!result.first) _updateFailedEvent.value = Event(result.second?.message)
+            if (result.isFailure) _updateFailedEvent.value = Event(result.exceptionOrNull()?.message)
         }
     }
 

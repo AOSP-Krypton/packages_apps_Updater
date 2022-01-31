@@ -219,14 +219,17 @@ class MainActivity : AppCompatActivity() {
                     text = getString(R.string.checking_for_update)
                     visibility = View.VISIBLE
                 }
-            mainViewModel.lastCheckedTime.value != null ->
-                binding.updateStatus.apply {
-                    text = getString(
-                        R.string.last_checked_time_format,
-                        mainViewModel.lastCheckedTime.value
-                    )
-                    visibility = View.VISIBLE
+            mainViewModel.lastCheckedTime.value != null -> {
+                binding.updateStatus.post {
+                    binding.updateStatus.apply {
+                        text = getString(
+                            R.string.last_checked_time_format,
+                            mainViewModel.lastCheckedTime.value
+                        )
+                        visibility = View.VISIBLE
+                    }
                 }
+            }
             else -> binding.updateStatus.visibility = View.GONE
         }
     }
