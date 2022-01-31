@@ -26,6 +26,7 @@ import com.krypton.updater.data.download.DownloadManager
 import com.krypton.updater.data.room.AppDatabase
 import com.krypton.updater.data.room.BuildInfoEntity
 import com.krypton.updater.data.room.ChangelogEntity
+import com.krypton.updater.data.update.UpdateManager
 import com.krypton.updater.services.PeriodicUpdateCheckerService
 
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -53,6 +54,7 @@ class MainRepository @Inject constructor(
     private val applicationScope: CoroutineScope,
     private val updateChecker: UpdateChecker,
     private val downloadManager: DownloadManager,
+    private val updateManager: UpdateManager,
 ) {
 
     private val alarmManager: AlarmManager by lazy {
@@ -127,6 +129,7 @@ class MainRepository @Inject constructor(
                 // A different update has been pushed / existing ota was pulled,
                 // reset state of managers.
                 downloadManager.reset()
+                updateManager.reset()
             }
             updateInfo?.let { saveUpdateInfo(it) }
             setRecheckAlarm()
