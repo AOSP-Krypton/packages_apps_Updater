@@ -22,11 +22,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.SystemClock
 
-import com.krypton.updater.data.download.DownloadManager
 import com.krypton.updater.data.room.AppDatabase
 import com.krypton.updater.data.room.BuildInfoEntity
 import com.krypton.updater.data.room.ChangelogEntity
-import com.krypton.updater.data.update.UpdateManager
 import com.krypton.updater.services.PeriodicUpdateCheckerService
 
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -41,7 +39,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -53,8 +50,6 @@ class MainRepository @Inject constructor(
     appDatabase: AppDatabase,
     private val applicationScope: CoroutineScope,
     private val updateChecker: UpdateChecker,
-    private val downloadManager: DownloadManager,
-    private val updateManager: UpdateManager,
 ) {
 
     private val alarmManager: AlarmManager by lazy {
@@ -108,9 +103,6 @@ class MainRepository @Inject constructor(
      *    second representing any exception thrown while fetching.
      */
     suspend fun fetchUpdateInfo(): Pair<Boolean, Throwable?> {
-        val currentBuildInfoEntity = withContext(Dispatchers.Default) {
-            updateInfoDao.getBuildInfo(DeviceInfo.getBuildDate()).firstOrNull()
-        }
         deleteSavedUpdateInfo()
         val result = withContext(Dispatchers.IO) {
             updateChecker.checkForUpdate()
@@ -121,17 +113,7 @@ class MainRepository @Inject constructor(
                 .build()
         }
         return if (result.isSuccess) {
-            val updateInfo = result.getOrThrow()
-            if (currentBuildInfoEntity != null &&
-                ((currentBuildInfoEntity.sha512 != updateInfo?.buildInfo?.sha512)
-                        || updateInfo.type == UpdateInfo.Type.NO_UPDATE)
-            ) {
-                // A different update has been pushed / existing ota was pulled,
-                // reset state of managers.
-                downloadManager.reset()
-                updateManager.reset()
-            }
-            updateInfo?.let { saveUpdateInfo(it) }
+            result.getOrThrow()?.let { saveUpdateInfo(it) }
             setRecheckAlarm()
             Pair(true, null)
         } else {
