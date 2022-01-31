@@ -80,7 +80,6 @@
     <string name="local_upgrade">Local upgrade</string>
     <string name="popup_menu">Popup menu</string>
     <string name="copying_file">Copying file</string>
-    <string name="do_not_close">Do not close the app until this is over</string>
     <string name="copying_failed">Copying failed: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
     <string name="install_update">Install update</string>
 </resources>
