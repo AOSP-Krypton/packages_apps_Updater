@@ -124,9 +124,7 @@ class MainActivity : AppCompatActivity() {
         downloadViewModel.stateRestoreFinished.observe(this) {
             stateRestoreProgressDialog?.dismiss()
             stateRestoreProgressDialog = if (!it) {
-                createProgressDialog(titleId = R.string.restoring_state).apply {
-                    show()
-                }
+                createProgressDialog(R.string.restoring_state).apply { show() }
             } else {
                 null
             }
@@ -135,9 +133,7 @@ class MainActivity : AppCompatActivity() {
             fileExportProgressDialog?.dismiss()
             fileExportProgressDialog = if (it) {
                 transitionToStart()
-                createProgressDialog(titleId = R.string.exporting_file).apply {
-                    show()
-                }
+                createProgressDialog(R.string.exporting_file).apply { show() }
             } else {
                 null
             }
@@ -154,12 +150,7 @@ class MainActivity : AppCompatActivity() {
             fileCopyProgressDialog?.dismiss()
             fileCopyProgressDialog = if (it) {
                 transitionToStart()
-                createProgressDialog(
-                    titleId = R.string.copying_file,
-                    messageId = R.string.do_not_close
-                ).apply {
-                    show()
-                }
+                createProgressDialog(R.string.copying_file).apply { show() }
             } else {
                 null
             }
@@ -172,15 +163,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun createProgressDialog(
-        @StringRes titleId: Int,
-        @StringRes messageId: Int = 0
-    ): AlertDialog =
+    private fun createProgressDialog(@StringRes titleId: Int): AlertDialog =
         AlertDialog.Builder(this)
             .setTitle(titleId)
-            .also {
-                if (messageId != 0) it.setMessage(messageId)
-            }
             .setCancelable(false)
             .create().also {
                 it.setView(
