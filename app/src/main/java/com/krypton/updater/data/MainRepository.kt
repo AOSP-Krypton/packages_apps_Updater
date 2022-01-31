@@ -99,10 +99,9 @@ class MainRepository @Inject constructor(
     /**
      * Check for updates in github.
      *
-     * @return a [Pair], first value representing whether fetch was success or not,
-     *    second representing any exception thrown while fetching.
+     * @return a [Result] representing whether fetch was success or not.
      */
-    suspend fun fetchUpdateInfo(): Pair<Boolean, Throwable?> {
+    suspend fun fetchUpdateInfo(): Result<Unit> {
         deleteSavedUpdateInfo()
         val result = withContext(Dispatchers.IO) {
             updateChecker.checkForUpdate()
@@ -115,9 +114,9 @@ class MainRepository @Inject constructor(
         return if (result.isSuccess) {
             result.getOrThrow()?.let { saveUpdateInfo(it) }
             setRecheckAlarm()
-            Pair(true, null)
+            Result.success(Unit)
         } else {
-            Pair(false, result.exceptionOrNull())
+            Result.failure(result.exceptionOrNull()!!)
         }
     }
 

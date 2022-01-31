@@ -79,7 +79,7 @@ class PeriodicUpdateCheckerService : Service() {
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         updateCheckerJob = serviceScope.launch {
             val result = mainRepository.fetchUpdateInfo()
-            if (!result.first)
+            if (result.isFailure)
                 notifyUser(
                     R.string.update_check_failed,
                     R.string.update_check_failed_description
