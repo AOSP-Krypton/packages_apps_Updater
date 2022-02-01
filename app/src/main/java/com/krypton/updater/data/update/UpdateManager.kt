@@ -215,6 +215,8 @@ class UpdateManager @Inject constructor(
     }
 
     fun restoreUpdateFinishedState() {
+        isUpdating = true
+        updateScheduled = true
         _updateState.value = UpdateState.finished()
         _progressFlow.value = 100
     }
