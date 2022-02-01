@@ -63,7 +63,7 @@ class UpdateFragment : Fragment(R.layout.fragment_update) {
         super.onViewCreated(view, savedInstanceState)
         binding = FragmentUpdateBinding.bind(view).also {
             it.lifecycleOwner = viewLifecycleOwner
-            it.mainViewModel = mainViewModel
+            it.updateViewModel = updateViewModel
         }
     }
 
@@ -80,7 +80,7 @@ class UpdateFragment : Fragment(R.layout.fragment_update) {
             logD("updateState = $it")
             updateLeftActionButton(it)
             updateRightActionButton()
-            binding.updateProgressGroup.visibility = if (it.idle) View.GONE else View.VISIBLE
+            binding.updateProgressGroup.visibility = if (it.idle || it.finished) View.GONE else View.VISIBLE
             updateInstallationText(it)
         }
         updateViewModel.updateFailed.observe(this) { message ->
@@ -167,17 +167,14 @@ class UpdateFragment : Fragment(R.layout.fragment_update) {
             state.initializing -> binding.updateProgressText.setText(R.string.initializing)
             state.updating -> binding.updateProgressText.setText(R.string.installing_update)
             state.paused -> binding.updateProgressText.setText(R.string.installation_paused)
-            state.finished -> binding.updateProgressText.setText(R.string.installation_finished)
             state.failed -> binding.updateProgressText.setText(R.string.installation_failed)
         }
     }
 
     private fun updateInstallationProgress(progress: Int) {
         updateViewModel.updateState.value?.let {
-            if (it.updating || it.finished) {
-                binding.updateProgress.progress = progress
-            }
             if (it.updating) {
+                binding.updateProgress.progress = progress
                 binding.updateProgressText.text =
                     getString(R.string.installing_update_format, progress)
             }
