@@ -36,18 +36,8 @@
             android:text="@{updateViewModel.updateState.finished ? @string/installation_finished : @string/install_update}"
             android:textSize="24sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/subtitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:singleLine="true"
-            android:ellipsize="middle"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/title"
-            tools:text="KOSP-2.3-guacamole-user-OFFICIAL-GAPPS-20220127-1159.zip" />
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Install update" />
 
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/start_guide_line"
@@ -71,7 +61,7 @@
             app:layout_constraintBottom_toTopOf="@id/update_progress"
             app:layout_constraintEnd_toEndOf="@id/end_guide_line"
             app:layout_constraintStart_toStartOf="@id/start_guide_line"
-            app:layout_constraintTop_toBottomOf="@id/subtitle"
+            app:layout_constraintTop_toBottomOf="@id/title"
             app:layout_constraintVertical_chainStyle="packed"
             tools:text="Installing - 100%" />
 
