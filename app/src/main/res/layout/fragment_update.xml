@@ -21,10 +21,6 @@
     <data>
 
         <variable
-            name="mainViewModel"
-            type="com.krypton.updater.viewmodel.MainViewModel" />
-
-        <variable
             name="updateViewModel"
             type="com.krypton.updater.viewmodel.UpdateViewModel" />
     </data>
@@ -37,7 +33,7 @@
             android:id="@+id/title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/install_update"
+            android:text="@{updateViewModel.updateState.finished ? @string/installation_finished : @string/install_update}"
             android:textSize="24sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
