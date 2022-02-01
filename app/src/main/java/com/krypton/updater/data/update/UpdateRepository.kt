@@ -118,6 +118,7 @@ class UpdateRepository @Inject constructor(
      */
     suspend fun copyOTAFile(uri: Uri) {
         updateManager.reset()
+        clearSavedUpdateState()
         _readyForUpdate.value = false
         copyingFile.send(true)
         val result = withContext(Dispatchers.IO) {
@@ -135,7 +136,8 @@ class UpdateRepository @Inject constructor(
 
     fun prepareForReboot(): Job =
         applicationScope.launch {
-            otaFileManager.wipe()
+            resetState()
+            clearSavedUpdateState()
         }
 
     fun resetState() {
@@ -157,6 +159,16 @@ class UpdateRepository @Inject constructor(
             savedStateDataStore.updateData {
                 it.toBuilder()
                     .setUpdateFinished(true)
+                    .build()
+            }
+        }
+    }
+
+    private fun clearSavedUpdateState() {
+        applicationScope.launch {
+            savedStateDataStore.updateData {
+                it.toBuilder()
+                    .clearUpdateFinished()
                     .build()
             }
         }
