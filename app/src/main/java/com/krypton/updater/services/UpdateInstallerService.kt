@@ -71,10 +71,11 @@ class UpdateInstallerService : Service() {
 
     private val broadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            logD("onReceive, action = ${intent?.action}")
-            if (intent?.action == ACTION_CANCEL_UPDATE) {
+            val action = intent?.action ?: return
+            logD("onReceive, action = $action")
+            if (action == ACTION_CANCEL_UPDATE) {
                 cancelUpdate()
-            } else if (intent?.action == ACTION_REBOOT) {
+            } else if (action == ACTION_REBOOT) {
                 reboot()
             }
         }
@@ -131,7 +132,7 @@ class UpdateInstallerService : Service() {
         )
         rebootIntent = PendingIntent.getBroadcast(
             this,
-            CANCEL_REQUEST_CODE,
+            REBOOT_REQUEST_CODE,
             Intent(ACTION_REBOOT),
             PendingIntent.FLAG_IMMUTABLE
         )
@@ -140,27 +141,23 @@ class UpdateInstallerService : Service() {
     private fun listenForEvents() {
         serviceScope.launch {
             updateRepository.updateState.collect {
+                shouldShowProgressNotification = it.initializing || it.updating
                 when {
                     it.initializing -> {
-                        shouldShowProgressNotification = true
                         updateProgressNotification(0, true)
                     }
                     it.updating -> {
-                        shouldShowProgressNotification = true
                         updateProgressNotification(0)
                     }
                     it.paused -> {
-                        shouldShowProgressNotification = false
                         releaseAndStopFg()
                         showUpdatePausedNotification()
                     }
                     it.failed -> {
-                        shouldShowProgressNotification = false
                         releaseAndStopFg()
                         showUpdateFailedNotification(it.exception?.message)
                     }
                     it.finished -> {
-                        shouldShowProgressNotification = false
                         releaseAndStopFg()
                         showUpdateFinishedNotification()
                     }
@@ -222,12 +219,13 @@ class UpdateInstallerService : Service() {
     private fun listenForProgressUpdates() {
         serviceScope.launch {
             updateRepository.updateProgress.collect {
-                if (shouldShowProgressNotification) updateProgressNotification(it)
+                updateProgressNotification(it)
             }
         }
     }
 
     private fun updateProgressNotification(progress: Int, indeterminate: Boolean = false) {
+        if (!shouldShowProgressNotification) return
         notificationManager.notify(
             UPDATE_INSTALLATION_NOTIFICATION_ID,
             NotificationCompat.Builder(this, UPDATE_INSTALLATION_CHANNEL_ID)
@@ -366,10 +364,11 @@ class UpdateInstallerService : Service() {
 
         private const val ACTIVITY_REQUEST_CODE = 3001
         private const val CANCEL_REQUEST_CODE = 30001
+        private const val REBOOT_REQUEST_CODE = 40001
 
         const val ACTION_START_UPDATE = "com.krypton.updater.ACTION_START_UPDATE"
         private const val ACTION_CANCEL_UPDATE = "com.krypton.updater.ACTION_CANCEL_UPDATE"
-        private const val ACTION_REBOOT = "com.krypton.updater.ACTION_CANCEL_UPDATE"
+        private const val ACTION_REBOOT = "com.krypton.updater.ACTION_REBOOT"
 
         private fun logD(msg: String) {
             if (DEBUG) Log.d(TAG, msg)
