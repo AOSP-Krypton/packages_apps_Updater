@@ -81,7 +81,7 @@ class UpdateRepository @Inject constructor(
                     downloadManager.downloadFile?.let { file ->
                         copyOTAFile(Uri.fromFile(file))
                     }
-                } else if (it.idle) {
+                } else if (it.idle && updateState.value.idle) {
                     _readyForUpdate.value = false
                 }
             }
@@ -117,6 +117,7 @@ class UpdateRepository @Inject constructor(
      * @param uri the [Uri] of the update zip file.
      */
     suspend fun copyOTAFile(uri: Uri) {
+        updateManager.reset()
         _readyForUpdate.value = false
         copyingFile.send(true)
         val result = withContext(Dispatchers.IO) {

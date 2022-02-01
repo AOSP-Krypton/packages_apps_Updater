@@ -4,7 +4,6 @@ import android.net.Uri
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 
@@ -48,8 +47,9 @@ class UpdateViewModel @Inject constructor(
     val readyForUpdate: LiveData<Boolean>
         get() = _readyForUpdate
 
+    private val _isUpdating = MutableLiveData<Boolean>()
     val isUpdating: LiveData<Boolean>
-        get() = Transformations.map(_updateState) { !it.idle }
+        get() = _isUpdating
 
     init {
         viewModelScope.launch {
@@ -65,6 +65,7 @@ class UpdateViewModel @Inject constructor(
         viewModelScope.launch {
             updateRepository.updateState.collect {
                 _updateState.value = it
+                _isUpdating.value = !it.idle
                 if (it.failed) _updateFailed.value = Event(it.exception?.message)
             }
         }
