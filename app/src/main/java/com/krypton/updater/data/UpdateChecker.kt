@@ -53,11 +53,11 @@ class UpdateChecker @Inject constructor(
                 fileSize = otaJsonContent.fileSize,
                 sha512 = otaJsonContent.sha512,
             )
-            updateBuildDate = buildInfo.date * 1000 /* convert to millis */
+            updateBuildDate = buildInfo.date
             val newUpdate = isNewUpdate(buildInfo)
             Result.success(
                 UpdateInfo(
-                    buildInfo = buildInfo.copy(date = updateBuildDate),
+                    buildInfo = buildInfo,
                     changelog = if (newUpdate) getChangelog() else null,
                     type = if (newUpdate) UpdateInfo.Type.NEW_UPDATE else UpdateInfo.Type.NO_UPDATE
                 )
@@ -118,6 +118,6 @@ class UpdateChecker @Inject constructor(
             return firstCalendar.compareTo(secondCalendar)
         }
 
-        fun isNewUpdate(buildInfo: BuildInfo): Boolean = (buildInfo.date * 1000) > SYSTEM_BUILD_DATE
+        fun isNewUpdate(buildInfo: BuildInfo): Boolean = (buildInfo.date) > SYSTEM_BUILD_DATE
     }
 }
