@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2021-2022 AOSP-Krypton Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">KOSP 更新</string>
+
+    <!-- Update checker -->
+    <string name="new_system_update">检测到新的系统更新</string>
+    <string name="new_system_update_description">点击这里以下载并安装更新</string>
+    <string name="update_check_failed">自动检测更新失败</string>
+    <string name="update_check_failed_description">请手动检查更新</string>
+
+    <!-- Download -->
+    <string name="downloading">下载中</string>
+    <string name="downloading_update">下载更新</string>
+    <string name="downloading_failed">下载失败</string>
+    <string name="downloading_finished">下载完成</string>
+
+    <!-- Main activity -->
+    <string name="updater_logo_description">Updater logo</string>
+    <string name="system_build_info_format" translatable="false">
+        <xliff:g example="12-11-2021" id="date">%1$s</xliff:g>\u0020\u0020|\u0020\u0020KOSP v<xliff:g example="2.3" id="version">%2$s</xliff:g>
+    </string>
+    <string name="check_for_updates">检查更新</string>
+    <string name="checking_for_update">正在检查更新...</string>
+    <string name="last_checked_time_format">
+        最后检查时间: <xliff:g example="11:02 AM" id="time">%1$s</xliff:g>
+    </string>
+    <string name="up_to_date">你的设备已是最新</string>
+    <string name="come_back_later">稍后再来吧</string>
+    <string name="new_update_available">检测到新版本</string>
+    <string name="new_update_description_format">
+        v<xliff:g example="2.3" id="version">%1$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="12-11-2021" id="date">%2$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="1.3GB" id="size">%3$s</xliff:g>
+    </string>
+    <string name="download">下载</string>
+    <string name="update">更新</string>
+    <string name="download_text_format">
+        下载中 - <xliff:g example="100" id="percent">%1$d%%</xliff:g>
+    </string>
+    <string name="waiting">等待中</string>
+    <string name="restoring_state">恢复状态</string>
+    <string name="exporting_file">导出文件到内部存储</string>
+    <string name="exporting_failed">导出失败: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+
+    <!-- Changelog -->
+    <string name="changelog">更新日志</string>
+    <string name="changelog_unavailable">更新日志不可用</string>
+
+    <!-- Update -->
+    <string name="low_battery_plug_in">电量低，插入电源以继续</string>
+    <string name="payload_generation_failed">Payload 信息生成失败： <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="metadata_verification_failed">元数据验证失败</string>
+    <string name="not_enough_space">设备储存空间不足啦</string>
+    <string name="applying_payload_failed">应用 payload 失败： <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="installing_update">安装更新中</string>
+    <string name="installation_failed">安装失败</string>
+    <string name="reboot">重启</string>
+    <string name="initializing">初始化中...</string>
+    <string name="installation_finished">安装已完成</string>
+    <string name="installation_paused">安装已暂停</string>
+    <string name="installing_update_format">安装更新中 - <xliff:g example="100" id="percent">%1$d%%</xliff:g></string>
+    <string name="pause">暂停</string>
+    <string name="downgrading_not_allowed">请不要降级哟</string>
+    <string name="rootfs_verification_failed">rootfs 验证失败，需要重试呢</string>
+    <string name="update_transfer_error">更新传输失败呢</string>
+    <string name="resume">继续</string>
+    <string name="local_upgrade">本地升级</string>
+    <string name="popup_menu">弹出菜单</string>
+    <string name="copying_file">复制文件中</string>
+    <string name="copying_failed">复制失败: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="install_update">安装更新</string>
+</resources>
