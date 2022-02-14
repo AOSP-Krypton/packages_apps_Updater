@@ -35,20 +35,16 @@ import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Singleton
 class MainRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     appDatabase: AppDatabase,
-    private val applicationScope: CoroutineScope,
     private val updateChecker: UpdateChecker,
 ) {
 
@@ -168,14 +164,6 @@ class MainRepository @Inject constructor(
             alarmIntent
         )
     }
-
-    fun prepareForReboot(): Job =
-        applicationScope.launch {
-            savedStateDatastore.updateData {
-                it.toBuilder().clearLastCheckedTime().build()
-            }
-            deleteSavedUpdateInfo()
-        }
 
     companion object {
         private const val REQUEST_CODE_CHECK_UPDATE = 2001
