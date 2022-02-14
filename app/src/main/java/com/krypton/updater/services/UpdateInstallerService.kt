@@ -286,14 +286,7 @@ class UpdateInstallerService : Service() {
 
     fun reboot() {
         logD("rebooting")
-        serviceScope.launch {
-            joinAll(
-                updateRepository.prepareForReboot(),
-                downloadRepository.prepareForReboot(),
-                mainRepository.prepareForReboot(),
-            )
-            powerManager.reboot(null)
-        }
+        powerManager.reboot(null)
     }
 
     private fun releaseWakeLock() {

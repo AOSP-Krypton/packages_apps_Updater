@@ -34,7 +34,6 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
@@ -181,16 +180,6 @@ class DownloadRepository @Inject constructor(
     suspend fun resetState() {
         downloadManager.reset()
     }
-
-    fun prepareForReboot(): Job =
-        applicationScope.launch {
-            savedStateDatastore.updateData {
-                it.toBuilder()
-                    .clearDownloadFinished()
-                    .build()
-            }
-            downloadManager.cleanCache()
-        }
 
     companion object {
         private const val TAG = "DownloadRepository"
