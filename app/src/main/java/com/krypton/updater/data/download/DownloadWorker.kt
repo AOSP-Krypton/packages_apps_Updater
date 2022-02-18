@@ -77,16 +77,12 @@ class DownloadWorker(
         }
         logD("resume = $resume")
         val connectionResult = withContext(Dispatchers.IO) {
-            openConnection()
+            openConnection(if (resume) "$downloadedBytes-" else null)
         }
         if (connectionResult.isFailure) {
             return DownloadResult.failure(connectionResult.exceptionOrNull())
         }
         val connection = connectionResult.getOrThrow()
-        if (resume) {
-            connection.setRequestProperty("Range", "bytes=$downloadedBytes-")
-        }
-        connection.responseCode
         logD("connection opened")
         val downloadResult = withContext(Dispatchers.IO) {
             runCatching {
@@ -126,7 +122,7 @@ class DownloadWorker(
         }
     }
 
-    private suspend fun openConnection(): Result<HttpsURLConnection> {
+    private suspend fun openConnection(range: String?): Result<HttpsURLConnection> {
         val connection: HttpsURLConnection? = withTimeoutOrNull(CONNECTION_RETRY_TIMEOUT) {
             while (isActive) {
                 val connectionResult = runCatching {
@@ -134,12 +130,15 @@ class DownloadWorker(
                 }
                 if (connectionResult.isSuccess) {
                     val conn = connectionResult.getOrThrow()
+                    if (range != null) {
+                        conn.setRequestProperty("Range", "bytes=$range")
+                    }
                     if (conn.responseCode == 200) {
                         return@withTimeoutOrNull conn
                     }
                 }
             }
-            return@withTimeoutOrNull null
+            null
         }
         return connection?.let { Result.success(it) }
             ?: Result.failure(Throwable("Failed to establish a connection with the url"))
