@@ -26,7 +26,8 @@ import java.util.zip.ZipFile
  */
 object PayloadInfoFactory {
     private const val TAG = "PayloadInfoFactory"
-    private const val DEBUG = false
+    private val DEBUG: Boolean
+        get() = Log.isLoggable(TAG, Log.DEBUG)
 
     // Metadata file path in the zip file
     private const val METADATA_FILE = "META-INF/com/android/metadata"

@@ -297,7 +297,8 @@ class MainActivity : AppCompatActivity() {
         private const val UPDATE_FRAGMENT_TAG = "update_fragment"
 
         private const val TAG = "MainActivity"
-        private const val DEBUG = false
+        private val DEBUG: Boolean
+            get() = Log.isLoggable(TAG, Log.DEBUG)
 
         private fun logD(msg: String) {
             if (DEBUG) Log.d(TAG, msg)

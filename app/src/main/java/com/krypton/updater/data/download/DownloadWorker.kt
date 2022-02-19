@@ -18,20 +18,23 @@ package com.krypton.updater.data.download
 
 import android.util.DataUnit
 import android.util.Log
+
 import com.krypton.updater.data.HashVerifier
-import kotlinx.coroutines.*
-
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.net.URL
-import java.security.MessageDigest
-
-import javax.net.ssl.HttpsURLConnection
 
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+
+import java.io.File
+import java.io.FileOutputStream
+import java.net.URL
 import java.util.concurrent.TimeUnit
+
+import javax.net.ssl.HttpsURLConnection
 
 /**
  * A worker whose job is to download the file from the given url.
@@ -69,7 +72,7 @@ class DownloadWorker(
                     channel.send(downloadedBytes)
                     return DownloadResult.success()
                 }
-                logD("file is corrupt, deleting")
+                Log.w(TAG,"file is corrupt, deleting")
                 downloadFile.delete()
                 downloadedBytes = 0
                 resume = false
@@ -146,7 +149,8 @@ class DownloadWorker(
 
     companion object {
         private const val TAG = "DownloadWorker"
-        private const val DEBUG = false
+        private val DEBUG: Boolean
+            get() = Log.isLoggable(TAG, Log.DEBUG)
 
         private val DOWNLOAD_BUFFER_SIZE = DataUnit.KIBIBYTES.toBytes(256).toInt()
 
