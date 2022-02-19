@@ -183,7 +183,8 @@ class DownloadRepository @Inject constructor(
 
     companion object {
         private const val TAG = "DownloadRepository"
-        private const val DEBUG = false
+        private val DEBUG: Boolean
+            get() = Log.isLoggable(TAG, Log.DEBUG)
 
         private fun logD(msg: String) {
             if (DEBUG) Log.d(TAG, msg)

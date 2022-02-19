@@ -16,6 +16,8 @@
 
 package com.krypton.updater.data
 
+import android.util.Log
+
 import com.krypton.updater.data.retrofit.Content
 import com.krypton.updater.data.retrofit.OTAJsonContent
 import com.krypton.updater.data.retrofit.GithubApiService
@@ -108,7 +110,9 @@ class GithubApiHelper @Inject constructor() {
         }
 
     companion object {
-        private const val DEBUG = false
+        private const val TAG = "GithubApiHelper"
+        private val DEBUG: Boolean
+            get() = Log.isLoggable(TAG, Log.DEBUG)
 
         // Git branch to fetch contents from
         private const val GIT_BRANCH = "A12"

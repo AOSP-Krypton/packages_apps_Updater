@@ -33,19 +33,20 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 
 import com.krypton.updater.R
-import com.krypton.updater.data.MainRepository
-import com.krypton.updater.data.download.DownloadRepository
 import com.krypton.updater.data.update.UpdateRepository
 import com.krypton.updater.ui.MainActivity
 
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.*
 
 import java.util.concurrent.TimeUnit
 
 import javax.inject.Inject
 
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class UpdateInstallerService : Service() {
@@ -56,12 +57,6 @@ class UpdateInstallerService : Service() {
 
     @Inject
     lateinit var updateRepository: UpdateRepository
-
-    @Inject
-    lateinit var downloadRepository: DownloadRepository
-
-    @Inject
-    lateinit var mainRepository: MainRepository
 
     private var binder: IBinder? = null
 
@@ -346,7 +341,8 @@ class UpdateInstallerService : Service() {
 
     companion object {
         private const val TAG = "UpdateInstallerService"
-        private const val DEBUG = false
+        private val DEBUG: Boolean
+            get() = Log.isLoggable(TAG, Log.DEBUG)
 
         private const val WL_TAG = "$TAG:WakeLock"
         private val WAKELOCK_TIMEOUT = TimeUnit.MINUTES.toMillis(30)

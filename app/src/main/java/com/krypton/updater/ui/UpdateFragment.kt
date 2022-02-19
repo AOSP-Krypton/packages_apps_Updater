@@ -33,14 +33,12 @@ import com.krypton.updater.databinding.FragmentUpdateBinding
 import com.krypton.updater.R
 import com.krypton.updater.data.update.UpdateState
 import com.krypton.updater.services.UpdateInstallerService
-import com.krypton.updater.viewmodel.MainViewModel
 import com.krypton.updater.viewmodel.UpdateViewModel
 
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class UpdateFragment : Fragment(R.layout.fragment_update) {
-    private val mainViewModel: MainViewModel by activityViewModels()
     private val updateViewModel: UpdateViewModel by activityViewModels()
 
     private lateinit var binding: FragmentUpdateBinding
@@ -183,7 +181,8 @@ class UpdateFragment : Fragment(R.layout.fragment_update) {
 
     companion object {
         private const val TAG = "UpdateFragment"
-        private const val DEBUG = false
+        private val DEBUG: Boolean
+            get() = Log.isLoggable(TAG, Log.DEBUG)
 
         private fun logD(msg: String) {
             if (DEBUG) Log.d(TAG, msg)

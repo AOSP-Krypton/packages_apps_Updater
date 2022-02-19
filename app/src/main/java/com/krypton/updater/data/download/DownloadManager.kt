@@ -96,9 +96,9 @@ class DownloadManager @Inject constructor(
         }
         if (jobScheduler.schedule(jobInfo!!) == JobScheduler.RESULT_SUCCESS) {
             _downloadState.value = DownloadState.waiting()
-            logD("download scheduled successfully")
+            logD("Download scheduled successfully")
         } else {
-            logD("failed to schedule download")
+            Log.e(TAG,"Failed to schedule download")
         }
     }
 
@@ -211,7 +211,7 @@ class DownloadManager @Inject constructor(
         val file = File(cacheDir, buildInfo.fileName)
         if (file.isFile) {
             if (file.length() != buildInfo.fileSize) {
-                logD("file size does not match, deleting")
+                Log.w(TAG,"file size does not match, deleting")
                 file.delete()
                 return
             }
@@ -219,7 +219,7 @@ class DownloadManager @Inject constructor(
                 HashVerifier.verifyHash(file, buildInfo.sha512)
             }
             if (!hashMatch) {
-                logD("file hash does not match, deleting")
+                Log.w(TAG, "file hash does not match, deleting")
                 file.delete()
                 return
             } else {
@@ -236,7 +236,8 @@ class DownloadManager @Inject constructor(
         private const val JOB_ID = 2568346
 
         private const val TAG = "DownloadManager"
-        private const val DEBUG = false
+        private val DEBUG: Boolean
+            get() = Log.isLoggable(TAG, Log.DEBUG)
 
         private fun logD(msg: String) {
             if (DEBUG) Log.d(TAG, msg)

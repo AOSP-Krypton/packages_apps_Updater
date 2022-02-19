@@ -246,7 +246,8 @@ class UpdateDownloadService : JobService() {
 
     companion object {
         private const val TAG = "UpdateDownloadService"
-        private const val DEBUG = false
+        private val DEBUG: Boolean
+            get() = Log.isLoggable(TAG, Log.DEBUG)
 
         private fun logD(msg: String) {
             if (DEBUG) Log.d(TAG, msg)
