@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2021-2022 AOSP-Krypton Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">Actualizador</string>
+
+    <!-- Update checker -->
+    <string name="new_system_update">Se ha detectado una nueva actualización del sistema</string>
+    <string name="new_system_update_description">Haga clic aquí para descargar e instalar la actualización</string>
+    <string name="update_check_failed">Fallo en la comprobación de la actualización automática</string>
+    <string name="update_check_failed_description">Compruebe las actualizaciones manualmente</string>
+
+    <!-- Download -->
+    <string name="downloading">Descargando</string>
+    <string name="downloading_update">Descargando la actualización</string>
+    <string name="downloading_failed">Descarga fallida</string>
+    <string name="downloading_finished">Descarga terminada</string>
+
+    <!-- Main activity -->
+    <string name="updater_logo_description">Logotipo del actualizador</string>
+    <string name="system_build_info_format" translatable="false">
+        <xliff:g example="12-11-2021" id="date">%1$s</xliff:g>\u0020\u0020|\u0020\u0020KOSP v<xliff:g example="2.3" id="version">%2$s</xliff:g>
+    </string>
+    <string name="check_for_updates">Comprobar las actualizaciones</string>
+    <string name="checking_for_update">Comprobando las actualizaciones...</string>
+    <string name="last_checked_time_format">
+        Última comprobación en <xliff:g example="11:02 AM" id="time">%1$s</xliff:g>
+    </string>
+    <string name="up_to_date">Su dispositivo está actualizado</string>
+    <string name="come_back_later">Vuelve más tarde...</string>
+    <string name="new_update_available">Nueva actualización disponible</string>
+    <string name="new_update_description_format">
+        v<xliff:g example="2.3" id="version">%1$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="12-11-2021" id="date">%2$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="1.3GB" id="size">%3$s</xliff:g>
+    </string>
+    <string name="download">Descargar</string>
+    <string name="update">Actualizar</string>
+    <string name="download_text_format">
+        Descargando - <xliff:g example="100" id="percent">%1$d%%</xliff:g>
+    </string>
+    <string name="waiting">Esperando</string>
+    <string name="restoring_state">Restaurando el estado</string>
+    <string name="exporting_file">Exportando archivos a la memoria interna</string>
+    <string name="exporting_failed">Fallo en la exportación del archivo: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+
+    <!-- Changelog -->
+    <string name="changelog">Registro de cambios</string>
+    <string name="changelog_unavailable">Registro de cambios no disponible</string>
+
+    <!-- Update -->
+    <string name="low_battery_plug_in">Batería baja, enchufe para continuar</string>
+    <string name="payload_generation_failed">Error en la generación de información del payload: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="metadata_verification_failed">Fallo en la verificación de los metadatos</string>
+    <string name="not_enough_space">No hay suficiente espacio en el dispositivo</string>
+    <string name="applying_payload_failed">Fallo en la aplicación del payload: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="installing_update">Instalando la actualización</string>
+    <string name="installation_failed">Instalación fallida</string>
+    <string name="reboot">Reiniciar</string>
+    <string name="initializing">Iniciando...</string>
+    <string name="installation_finished">Instalación terminada</string>
+    <string name="installation_paused">Instalación en pausa</string>
+    <string name="installing_update_format">Instalando la actualización - <xliff:g example="100" id="percent">%1$d%%</xliff:g></string>
+    <string name="pause">Pausar</string>
+    <string name="downgrading_not_allowed">No se permite instalar una versión inferior</string>
+    <string name="rootfs_verification_failed">La verificación de Rootfs ha fallado, inténtelo de nuevo</string>
+    <string name="update_transfer_error">Fallo en la transferencia de la actualización</string>
+    <string name="resume">Continuar</string>
+    <string name="local_upgrade">Actualización local</string>
+    <string name="popup_menu">Menú emergente</string>
+    <string name="copying_file">Copiando el archivo</string>
+    <string name="copying_failed">Fallo en la copia: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="install_update">Instalar actualización</string>
+</resources>
