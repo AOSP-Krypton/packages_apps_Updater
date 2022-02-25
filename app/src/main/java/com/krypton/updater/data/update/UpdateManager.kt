@@ -56,7 +56,8 @@ class UpdateManager @Inject constructor(
                     isUpdating = true
                     _updateState.value = UpdateState.updating()
                 }
-                UpdateStatusConstants.DOWNLOADING -> {
+                UpdateStatusConstants.DOWNLOADING,
+                UpdateStatusConstants.VERIFYING -> {
                     _progressFlow.value = ((percent / 2) * 100).toInt()
                 }
                 UpdateStatusConstants.FINALIZING -> {
