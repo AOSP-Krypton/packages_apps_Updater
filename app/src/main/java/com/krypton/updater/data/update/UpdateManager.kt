@@ -77,22 +77,22 @@ class UpdateManager @Inject constructor(
                 ErrorCodeConstants.SUCCESS -> _updateState.value = UpdateState.finished()
                 ErrorCodeConstants.DOWNLOAD_INVALID_METADATA_MAGIC_STRING,
                 ErrorCodeConstants.DOWNLOAD_METADATA_SIGNATURE_MISMATCH ->
-                    _updateState.value =
-                        UpdateState.failure(Throwable(context.getString(R.string.metadata_verification_failed)))
+                    reportFailure(context.getString(R.string.metadata_verification_failed))
                 ErrorCodeConstants.NOT_ENOUGH_SPACE ->
-                    _updateState.value =
-                        UpdateState.failure(Throwable(context.getString(R.string.not_enough_space)))
+                    reportFailure(context.getString(R.string.not_enough_space))
                 ErrorCodeConstants.PAYLOAD_TIMESTAMP_ERROR ->
-                    _updateState.value =
-                        UpdateState.failure(Throwable(context.getString(R.string.downgrading_not_allowed)))
+                    reportFailure(context.getString(R.string.downgrading_not_allowed))
                 ErrorCodeConstants.NEW_ROOTFS_VERIFICATION_ERROR ->
-                    _updateState.value =
-                        UpdateState.failure(Throwable(context.getString(R.string.rootfs_verification_failed)))
+                    reportFailure(context.getString(R.string.rootfs_verification_failed))
                 ErrorCodeConstants.DOWNLOAD_TRANSFER_ERROR ->
-                    _updateState.value =
-                        UpdateState.failure(Throwable(context.getString(R.string.update_transfer_error)))
+                    reportFailure(context.getString(R.string.update_transfer_error))
                 ErrorCodeConstants.USER_CANCELLED -> {}
-                else -> Log.e(TAG, "onPayloadApplicationComplete: unknown errorCode $errorCode")
+                else -> reportFailure(
+                    context.getString(
+                        R.string.update_installation_failed_with_code,
+                        errorCode
+                    )
+                )
             }
         }
     }
@@ -124,6 +124,10 @@ class UpdateManager @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun reportFailure(msg: String) {
+        _updateState.value = UpdateState.failure(Throwable(msg))
     }
 
     fun start() {
