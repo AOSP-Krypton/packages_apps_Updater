@@ -56,12 +56,17 @@ class UpdateManager @Inject constructor(
                     isUpdating = true
                     _updateState.value = UpdateState.updating()
                 }
-                UpdateStatusConstants.DOWNLOADING,
-                UpdateStatusConstants.VERIFYING -> {
-                    _progressFlow.value = ((percent / 2) * 100).toInt()
+                // Step 1
+                UpdateStatusConstants.DOWNLOADING -> {
+                    _progressFlow.value = ((percent / 3) * 100).toInt()
                 }
+                // Step 2
+                UpdateStatusConstants.VERIFYING -> {
+                    _progressFlow.value = ((100 / 3) + (percent / 3) * 100).toInt()
+                }
+                // Step 3
                 UpdateStatusConstants.FINALIZING -> {
-                    _progressFlow.value = 50 + ((percent / 2) * 100).toInt()
+                    _progressFlow.value = ((200 / 3) + (percent / 3) * 100).toInt()
                 }
                 UpdateStatusConstants.UPDATED_NEED_REBOOT -> {
                     _progressFlow.value = 100
