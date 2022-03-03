@@ -43,45 +43,51 @@ class UpdateChecker @Inject constructor(
      */
     fun checkForUpdate(): Result<UpdateInfo?> {
         val result = githubApiHelper.getBuildInfo(DeviceInfo.getDevice())
-        return if (result.isSuccess) {
-            val otaJsonContent = result.getOrNull() ?: return Result.success(null)
-            val buildInfo = BuildInfo(
-                version = otaJsonContent.version,
-                date = otaJsonContent.date,
-                url = otaJsonContent.url,
-                fileName = otaJsonContent.fileName,
-                fileSize = otaJsonContent.fileSize,
-                sha512 = otaJsonContent.sha512,
-            )
-            updateBuildDate = buildInfo.date
-            val newUpdate = isNewUpdate(buildInfo)
-            Result.success(
-                UpdateInfo(
-                    buildInfo = buildInfo,
-                    changelog = if (newUpdate) getChangelog() else null,
-                    type = if (newUpdate) UpdateInfo.Type.NEW_UPDATE else UpdateInfo.Type.NO_UPDATE
-                )
-            )
-        } else {
-            Result.failure(result.exceptionOrNull()!!)
+        if (result.isFailure) {
+            return Result.failure(result.exceptionOrNull()!!)
         }
+        val otaJsonContent = result.getOrNull() ?: return Result.success(null)
+        val buildInfo = BuildInfo(
+            version = otaJsonContent.version,
+            date = otaJsonContent.date,
+            url = otaJsonContent.url,
+            fileName = otaJsonContent.fileName,
+            fileSize = otaJsonContent.fileSize,
+            sha512 = otaJsonContent.sha512,
+        )
+        updateBuildDate = buildInfo.date
+        val newUpdate = isNewUpdate(buildInfo)
+        return Result.success(
+            UpdateInfo(
+                buildInfo = buildInfo,
+                changelog = if (newUpdate) getChangelog() else null,
+                type = if (newUpdate) UpdateInfo.Type.NEW_UPDATE else UpdateInfo.Type.NO_UPDATE
+            )
+        )
     }
 
     private fun getChangelog(): Map<Long, String?>? {
         val result = githubApiHelper.getChangelogs(DeviceInfo.getDevice())
-        if (result.isSuccess) {
-            val changelogMap = result.getOrNull()?.takeIf { it.isNotEmpty() } ?: return null
-            val filteredMap = mutableMapOf<Long, String?>()
-            changelogMap.forEach { (name, content) ->
-                val date = getDateFromChangelogFileName(name) ?: return@forEach
-                if (compareTillDay(date, SYSTEM_BUILD_DATE) < 0 /* Changelog is older than current build */
-                        || compareTillDay(date, updateBuildDate) > 0 /* Changelog is newer than OTA (wtf?) */) {
-                    return@forEach
-                }
-                filteredMap[date.time] = content
+        if (result.isFailure) {
+            return null
+        }
+        val changelogMap = result.getOrNull()?.takeIf { it.isNotEmpty() } ?: return null
+        val filteredMap = mutableMapOf<Long, String?>()
+        changelogMap.forEach { (name, content) ->
+            val date = getDateFromChangelogFileName(name) ?: return@forEach
+            if (compareTillDay(
+                    date,
+                    SYSTEM_BUILD_DATE
+                ) < 0 /* Changelog is older than current build */
+                || compareTillDay(
+                    date,
+                    updateBuildDate
+                ) > 0 /* Changelog is newer than OTA (wtf?) */) {
+                return@forEach
             }
-            return filteredMap.toMap()
-        } else return null
+            filteredMap[date.time] = content
+        }
+        return filteredMap.toMap()
     }
 
     companion object {
@@ -91,6 +97,7 @@ class UpdateChecker @Inject constructor(
 
         // Changelog files are of the format changelog_2021_12_30
         private const val CHANGELOG_FILE_NAME_PREFIX = "changelog_"
+
         @SuppressLint("SimpleDateFormat")
         private val CHANGELOG_FILE_DATE_FORMAT = SimpleDateFormat("yyyy_MM_dd")
 

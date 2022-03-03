@@ -63,7 +63,7 @@ class MainRepository @Inject constructor(
         get() = savedStateDatastore.data.map { Date(it.lastCheckedTime) }
 
     fun getUpdateInfo(): Flow<UpdateInfo> {
-        return updateInfoDao.getBuildInfo(DeviceInfo.getBuildDate()).combine(
+        return updateInfoDao.getBuildInfo().combine(
             updateInfoDao.getChangelogs()
         ) { buildInfoEntity, changelogs ->
             val buildInfo = buildInfoEntity?.let {
@@ -77,15 +77,15 @@ class MainRepository @Inject constructor(
                 )
             }
             UpdateInfo(
-                buildInfo = buildInfo,
+                buildInfo,
                 changelogs,
-                if (buildInfo == null) {
+                type = if (buildInfo == null) {
                     UpdateInfo.Type.UNKNOWN
                 } else {
                     if (UpdateChecker.isNewUpdate(buildInfo)) {
                         UpdateInfo.Type.NEW_UPDATE
                     } else {
-                        UpdateInfo.Type.UNKNOWN
+                        UpdateInfo.Type.NO_UPDATE
                     }
                 }
             )

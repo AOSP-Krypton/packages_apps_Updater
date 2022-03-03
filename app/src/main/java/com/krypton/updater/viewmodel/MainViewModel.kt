@@ -73,10 +73,6 @@ class MainViewModel @Inject constructor(
     val isCheckingForUpdate: LiveData<Boolean>
         get() = _isCheckingForUpdate
 
-    private val _updateInfoUnavailable = MutableLiveData<Boolean>()
-    val updateInfoUnavailable: LiveData<Boolean>
-        get() = _updateInfoUnavailable
-
     private val _newUpdateAvailable = MutableLiveData<Boolean>()
     val newUpdateAvailable: LiveData<Boolean>
         get() = _newUpdateAvailable
@@ -117,7 +113,6 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             mainRepository.getUpdateInfo().collect {
                 _updateInfo.value = it
-                _updateInfoUnavailable.value = it.type == UpdateInfo.Type.UNKNOWN
                 _newUpdateAvailable.value = it.type == UpdateInfo.Type.NEW_UPDATE
                 _noUpdateAvailable.value = it.type == UpdateInfo.Type.NO_UPDATE
             }
@@ -150,7 +145,8 @@ class MainViewModel @Inject constructor(
             updateRepository.resetState()
             val result = mainRepository.fetchUpdateInfo()
             _isCheckingForUpdate.value = false
-            if (result.isFailure) _updateFailedEvent.value = Event(result.exceptionOrNull()?.message)
+            if (result.isFailure) _updateFailedEvent.value =
+                Event(result.exceptionOrNull()?.message)
         }
     }
 

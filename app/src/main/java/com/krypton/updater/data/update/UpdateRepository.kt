@@ -147,7 +147,8 @@ class UpdateRepository @Inject constructor(
     }
 
     private suspend fun restoreState() {
-        val updateFinished = savedStateDataStore.data.map { it.updateFinished }.firstOrNull() == true
+        val updateFinished =
+            savedStateDataStore.data.map { it.updateFinished }.firstOrNull() == true
         if (updateFinished) {
             updateManager.restoreUpdateFinishedState()
         }
