@@ -198,13 +198,18 @@ class MainActivity : AppCompatActivity() {
         PopupMenu(this, view).apply {
             menuInflater.inflate(R.menu.updater_menu, menu)
             setOnMenuItemClickListener {
-                if (it.itemId == R.id.local_upgrade) {
-                    if (!downloadViewModel.isDownloading) {
-                        localUpgradeFileContract.launch(ZIP_MIME)
+                when (it.itemId) {
+                    R.id.local_upgrade -> {
+                        if (!downloadViewModel.isDownloading) {
+                            localUpgradeFileContract.launch(ZIP_MIME)
+                        }
+                        true
                     }
-                    true
-                } else {
-                    false
+                    R.id.settings -> {
+                        startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
+                        true
+                    }
+                    else -> false
                 }
             }
             show()

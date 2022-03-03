@@ -14,17 +14,15 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item android:id="@+id/local_upgrade"
-        android:title="@string/local_upgrade"
-        android:icon="@drawable/ic_baseline_folder_24"
-        app:showAsAction="ifRoom" />
-
-    <item android:id="@+id/settings"
-        android:title="@string/settings"
-        android:icon="@drawable/ic_baseline_settings_24"
-        app:showAsAction="ifRoom" />
-
-</menu>
+    <SeekBarPreference
+        android:defaultValue="7"
+        android:key="update_check_interval_preference"
+        android:max="30"
+        android:summary="@string/update_check_interval_summary"
+        android:title="@string/update_check_interval_title"
+        app:min="0"
+        app:showSeekBarValue="true" />
+</PreferenceScreen>

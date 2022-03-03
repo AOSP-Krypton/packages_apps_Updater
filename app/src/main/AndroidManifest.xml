@@ -53,6 +53,10 @@
             android:exported="false"
             android:parentActivityName=".ui.MainActivity" />
 
+        <activity android:name=".ui.SettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.MainActivity" />
+
         <receiver
             android:name=".BootCompleteReceiver"
             android:exported="false">
