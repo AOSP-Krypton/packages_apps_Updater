@@ -54,7 +54,7 @@ class UpdateRepository @Inject constructor(
     val updateState: StateFlow<UpdateState>
         get() = updateManager.updateState
 
-    val updateProgress: StateFlow<Int>
+    val updateProgress: StateFlow<Float>
         get() = updateManager.progressFlow
 
     val isUpdating: Boolean
@@ -94,20 +94,28 @@ class UpdateRepository @Inject constructor(
         }
     }
 
-    fun start() {
-        updateManager.start()
+    suspend fun start() {
+        withContext(Dispatchers.Default) {
+            updateManager.start()
+        }
     }
 
-    fun pause() {
-        updateManager.pause()
+    suspend fun pause() {
+        withContext(Dispatchers.Default) {
+            updateManager.pause()
+        }
     }
 
-    fun resume() {
-        updateManager.resume()
+    suspend fun resume() {
+        withContext(Dispatchers.Default) {
+            updateManager.resume()
+        }
     }
 
-    fun cancel() {
-        updateManager.cancel()
+    suspend fun cancel() {
+        withContext(Dispatchers.Default) {
+            updateManager.cancel()
+        }
     }
 
     /**

@@ -78,7 +78,8 @@ class UpdateFragment : Fragment(R.layout.fragment_update) {
             logD("updateState = $it")
             updateLeftActionButton(it)
             updateRightActionButton()
-            binding.updateProgressGroup.visibility = if (it.idle || it.finished) View.GONE else View.VISIBLE
+            binding.updateProgressGroup.visibility =
+                if (it.idle || it.finished) View.GONE else View.VISIBLE
             updateInstallationText(it)
         }
         updateViewModel.updateFailed.observe(this) { message ->
@@ -169,12 +170,12 @@ class UpdateFragment : Fragment(R.layout.fragment_update) {
         }
     }
 
-    private fun updateInstallationProgress(progress: Int) {
+    private fun updateInstallationProgress(progress: Float) {
         updateViewModel.updateState.value?.let {
             if (it.updating) {
-                binding.updateProgress.progress = progress
+                binding.updateProgress.progress = progress.toInt()
                 binding.updateProgressText.text =
-                    getString(R.string.installing_update_format, progress)
+                    getString(R.string.installing_update_format, String.format("%.2f", progress))
             }
         }
     }

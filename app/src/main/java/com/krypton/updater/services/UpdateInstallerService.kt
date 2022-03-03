@@ -137,12 +137,8 @@ class UpdateInstallerService : Service() {
             updateRepository.updateState.collect {
                 shouldShowProgressNotification = it.initializing || it.updating
                 when {
-                    it.initializing -> {
-                        updateProgressNotification(0, true)
-                    }
-                    it.updating -> {
-                        updateProgressNotification(0)
-                    }
+                    it.initializing -> updateProgressNotification(0f, true)
+                    it.updating -> updateProgressNotification(0f)
                     it.paused -> {
                         releaseAndStopFg()
                         showUpdatePausedNotification()
@@ -218,7 +214,7 @@ class UpdateInstallerService : Service() {
         }
     }
 
-    private fun updateProgressNotification(progress: Int, indeterminate: Boolean = false) {
+    private fun updateProgressNotification(progress: Float, indeterminate: Boolean = false) {
         if (!shouldShowProgressNotification) return
         notificationManager.notify(
             UPDATE_INSTALLATION_NOTIFICATION_ID,
@@ -226,8 +222,13 @@ class UpdateInstallerService : Service() {
                 .setContentIntent(activityIntent)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(R.drawable.ic_baseline_system_update_24)
-                .setContentTitle(getString(R.string.installing_update_format, progress))
-                .setProgress(100, progress, indeterminate)
+                .setContentTitle(
+                    getString(
+                        R.string.installing_update_format,
+                        String.format("%.2f", progress)
+                    )
+                )
+                .setProgress(100, progress.toInt(), indeterminate)
                 .setOngoing(true)
                 .setSilent(true)
                 .addAction(
@@ -256,16 +257,22 @@ class UpdateInstallerService : Service() {
         listenForEvents()
         listenForProgressUpdates()
         acquireAndStartFg()
-        updateRepository.start()
+        serviceScope.launch {
+            updateRepository.start()
+        }
     }
 
     fun pauseOrResumeUpdate() {
         logD("pauseOrResumeUpdate, paused = ${updateRepository.isUpdatePaused}")
         if (updateRepository.isUpdatePaused) {
             acquireAndStartFg()
-            updateRepository.resume()
+            serviceScope.launch {
+                updateRepository.resume()
+            }
         } else {
-            updateRepository.pause()
+            serviceScope.launch {
+                updateRepository.pause()
+            }
             releaseAndStopFg()
         }
     }
@@ -273,7 +280,9 @@ class UpdateInstallerService : Service() {
     fun cancelUpdate() {
         logD("cancelUpdate, updating = ${updateRepository.isUpdating}")
         if (updateRepository.isUpdating) {
-            updateRepository.cancel()
+            serviceScope.launch {
+                updateRepository.cancel()
+            }
             stop()
         }
     }
@@ -328,9 +337,8 @@ class UpdateInstallerService : Service() {
     private fun stop() {
         logD("stop")
         releaseAndStopFg()
-        serviceScope.cancel()
-        notificationManager.cancel(UPDATE_INSTALLATION_NOTIFICATION_ID)
         stopSelf()
+        notificationManager.cancel(UPDATE_INSTALLATION_NOTIFICATION_ID)
     }
 
     inner class ServiceBinder : Binder() {

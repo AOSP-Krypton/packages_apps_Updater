@@ -71,7 +71,7 @@
     <string name="initializing">Initializing…</string>
     <string name="installation_finished">Installation finished</string>
     <string name="installation_paused">Installation paused</string>
-    <string name="installing_update_format">Installing update - <xliff:g example="100" id="percent">%1$d%%</xliff:g></string>
+    <string name="installing_update_format">Installing update - <xliff:g example="100.00" id="percent">%1$s%%</xliff:g></string>
     <string name="pause">Pause</string>
     <string name="downgrading_not_allowed">Downgrading is not allowed</string>
     <string name="rootfs_verification_failed">Rootfs verification failed, try again</string>
