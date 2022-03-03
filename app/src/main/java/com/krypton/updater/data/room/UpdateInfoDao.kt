@@ -29,8 +29,8 @@ interface UpdateInfoDao {
     @Query("SELECT COUNT(*) FROM build_info_table")
     fun entityCount(): Int
 
-    @Query("SELECT * FROM build_info_table WHERE date >= :fromDate ORDER BY date DESC LIMIT 1")
-    fun getBuildInfo(fromDate: Long): Flow<BuildInfoEntity?>
+    @Query("SELECT * FROM build_info_table ORDER BY date DESC LIMIT 1")
+    fun getBuildInfo(): Flow<BuildInfoEntity?>
 
     @MapInfo(keyColumn = "date", valueColumn = "changelog")
     @Query("SELECT changelog_table.date AS date, changelog_table.changelog AS changelog FROM changelog_table")

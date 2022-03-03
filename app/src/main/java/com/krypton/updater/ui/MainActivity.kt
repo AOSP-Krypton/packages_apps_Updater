@@ -118,7 +118,6 @@ class MainActivity : AppCompatActivity() {
         }
         mainViewModel.lastCheckedTime.observe(this) { refreshUpdateView() }
         mainViewModel.isCheckingForUpdate.observe(this) { refreshUpdateView() }
-        mainViewModel.updateInfoUnavailable.observe(this) { updateCardFragment() }
         mainViewModel.newUpdateAvailable.observe(this) { updateCardFragment() }
         mainViewModel.noUpdateAvailable.observe(this) { updateCardFragment() }
         downloadViewModel.stateRestoreFinished.observe(this) {

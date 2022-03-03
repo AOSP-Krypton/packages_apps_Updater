@@ -17,6 +17,7 @@
 package com.krypton.updater.ui
 
 import androidx.fragment.app.Fragment
+
 import com.krypton.updater.R
 
-class NoUpdateFragment: Fragment(R.layout.fragment_no_update)
+class NoUpdateFragment : Fragment(R.layout.fragment_no_update)

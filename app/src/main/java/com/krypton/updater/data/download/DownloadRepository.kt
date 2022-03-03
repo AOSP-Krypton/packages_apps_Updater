@@ -21,7 +21,6 @@ import android.os.Bundle
 import android.util.Log
 
 import com.krypton.updater.data.BuildInfo
-import com.krypton.updater.data.DeviceInfo
 import com.krypton.updater.data.FileCopier
 import com.krypton.updater.data.room.AppDatabase
 import com.krypton.updater.data.savedStateDataStore
@@ -161,7 +160,7 @@ class DownloadRepository @Inject constructor(
                 return@withContext
             }
             val buildInfoEntity =
-                updateInfoDao.getBuildInfo(DeviceInfo.getBuildDate()).first() ?: return@withContext
+                updateInfoDao.getBuildInfo().first() ?: return@withContext
             logD("restoring state")
             downloadManager.restoreDownloadState(
                 BuildInfo(
