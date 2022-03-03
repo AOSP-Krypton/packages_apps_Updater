@@ -27,6 +27,7 @@ import android.content.IntentFilter
 import android.os.Binder
 import android.os.IBinder
 import android.os.PowerManager
+import android.os.UpdateLock
 import android.util.Log
 
 import androidx.core.app.NotificationCompat
@@ -37,8 +38,6 @@ import com.krypton.updater.data.update.UpdateRepository
 import com.krypton.updater.ui.MainActivity
 
 import dagger.hilt.android.AndroidEntryPoint
-
-import java.util.concurrent.TimeUnit
 
 import javax.inject.Inject
 
@@ -52,7 +51,7 @@ import kotlinx.coroutines.launch
 class UpdateInstallerService : Service() {
     private lateinit var notificationManager: NotificationManagerCompat
     private lateinit var powerManager: PowerManager
-    private lateinit var wakeLock: PowerManager.WakeLock
+    private lateinit var updateLock: UpdateLock
     private lateinit var serviceScope: CoroutineScope
 
     @Inject
@@ -85,7 +84,7 @@ class UpdateInstallerService : Service() {
         setupNotificationChannel()
         setupIntents()
         powerManager = getSystemService(PowerManager::class.java)
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WL_TAG)
+        updateLock = UpdateLock(WL_TAG)
         binder = ServiceBinder()
         registerReceiver(broadcastReceiver, IntentFilter().apply {
             addAction(ACTION_CANCEL_UPDATE)
@@ -285,16 +284,16 @@ class UpdateInstallerService : Service() {
     }
 
     private fun releaseWakeLock() {
-        if (wakeLock.isHeld) {
+        if (updateLock.isHeld) {
             logD("releaseWakeLock")
-            wakeLock.release()
+            updateLock.release()
         }
     }
 
     private fun acquireWakeLock() {
-        if (!wakeLock.isHeld) {
+        if (!updateLock.isHeld) {
             logD("acquireWakeLock")
-            wakeLock.acquire(WAKELOCK_TIMEOUT)
+            updateLock.acquire()
         }
     }
 
@@ -345,7 +344,6 @@ class UpdateInstallerService : Service() {
             get() = Log.isLoggable(TAG, Log.DEBUG)
 
         private const val WL_TAG = "$TAG:WakeLock"
-        private val WAKELOCK_TIMEOUT = TimeUnit.MINUTES.toMillis(30)
 
         private const val UPDATE_INSTALLATION_NOTIFICATION_ID = 2002
         private val UPDATE_INSTALLATION_CHANNEL_ID = UpdateDownloadService::class.qualifiedName!!
