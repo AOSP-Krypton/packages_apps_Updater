@@ -83,4 +83,7 @@
     <string name="copying_failed">Copying failed: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
     <string name="install_update">Install update</string>
     <string name="update_installation_failed_with_code">Update failed with error code <xliff:g example="20" id="error_code">%1$d</xliff:g></string>
+    <string name="settings">Settings</string>
+    <string name="update_check_interval_title">Periodic update check interval</string>
+    <string name="update_check_interval_summary">Number of days after which updates should be checked, periodically</string>
 </resources>

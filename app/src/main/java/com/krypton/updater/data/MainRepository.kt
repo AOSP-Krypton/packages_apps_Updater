@@ -35,10 +35,13 @@ import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Singleton
@@ -46,6 +49,7 @@ class MainRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     appDatabase: AppDatabase,
     private val updateChecker: UpdateChecker,
+    private val applicationScope: CoroutineScope,
 ) {
 
     private val alarmManager: AlarmManager by lazy {
@@ -109,11 +113,19 @@ class MainRepository @Inject constructor(
         }
         return if (result.isSuccess) {
             result.getOrThrow()?.let { saveUpdateInfo(it) }
-            setRecheckAlarm()
+            applicationScope.launch {
+                setRecheckAlarm(getUpdateCheckInterval())
+            }
             Result.success(Unit)
         } else {
             Result.failure(result.exceptionOrNull()!!)
         }
+    }
+
+    private suspend fun getUpdateCheckInterval(): Int {
+        return context.appSettings.data.map {
+            it.updateCheckInterval
+        }.first()
     }
 
     private suspend fun deleteSavedUpdateInfo() {
@@ -150,25 +162,31 @@ class MainRepository @Inject constructor(
         }
     }
 
-    private fun setRecheckAlarm() {
+    /**
+     * Schedule alarm for checking updates periodically.
+     * Previous alarm will be cancelled so it's safe to
+     * call more than once.
+     *
+     * @param interval the interval as number of days.
+     */
+    fun setRecheckAlarm(interval: Int) {
         val alarmIntent = PendingIntent.getService(
             context,
             REQUEST_CODE_CHECK_UPDATE,
             Intent(context, PeriodicUpdateCheckerService::class.java),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
+        alarmManager.cancel(alarmIntent)
+        val actualInterval = TimeUnit.DAYS.toMillis(interval.toLong())
         alarmManager.setInexactRepeating(
             AlarmManager.ELAPSED_REALTIME_WAKEUP,
-            SystemClock.elapsedRealtime() + UPDATE_RECHECK_INTERVAL,
-            UPDATE_RECHECK_INTERVAL,
+            SystemClock.elapsedRealtime() + actualInterval,
+            actualInterval,
             alarmIntent
         )
     }
 
     companion object {
         private const val REQUEST_CODE_CHECK_UPDATE = 2001
-
-        // TODO Fetch it from settings when ui for it is setup
-        private val UPDATE_RECHECK_INTERVAL = TimeUnit.DAYS.toMillis(7)
     }
 }
