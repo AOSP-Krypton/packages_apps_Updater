@@ -31,8 +31,8 @@ class UpdateViewModel @Inject constructor(
     val updateFailed: LiveData<Event<String?>>
         get() = _updateFailed
 
-    private val _updateProgress = MutableLiveData<Int>()
-    val updateProgress: LiveData<Int>
+    private val _updateProgress = MutableLiveData<Float>()
+    val updateProgress: LiveData<Float>
         get() = _updateProgress
 
     private val _copyingFile = MutableLiveData<Boolean>()

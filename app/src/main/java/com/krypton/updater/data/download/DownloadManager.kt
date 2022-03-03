@@ -179,15 +179,6 @@ class DownloadManager @Inject constructor(
         jobExtras = null
     }
 
-    /**
-     * Clear out the cache.
-     */
-    fun cleanCache() {
-        cacheDir.listFiles()?.forEach {
-            it.delete()
-        }
-    }
-
     private fun buildJobInfo(buildInfo: BuildInfo, jobExtras: Bundle) =
         JobInfo.Builder(JOB_ID, downloadServiceComponent)
             .setTransientExtras(jobExtras)

@@ -58,18 +58,18 @@ class UpdateManager @Inject constructor(
                 }
                 // Step 1
                 UpdateStatusConstants.DOWNLOADING -> {
-                    _progressFlow.value = ((percent / 3) * 100).toInt()
+                    _progressFlow.value = (percent / 3) * 100
                 }
                 // Step 2
                 UpdateStatusConstants.VERIFYING -> {
-                    _progressFlow.value = (((percent + 1) * 100) / 3).toInt()
+                    _progressFlow.value = ((percent + 1) * 100) / 3
                 }
                 // Step 3
                 UpdateStatusConstants.FINALIZING -> {
-                    _progressFlow.value = (((percent + 2) * 100) / 3).toInt()
+                    _progressFlow.value = ((percent + 2) * 100) / 3
                 }
                 UpdateStatusConstants.UPDATED_NEED_REBOOT -> {
-                    _progressFlow.value = 100
+                    _progressFlow.value = 100f
                 }
                 else -> Log.e(TAG, "onStatusUpdate: unknown status code $status")
             }
@@ -114,8 +114,8 @@ class UpdateManager @Inject constructor(
     val updateState: StateFlow<UpdateState>
         get() = _updateState
 
-    private val _progressFlow = MutableStateFlow(0)
-    val progressFlow: StateFlow<Int>
+    private val _progressFlow = MutableStateFlow(0f)
+    val progressFlow: StateFlow<Float>
         get() = _progressFlow
 
     init {
@@ -221,14 +221,14 @@ class UpdateManager @Inject constructor(
         updateScheduled = false
         isUpdating = false
         _updateState.value = UpdateState.idle()
-        _progressFlow.value = 0
+        _progressFlow.value = 0f
     }
 
     fun restoreUpdateFinishedState() {
         isUpdating = true
         updateScheduled = true
         _updateState.value = UpdateState.finished()
-        _progressFlow.value = 100
+        _progressFlow.value = 100f
     }
 
     companion object {
