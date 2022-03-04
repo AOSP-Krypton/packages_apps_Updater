@@ -27,6 +27,8 @@ import androidx.room.PrimaryKey
 data class BuildInfoEntity(
     var version: String,
     var date: Long,
+    @ColumnInfo(name = "pre_build_incremental")
+    var preBuildIncremental: Long?,
     var url: String,
     @ColumnInfo(name = "file_name")
     var fileName: String,

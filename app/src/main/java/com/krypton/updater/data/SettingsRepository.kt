@@ -17,6 +17,7 @@
 package com.krypton.updater.data
 
 import android.content.Context
+import androidx.lifecycle.viewModelScope
 
 import dagger.hilt.android.qualifiers.ApplicationContext
 
@@ -25,6 +26,7 @@ import javax.inject.Singleton
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 @Singleton
 class SettingsRepository @Inject constructor(
@@ -34,6 +36,9 @@ class SettingsRepository @Inject constructor(
 
     val updateCheckInterval: Flow<Int>
         get() = appSettings.data.map { it.updateCheckInterval }
+
+    val optOutIncremental: Flow<Boolean>
+        get() = appSettings.data.map { it.optOutIncremental }
 
     /**
      * Set interval (in days) for automatic update checking.
@@ -45,6 +50,19 @@ class SettingsRepository @Inject constructor(
         appSettings.updateData {
             it.toBuilder()
                 .setUpdateCheckInterval(interval)
+                .build()
+        }
+    }
+
+    /**
+     * Set whether to opt out of incremental updates.
+     *
+     * @param optOut true if opting out, false otherwise.
+     */
+    suspend fun setOptOutIncremental(optOut: Boolean) {
+        appSettings.updateData {
+            it.toBuilder()
+                .setOptOutIncremental(optOut)
                 .build()
         }
     }

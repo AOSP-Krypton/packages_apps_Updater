@@ -38,25 +38,33 @@ class UpdateChecker @Inject constructor(
      * Check for updates in github. This method should not
      * be called from main thread.
      *
+     * @param incremental whether to fetch incremental update.
      * @return the fetch result as a [Result] of type [UpdateInfo].
      *   [UpdateInfo.Type] will indicate whether there is a new update or not.
      */
-    fun checkForUpdate(): Result<UpdateInfo?> {
-        val result = githubApiHelper.getBuildInfo(DeviceInfo.getDevice())
+    fun checkForUpdate(incremental: Boolean): Result<UpdateInfo?> {
+        var result = githubApiHelper.getBuildInfo(DeviceInfo.getDevice(), incremental)
+        var isIncremental = incremental
         if (result.isFailure) {
             return Result.failure(result.exceptionOrNull()!!)
+        }
+        if (result.getOrNull() == null) {
+            // Fallback to full OTA if incremental is unavailable
+            isIncremental = false
+            result = githubApiHelper.getBuildInfo(DeviceInfo.getDevice(), false)
         }
         val otaJsonContent = result.getOrNull() ?: return Result.success(null)
         val buildInfo = BuildInfo(
             version = otaJsonContent.version,
             date = otaJsonContent.date,
+            preBuildIncremental = otaJsonContent.preBuildIncremental,
             url = otaJsonContent.url,
             fileName = otaJsonContent.fileName,
             fileSize = otaJsonContent.fileSize,
             sha512 = otaJsonContent.sha512,
         )
         updateBuildDate = buildInfo.date
-        val newUpdate = isNewUpdate(buildInfo)
+        val newUpdate = isNewUpdate(buildInfo, isIncremental)
         return Result.success(
             UpdateInfo(
                 buildInfo = buildInfo,
@@ -82,7 +90,7 @@ class UpdateChecker @Inject constructor(
                 || compareTillDay(
                     date,
                     updateBuildDate
-                ) > 0 /* Changelog is newer than OTA (wtf?) */) {
+                ) > 0 /* Changelog is newer than OTA */) {
                 return@forEach
             }
             filteredMap[date.time] = content
@@ -93,7 +101,8 @@ class UpdateChecker @Inject constructor(
     companion object {
         private const val TAG = "UpdateChecker"
 
-        private val SYSTEM_BUILD_DATE = DeviceInfo.getBuildDate()
+        private val SYSTEM_BUILD_DATE: Long
+            get() = DeviceInfo.getBuildDate()
 
         // Changelog files are of the format changelog_2021_12_30
         private const val CHANGELOG_FILE_NAME_PREFIX = "changelog_"
@@ -125,6 +134,12 @@ class UpdateChecker @Inject constructor(
             return firstCalendar.compareTo(secondCalendar)
         }
 
-        fun isNewUpdate(buildInfo: BuildInfo): Boolean = (buildInfo.date) > SYSTEM_BUILD_DATE
+        fun isNewUpdate(buildInfo: BuildInfo, incremental: Boolean): Boolean =
+            if (incremental) {
+                buildInfo.preBuildIncremental == DeviceInfo.getBuildVersionIncremental()
+                        && (buildInfo.date) > SYSTEM_BUILD_DATE
+            } else {
+                (buildInfo.date) > SYSTEM_BUILD_DATE
+            }
     }
 }

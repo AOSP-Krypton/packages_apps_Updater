@@ -55,19 +55,17 @@ class GithubApiHelper @Inject constructor() {
      * This method should not be called from main thread.
      *
      * @param device the device to fetch OTA json for.
+     * @param incremental whether to fetch incremental update.
      * @return the OTA json file parsed as a [Result] of type [OTAJsonContent].
      *   (Maybe null if OTA info is not available).
      *   [Result] will represent a failure if an exception was thrown.
      */
-    fun getBuildInfo(device: String): Result<OTAJsonContent?> =
-        try {
-            val otaJsonContent: OTAJsonContent? = githubApiService
-                .getOTAJsonContent(getUrlForDevice(device))
+    fun getBuildInfo(device: String, incremental: Boolean): Result<OTAJsonContent?> =
+        runCatching {
+            githubApiService
+                .getOTAJsonContent(getUrlForDevice(device, incremental))
                 .execute()
                 .body()
-            Result.success(otaJsonContent)
-        } catch (e: Exception) {
-            Result.failure(e)
         }
 
     /**
@@ -86,7 +84,9 @@ class GithubApiHelper @Inject constructor() {
                 .getContents(device, GIT_BRANCH)
                 .execute()
                 .body()
-                ?.filter { it.name != OTA_JSON_FILE_NAME }
+                ?.filterNot {
+                    it.name == OTA_JSON || it.name == INCREMENTAL_OTA_JSON
+                }
             when {
                 contentList == null -> {
                     Result.success(null)
@@ -117,13 +117,13 @@ class GithubApiHelper @Inject constructor() {
         // Git branch to fetch contents from
         private const val GIT_BRANCH = "A12"
 
-        // File name of the ota json
-        private const val OTA_JSON_FILE_NAME = "ota.json"
+        private const val OTA_JSON = "ota.json"
+        private const val INCREMENTAL_OTA_JSON = "incremental_ota.json"
 
         private const val GITHUB_API_URL = "https://api.github.com/repos/AOSP-Krypton/ota/"
         private const val OTA_URL = "https://raw.githubusercontent.com/AOSP-Krypton/ota/"
 
-        private fun getUrlForDevice(device: String) =
-            "$OTA_URL$GIT_BRANCH/$device/$OTA_JSON_FILE_NAME"
+        private fun getUrlForDevice(device: String, incremental: Boolean) =
+            "$OTA_URL$GIT_BRANCH/$device/${if (incremental) INCREMENTAL_OTA_JSON else OTA_JSON}"
     }
 }

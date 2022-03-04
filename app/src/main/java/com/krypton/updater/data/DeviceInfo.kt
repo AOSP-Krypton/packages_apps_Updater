@@ -22,6 +22,7 @@ object DeviceInfo {
     private const val PROP_DEVICE = "ro.krypton.build.device"
     private const val PROP_DATE = "ro.build.date.utc"
     private const val PROP_VERSION = "ro.krypton.build.version"
+    private const val PROP_BUILD_VERSION_INCREMENTAL = "ro.build.version.incremental"
 
     /**
      * Get device code name.
@@ -29,7 +30,7 @@ object DeviceInfo {
     fun getDevice(): String = SystemProperties.get(PROP_DEVICE, "Unknown")
 
     /**
-     * Get build date as unix timestamp (seconds since epoch).
+     * Get build date as unix timestamp (milliseconds since epoch).
      */
     fun getBuildDate(): Long = SystemProperties.get(PROP_DATE, "0").toLong() * 1000 /* convert to millis */
 
@@ -37,4 +38,9 @@ object DeviceInfo {
      * Get build version.
      */
     fun getBuildVersion(): String = SystemProperties.get(PROP_VERSION, "0.0")
+
+    /**
+     * Get current incremental build version.
+     */
+    fun getBuildVersionIncremental(): Long = SystemProperties.get(PROP_BUILD_VERSION_INCREMENTAL, "0").toLong()
 }

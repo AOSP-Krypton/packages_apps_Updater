@@ -41,10 +41,19 @@ class SettingsViewModel @Inject constructor(
     val updateCheckInterval: LiveData<Int>
         get() = _updateCheckInterval
 
+    private val _optOutIncremental = MutableLiveData<Boolean>()
+    val optOutIncremental: LiveData<Boolean>
+        get() = _optOutIncremental
+
     init {
         viewModelScope.launch {
             settingsRepository.updateCheckInterval.collect {
                 _updateCheckInterval.value = it
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.optOutIncremental.collect {
+                _optOutIncremental.value = it
             }
         }
     }
@@ -59,6 +68,17 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             settingsRepository.setUpdateCheckInterval(interval)
             mainRepository.setRecheckAlarm(interval)
+        }
+    }
+
+    /**
+     * Set whether to opt out of incremental updates.
+     *
+     * @param optOut true if opting out, false otherwise.
+     */
+    fun setOptOutIncremental(optOut: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setOptOutIncremental(optOut)
         }
     }
 }
