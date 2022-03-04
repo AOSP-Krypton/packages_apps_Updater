@@ -20,6 +20,5 @@ import com.google.gson.annotations.SerializedName
 
 class Content(
     @SerializedName("name") val name: String,
-    @SerializedName("sha") val sha: String,
     @SerializedName("download_url") val url: String,
 )

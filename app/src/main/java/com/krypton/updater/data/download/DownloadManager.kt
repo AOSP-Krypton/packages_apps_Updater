@@ -24,7 +24,6 @@ import android.os.Bundle
 import android.util.Log
 
 import com.krypton.updater.R
-import com.krypton.updater.data.BuildInfo
 import com.krypton.updater.data.HashVerifier
 
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -58,16 +57,14 @@ class DownloadManager @Inject constructor(
 
     private val cacheDir = context.cacheDir
 
-    private var buildInfo: BuildInfo? = null
-    private var jobInfo: JobInfo? = null
-    private var jobExtras: Bundle? = null
+    private var downloadInfo: DownloadInfo? = null
 
     var downloadFile: File? = null
         private set
     val downloadFileName: String?
         get() = downloadFile?.name
     val downloadSize: Long
-        get() = buildInfo?.fileSize ?: 0
+        get() = downloadInfo?.size ?: 0
 
     private val _downloadState = MutableStateFlow(DownloadState.idle())
     val downloadState: StateFlow<DownloadState>
@@ -81,24 +78,25 @@ class DownloadManager @Inject constructor(
     /**
      * Initiates the download by scheduling a job with [JobScheduler].
      *
-     * @param buildInfo a [BuildInfo] object containing the details of
+     * @param downloadInfo a [DownloadInfo] object containing the details of
      *   the file to download.
      */
-    fun download(buildInfo: BuildInfo) {
+    fun download(downloadInfo: DownloadInfo) {
         logD("download, downloadInitiated = ${downloadState.value}")
         if (downloadState.value.downloading) return
         _downloadState.value = DownloadState.idle()
         _progressFlow.value = 0
-        if (this.buildInfo != buildInfo) {
-            this.buildInfo = buildInfo
-            jobExtras = buildExtras(buildInfo)
-            jobInfo = buildJobInfo(buildInfo, jobExtras!!)
-        }
-        if (jobScheduler.schedule(jobInfo!!) == JobScheduler.RESULT_SUCCESS) {
-            _downloadState.value = DownloadState.waiting()
-            logD("Download scheduled successfully")
-        } else {
-            Log.e(TAG,"Failed to schedule download")
+        this.downloadInfo = downloadInfo
+        try {
+            val result = jobScheduler.schedule(buildJobInfo(downloadInfo))
+            if (result == JobScheduler.RESULT_SUCCESS) {
+                _downloadState.value = DownloadState.waiting()
+                logD("Download scheduled successfully")
+            } else {
+                Log.e(TAG, "Failed to schedule download")
+            }
+        } catch (e: IllegalArgumentException) {
+            Log.wtf(TAG, "Download service does not exist")
         }
     }
 
@@ -112,17 +110,17 @@ class DownloadManager @Inject constructor(
         logD("runWorker, downloadState = ${downloadState.value}")
         _downloadState.value = DownloadState.downloading()
 
-        downloadFile = File(cacheDir, downloadInfo.getString(BuildInfo.FILE_NAME)!!)
+        downloadFile = File(cacheDir, downloadInfo.getString(DownloadInfo.FILE_NAME)!!)
 
         val urlResult = runCatching {
-            URL(downloadInfo.getString(BuildInfo.URL))
+            URL(downloadInfo.getString(DownloadInfo.URL))
         }
         if (urlResult.isFailure) {
             eventChannel.send(DownloadResult.failure(urlResult.exceptionOrNull()))
             return
         }
-        val fileSize = downloadInfo.getLong(BuildInfo.FILE_SIZE)
-        val sha512 = downloadInfo.getString(BuildInfo.SHA_512)!!
+        val fileSize = downloadInfo.getLong(DownloadInfo.FILE_SIZE)
+        val sha512 = downloadInfo.getString(DownloadInfo.SHA_512)!!
         val downloadWorker = DownloadWorker(
             downloadFile!!,
             urlResult.getOrThrow(),
@@ -160,9 +158,7 @@ class DownloadManager @Inject constructor(
         logD("cancelDownload, downloadState = ${downloadState.value}")
         if (downloadState.value.waiting || downloadState.value.downloading) {
             jobScheduler.cancel(JOB_ID)
-            buildInfo = null
-            jobExtras = null
-            jobInfo = null
+            downloadInfo = null
             _downloadState.value = DownloadState.idle()
         }
     }
@@ -174,40 +170,38 @@ class DownloadManager @Inject constructor(
         _progressFlow.emit(0)
         _downloadState.emit(DownloadState.idle())
         downloadFile = null
-        buildInfo = null
-        jobInfo = null
-        jobExtras = null
+        downloadInfo = null
     }
 
-    private fun buildJobInfo(buildInfo: BuildInfo, jobExtras: Bundle) =
+    private fun buildJobInfo(downloadInfo: DownloadInfo) =
         JobInfo.Builder(JOB_ID, downloadServiceComponent)
-            .setTransientExtras(jobExtras)
+            .setTransientExtras(buildExtras(downloadInfo))
             .setBackoffCriteria(retryInterval, JobInfo.BACKOFF_POLICY_EXPONENTIAL)
             .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-            .setEstimatedNetworkBytes(buildInfo.fileSize, JobInfo.NETWORK_BYTES_UNKNOWN.toLong())
+            .setEstimatedNetworkBytes(downloadInfo.size, JobInfo.NETWORK_BYTES_UNKNOWN.toLong())
             .setRequiresStorageNotLow(true)
             .setRequiresBatteryNotLow(true)
             .build()
 
-    private fun buildExtras(buildInfo: BuildInfo) =
+    private fun buildExtras(downloadInfo: DownloadInfo) =
         Bundle(4).apply {
-            putString(BuildInfo.URL, buildInfo.url)
-            putString(BuildInfo.FILE_NAME, buildInfo.fileName)
-            putString(BuildInfo.SHA_512, buildInfo.sha512)
-            putLong(BuildInfo.FILE_SIZE, buildInfo.fileSize)
+            putString(DownloadInfo.URL, downloadInfo.url)
+            putString(DownloadInfo.FILE_NAME, downloadInfo.name)
+            putString(DownloadInfo.SHA_512, downloadInfo.sha512)
+            putLong(DownloadInfo.FILE_SIZE, downloadInfo.size)
         }
 
-    suspend fun restoreDownloadState(buildInfo: BuildInfo) {
-        logD( "restoring state, buildInfo = $buildInfo")
-        val file = File(cacheDir, buildInfo.fileName)
+    suspend fun restoreDownloadState(downloadInfo: DownloadInfo) {
+        logD("restoring state, buildInfo = $downloadInfo")
+        val file = File(cacheDir, downloadInfo.name)
         if (file.isFile) {
-            if (file.length() != buildInfo.fileSize) {
-                Log.w(TAG,"file size does not match, deleting")
+            if (file.length() != downloadInfo.size) {
+                Log.w(TAG, "file size does not match, deleting")
                 file.delete()
                 return
             }
             val hashMatch = withContext(Dispatchers.IO) {
-                HashVerifier.verifyHash(file, buildInfo.sha512)
+                HashVerifier.verifyHash(file, downloadInfo.sha512)
             }
             if (!hashMatch) {
                 Log.w(TAG, "file hash does not match, deleting")
@@ -215,10 +209,10 @@ class DownloadManager @Inject constructor(
                 return
             } else {
                 logD("updating state")
-                this.buildInfo = buildInfo
+                this.downloadInfo = downloadInfo
                 downloadFile = file
                 _downloadState.emit(DownloadState.finished())
-                _progressFlow.emit(buildInfo.fileSize)
+                _progressFlow.emit(downloadInfo.size)
             }
         }
     }

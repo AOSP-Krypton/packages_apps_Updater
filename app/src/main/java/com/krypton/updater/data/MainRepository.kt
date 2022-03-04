@@ -57,6 +57,7 @@ class MainRepository @Inject constructor(
     }
 
     private val savedStateDatastore = context.savedStateDataStore
+    private val appSettings = context.appSettings
     private val updateInfoDao = appDatabase.updateInfoDao()
 
     val systemBuildDate = Date(DeviceInfo.getBuildDate())
@@ -74,6 +75,7 @@ class MainRepository @Inject constructor(
                 BuildInfo(
                     it.version,
                     it.date,
+                    it.preBuildIncremental,
                     it.url,
                     it.fileName,
                     it.fileSize,
@@ -86,7 +88,12 @@ class MainRepository @Inject constructor(
                 type = if (buildInfo == null) {
                     UpdateInfo.Type.UNKNOWN
                 } else {
-                    if (UpdateChecker.isNewUpdate(buildInfo)) {
+                    if (UpdateChecker.isNewUpdate(
+                            buildInfo,
+                            /* this should not be null iff it is incremental ota */
+                            buildInfo.preBuildIncremental != null
+                        )
+                    ) {
                         UpdateInfo.Type.NEW_UPDATE
                     } else {
                         UpdateInfo.Type.NO_UPDATE
@@ -103,8 +110,9 @@ class MainRepository @Inject constructor(
      */
     suspend fun fetchUpdateInfo(): Result<Unit> {
         deleteSavedUpdateInfo()
+        val optOutIncremental = appSettings.data.map { it.optOutIncremental }.first()
         val result = withContext(Dispatchers.IO) {
-            updateChecker.checkForUpdate()
+            updateChecker.checkForUpdate(!optOutIncremental)
         }
         savedStateDatastore.updateData {
             it.toBuilder()
@@ -144,6 +152,7 @@ class MainRepository @Inject constructor(
                     BuildInfoEntity(
                         version = it.version,
                         date = it.date,
+                        preBuildIncremental = it.preBuildIncremental,
                         url = it.url,
                         fileName = it.fileName,
                         fileSize = it.fileSize,

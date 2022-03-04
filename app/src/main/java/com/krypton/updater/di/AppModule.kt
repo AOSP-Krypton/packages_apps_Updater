@@ -22,7 +22,8 @@ object AppModule {
         context,
         AppDatabase::class.java,
         "updater_database"
-    ).build()
+    ).fallbackToDestructiveMigration()
+        .build()
 
     @Provides
     fun provideApplicationScope(@ApplicationContext context: Context) =

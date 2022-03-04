@@ -21,6 +21,7 @@ import com.google.gson.annotations.SerializedName
 class OTAJsonContent(
     @SerializedName("version") val version: String,
     @SerializedName("date") val date: Long,
+    @SerializedName("pre_build_incremental") val preBuildIncremental: Long?,
     @SerializedName("url") val url: String,
     @SerializedName("file_name") val fileName: String,
     @SerializedName("file_size") val fileSize: Long,

@@ -115,7 +115,14 @@ class DownloadRepository @Inject constructor(
      *   the file to download.
      */
     fun triggerDownload(buildInfo: BuildInfo) {
-        downloadManager.download(buildInfo)
+        downloadManager.download(
+            DownloadInfo(
+                buildInfo.url,
+                buildInfo.fileName,
+                buildInfo.fileSize,
+                buildInfo.sha512
+            )
+        )
     }
 
     /**
@@ -163,9 +170,7 @@ class DownloadRepository @Inject constructor(
                 updateInfoDao.getBuildInfo().first() ?: return@withContext
             logD("restoring state")
             downloadManager.restoreDownloadState(
-                BuildInfo(
-                    buildInfoEntity.version,
-                    buildInfoEntity.date,
+                DownloadInfo(
                     buildInfoEntity.url,
                     buildInfoEntity.fileName,
                     buildInfoEntity.fileSize,

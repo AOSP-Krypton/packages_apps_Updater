@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+package com.krypton.updater.data.download
 
-option java_package = "com.krypton.updater.data";
-option java_multiple_files = true;
-
-message Settings {
-  int32 update_check_interval = 1;
-  bool opt_out_incremental = 2;
+data class DownloadInfo(
+    val url: String,
+    val name: String,
+    val size: Long,
+    val sha512: String,
+) {
+    companion object {
+        const val URL = "url"
+        const val FILE_NAME = "file_name"
+        const val FILE_SIZE = "file_size"
+        const val SHA_512 = "sha_512"
+    }
 }
