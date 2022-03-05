@@ -77,7 +77,7 @@
     <string name="rootfs_verification_failed">rootfs 驗證失敗，需要重試呢</string>
     <string name="update_transfer_error">更新傳輸失敗呢</string>
     <string name="resume">繼續</string>
-    <string name="local_upgrade">本地升級</string>
+    <string name="local_upgrade">本地更新</string>
     <string name="popup_menu">彈出選單</string>
     <string name="copying_file">複製檔案中</string>
     <string name="copying_failed">複製失敗: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
