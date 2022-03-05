@@ -82,4 +82,12 @@
     <string name="copying_file">複製檔案中</string>
     <string name="copying_failed">複製失敗: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
     <string name="install_update">安裝更新</string>
+    <string name="update_installation_failed_with_code">更新失敗，錯誤碼: <xliff:g example="20" id="error_code">%1$d</xliff:g></string>
+
+    <!-- Settings -->
+    <string name="settings">更新設定</string>
+    <string name="update_check_interval_title">定期檢查更新間隔</string>
+    <string name="update_check_interval_summary">設定此應用檢查更新頻率（天）</string>
+    <string name="opt_out_incremental_title">增量更新</string>
+    <string name="opt_out_incremental_summary">只下載安裝全量包。若您已 root 或以任何形式修改過系統，則您必須開啟此選項。</string>
 </resources>
