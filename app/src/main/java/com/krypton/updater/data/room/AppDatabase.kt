@@ -25,6 +25,7 @@ import androidx.room.RoomDatabase
         ChangelogEntity::class
     ],
     version = 2,
+    exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun updateInfoDao(): UpdateInfoDao
