@@ -23,7 +23,7 @@
         android:max="30"
         android:summary="@string/update_check_interval_summary"
         android:title="@string/update_check_interval_title"
-        app:min="0"
+        app:min="1"
         app:showSeekBarValue="true" />
 
     <SwitchPreference
