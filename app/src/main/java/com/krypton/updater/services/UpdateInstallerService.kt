@@ -39,6 +39,8 @@ import com.krypton.updater.ui.MainActivity
 
 import dagger.hilt.android.AndroidEntryPoint
 
+import java.util.concurrent.TimeUnit
+
 import javax.inject.Inject
 
 import kotlinx.coroutines.flow.collect
@@ -51,6 +53,7 @@ import kotlinx.coroutines.launch
 class UpdateInstallerService : Service() {
     private lateinit var notificationManager: NotificationManagerCompat
     private lateinit var powerManager: PowerManager
+    private lateinit var wakeLock: PowerManager.WakeLock
     private lateinit var updateLock: UpdateLock
     private lateinit var serviceScope: CoroutineScope
 
@@ -84,7 +87,8 @@ class UpdateInstallerService : Service() {
         setupNotificationChannel()
         setupIntents()
         powerManager = getSystemService(PowerManager::class.java)
-        updateLock = UpdateLock(WL_TAG)
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKELOCK_TAG)
+        updateLock = UpdateLock(UPDATE_LOCK_TAG)
         binder = ServiceBinder()
         registerReceiver(broadcastReceiver, IntentFilter().apply {
             addAction(ACTION_CANCEL_UPDATE)
@@ -249,7 +253,7 @@ class UpdateInstallerService : Service() {
         logD("onDestroy")
         unregisterReceiver(broadcastReceiver)
         serviceScope.cancel()
-        releaseWakeLock()
+        releaseLocks()
     }
 
     private fun startUpdate() {
@@ -292,27 +296,37 @@ class UpdateInstallerService : Service() {
         powerManager.reboot(null)
     }
 
-    private fun releaseWakeLock() {
+    private fun releaseLocks() {
+        logD("releaseLocks")
+        if (wakeLock.isHeld) {
+            logD("Releasing wake lock")
+            wakeLock.release()
+        }
         if (updateLock.isHeld) {
-            logD("releaseWakeLock")
+            logD("Releasing update lock")
             updateLock.release()
         }
     }
 
-    private fun acquireWakeLock() {
+    private fun acquireLocks() {
+        logD("acquireLocks")
+        if (!wakeLock.isHeld) {
+            logD("Acquiring wake lock")
+            wakeLock.acquire(WAKELOCK_TIMEOUT)
+        }
         if (!updateLock.isHeld) {
-            logD("acquireWakeLock")
+            logD("Acquiring update lock")
             updateLock.acquire()
         }
     }
 
     private fun releaseAndStopFg() {
-        releaseWakeLock()
+        releaseLocks()
         stopForeground(true)
     }
 
     private fun acquireAndStartFg() {
-        acquireWakeLock()
+        acquireLocks()
         startForeground()
     }
 
@@ -351,7 +365,9 @@ class UpdateInstallerService : Service() {
         private val DEBUG: Boolean
             get() = Log.isLoggable(TAG, Log.DEBUG)
 
-        private const val WL_TAG = "$TAG:WakeLock"
+        private const val WAKELOCK_TAG = "$TAG:WakeLock"
+        private const val UPDATE_LOCK_TAG = "$TAG:UpdateLock"
+        private val WAKELOCK_TIMEOUT = TimeUnit.MINUTES.toMillis(30)
 
         private const val UPDATE_INSTALLATION_NOTIFICATION_ID = 2002
         private val UPDATE_INSTALLATION_CHANNEL_ID = UpdateDownloadService::class.qualifiedName!!
