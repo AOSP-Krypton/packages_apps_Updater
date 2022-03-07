@@ -29,6 +29,7 @@ import androidx.core.app.NotificationManagerCompat
 
 import com.krypton.updater.R
 import com.krypton.updater.data.MainRepository
+import com.krypton.updater.data.UpdateInfo
 import com.krypton.updater.ui.MainActivity
 
 import dagger.hilt.android.AndroidEntryPoint
@@ -39,7 +40,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -84,11 +85,11 @@ class PeriodicUpdateCheckerService : Service() {
                     R.string.update_check_failed,
                     R.string.update_check_failed_description
                 )
-            mainRepository.getUpdateInfo().collect {
+            val updateInfo = mainRepository.getUpdateInfo().first()
+            if (updateInfo.type == UpdateInfo.Type.NEW_UPDATE) {
                 notifyUser(R.string.new_system_update, R.string.new_system_update_description)
-                stopSelf()
-                cancel()
             }
+            stopSelf()
         }
         return START_STICKY
     }
