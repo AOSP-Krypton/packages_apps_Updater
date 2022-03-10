@@ -44,8 +44,15 @@
             android:resizeableActivity="false"
             tools:ignore="NonResizeableActivity">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+                <action android:name="com.android.settings.action.EXTRA_SETTINGS" />
             </intent-filter>
+            <meta-data android:name="com.android.settings.order" android:value="-270"/>
+            <meta-data android:name="com.android.settings.category"
+                android:value="com.android.settings.category.ia.system" />
+            <meta-data android:name="com.android.settings.title"
+                android:resource="@string/app_name"/>
+            <meta-data android:name="com.android.settings.icon"
+                android:resource="@drawable/ic_baseline_system_update_24" />
         </activity>
 
         <activity
