@@ -57,6 +57,7 @@
 
     <!-- Changelog -->
     <string name="changelog">Changelog</string>
+    <string name="changelog_back_button_desc">Changelog activity back button</string>
     <string name="changelog_unavailable">Changelog unavailable</string>
 
     <!-- Update -->
