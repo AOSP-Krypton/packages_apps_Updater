@@ -20,8 +20,8 @@
     <!-- Update checker -->
     <string name="new_system_update">检测到新的系统更新</string>
     <string name="new_system_update_description">点击这里以下载并安装更新</string>
-    <string name="update_check_failed">自动检测更新失败</string>
-    <string name="update_check_failed_description">请手动检查更新</string>
+    <string name="auto_update_check_failed">自动检测更新失败</string>
+    <string name="auto_update_check_failed_desc">请手动检查更新</string>
 
     <!-- Download -->
     <string name="downloading">下载中</string>
@@ -35,7 +35,7 @@
         <xliff:g example="12-11-2021" id="date">%1$s</xliff:g>\u0020\u0020|\u0020\u0020KOSP v<xliff:g example="2.3" id="version">%2$s</xliff:g>
     </string>
     <string name="check_for_updates">检查更新</string>
-    <string name="checking_for_update">正在检查更新...</string>
+    <string name="checking_for_update">正在检查更新…</string>
     <string name="last_checked_time_format">
         最后检查时间: <xliff:g example="11:02 AM" id="time">%1$s</xliff:g>
     </string>
@@ -48,7 +48,7 @@
     <string name="download">下载</string>
     <string name="update">更新</string>
     <string name="download_text_format">
-        下载中 - <xliff:g example="100" id="percent">%1$d%%</xliff:g>
+        下载中 - <xliff:g example="100" id="percent">%1$s%%</xliff:g>
     </string>
     <string name="waiting">等待中</string>
     <string name="restoring_state">恢复状态</string>
@@ -68,7 +68,7 @@
     <string name="installing_update">安装更新中</string>
     <string name="installation_failed">安装失败</string>
     <string name="reboot">重启</string>
-    <string name="initializing">初始化中...</string>
+    <string name="initializing">初始化中…</string>
     <string name="installation_finished">安装已完成</string>
     <string name="installation_paused">安装已暂停</string>
     <string name="installing_update_format">安装更新中 - <xliff:g example="100" id="percent">%1$s%%</xliff:g></string>

@@ -20,8 +20,8 @@
     <!-- Update checker -->
     <string name="new_system_update">Обнаружено новое обновление системы</string>
     <string name="new_system_update_description">Нажмите здесь, чтобы загрузить и установить обновление</string>
-    <string name="update_check_failed">Ошибка автоматической проверки обновлений</string>
-    <string name="update_check_failed_description">Пожалуйста, проверьте наличие обновлений вручную</string>
+    <string name="auto_update_check_failed">Ошибка автоматической проверки обновлений</string>
+    <string name="auto_update_check_failed_desc">Пожалуйста, проверьте наличие обновлений вручную</string>
 
     <!-- Download -->
     <string name="downloading">Загрузка</string>
@@ -48,7 +48,7 @@
     <string name="download">Скачать</string>
     <string name="update">Обновить</string>
     <string name="download_text_format">
-        Загружено - <xliff:g example="100" id="percent">%1$d%%</xliff:g>
+        Загружено - <xliff:g example="100" id="percent">%1$s%%</xliff:g>
     </string>
     <string name="waiting">Подождите</string>
     <string name="restoring_state">Восстановление состояния</string>

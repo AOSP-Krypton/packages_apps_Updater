@@ -17,7 +17,6 @@
 package com.krypton.updater.data
 
 import android.content.Context
-import androidx.lifecycle.viewModelScope
 
 import dagger.hilt.android.qualifiers.ApplicationContext
 
@@ -26,7 +25,6 @@ import javax.inject.Singleton
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 
 @Singleton
 class SettingsRepository @Inject constructor(

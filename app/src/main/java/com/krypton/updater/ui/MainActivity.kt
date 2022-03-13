@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2021-2022 AOSP-Krypton Project
+ * Copyright (C) 2022 AOSP-Krypton Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License")
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -16,31 +16,42 @@
 
 package com.krypton.updater.ui
 
-import android.annotation.StringRes
 import android.annotation.SuppressLint
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.ActivityInfo
+import android.net.Uri
 import android.os.Bundle
+import android.os.IBinder
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.widget.FrameLayout
-import android.widget.PopupMenu
-import android.widget.Toast
 
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.motion.widget.MotionLayout
-import androidx.core.content.res.ResourcesCompat
-import androidx.databinding.DataBindingUtil
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.commit
-import androidx.fragment.app.commitNow
+import androidx.compose.animation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.ExperimentalUnitApi
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 
 import com.krypton.updater.R
-import com.krypton.updater.databinding.ActivityMainBinding
+import com.krypton.updater.services.UpdateInstallerService
 import com.krypton.updater.viewmodel.DownloadViewModel
 import com.krypton.updater.viewmodel.MainViewModel
 import com.krypton.updater.viewmodel.UpdateViewModel
@@ -48,19 +59,21 @@ import com.krypton.updater.viewmodel.UpdateViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
-    private val mainViewModel: MainViewModel by viewModels()
-    private val downloadViewModel: DownloadViewModel by viewModels()
-    private val updateViewModel: UpdateViewModel by viewModels()
+class MainActivity : ComponentActivity() {
 
-    private lateinit var binding: ActivityMainBinding
-
-    private val localUpgradeFileContract =
-        registerForActivityResult(ActivityResultContracts.OpenDocument()) {
-            if (it != null) {
-                updateViewModel.setupLocalUpgrade(it)
-            }
+    private var bound = false
+    private var updateInstallerService: UpdateInstallerService? = null
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            logD("onServiceConnected")
+            updateInstallerService = (service as? UpdateInstallerService.ServiceBinder)?.service
         }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            logD("onServiceDisconnected")
+            updateInstallerService = null
+        }
+    }
 
     private val documentTreeContract =
         registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
@@ -73,29 +86,26 @@ class MainActivity : AppCompatActivity() {
             contentResolver.takePersistableUriPermission(it, flags)
         }
 
-    private var transitionPending = false
-
-    private var stateRestoreProgressDialog: AlertDialog? = null
-    private var fileExportProgressDialog: AlertDialog? = null
-    private var fileCopyProgressDialog: AlertDialog? = null
-
     @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        binding = DataBindingUtil.setContentView<ActivityMainBinding>(
-            this, R.layout.activity_main,
-        ).also {
-            it.mainViewModel = mainViewModel
-            it.lifecycleOwner = this
-        }
         checkExportFolderPermission()
-        supportFragmentManager.addFragmentOnAttachListener { _, _ ->
-            logD("onFragmentAttached")
-            if (transitionPending) {
-                logD("completing pending transition")
-                (binding.root as MotionLayout).transitionToEnd()
-                transitionPending = false
+        logD("binding service")
+        bound = bindService(
+            Intent(this, UpdateInstallerService::class.java),
+            serviceConnection,
+            Context.BIND_AUTO_CREATE
+        )
+        logD("bound = $bound")
+        setContent {
+            AppTheme {
+                val mainScreenState = rememberMainScreenState(
+                    viewModels<MainViewModel>().value,
+                    viewModels<DownloadViewModel>().value,
+                    viewModels<UpdateViewModel>().value
+                )
+                MainScreen(mainScreenState)
             }
         }
     }
@@ -109,196 +119,260 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        mainViewModel.updateFailedEvent.observe(this) {
-            if (!it.hasBeenHandled) {
-                Toast.makeText(this, it.getOrNull(), Toast.LENGTH_LONG).show()
-            }
+    override fun onDestroy() {
+        super.onDestroy()
+        if (bound) {
+            unbindService(serviceConnection)
+            bound = false
         }
-        mainViewModel.lastCheckedTime.observe(this) { refreshUpdateView() }
-        mainViewModel.isCheckingForUpdate.observe(this) { refreshUpdateView() }
-        mainViewModel.newUpdateAvailable.observe(this) { updateCardFragment() }
-        mainViewModel.noUpdateAvailable.observe(this) { updateCardFragment() }
-        downloadViewModel.stateRestoreFinished.observe(this) {
-            stateRestoreProgressDialog?.dismiss()
-            stateRestoreProgressDialog = if (!it) {
-                createProgressDialog(R.string.restoring_state).apply { show() }
-            } else {
-                null
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun MainScreen(state: MainScreenState) {
+        Scaffold(
+            topBar = {
+                AppBar(onRequestLocalUpgrade = {
+                    state.startLocalUpgrade(it)
+                })
+            },
+            snackbarHost = { SnackbarHost(state.snackbarHostState) }
+        ) {
+            val showExportDialog = state.showExportingDialog.collectAsState(false)
+            if (showExportDialog.value) {
+                ProgressDialog(title = stringResource(id = R.string.exporting_file))
             }
-        }
-        downloadViewModel.exportingFile.observe(this) {
-            fileExportProgressDialog?.dismiss()
-            fileExportProgressDialog = if (it) {
-                transitionToStart()
-                createProgressDialog(R.string.exporting_file).apply { show() }
-            } else {
-                null
+            val showCopyingDialog = state.showCopyingDialog.collectAsState(false)
+            if (showCopyingDialog.value) {
+                ProgressDialog(title = stringResource(id = R.string.copying_file))
             }
-        }
-        downloadViewModel.exportingFailed.observe(this) {
-            it.getOrNull()?.let { error ->
-                Toast.makeText(this, getString(R.string.exporting_failed, error), Toast.LENGTH_LONG)
-                    .show()
-            }
-        }
-        updateViewModel.readyForUpdate.observe(this) { updateCardFragment() }
-        updateViewModel.isUpdating.observe(this) { updateCardFragment() }
-        updateViewModel.copyingFile.observe(this) {
-            fileCopyProgressDialog?.dismiss()
-            fileCopyProgressDialog = if (it) {
-                transitionToStart()
-                createProgressDialog(R.string.copying_file).apply { show() }
-            } else {
-                null
-            }
-        }
-        updateViewModel.copyFailed.observe(this) {
-            it.getOrNull()?.let { error ->
-                Toast.makeText(this, getString(R.string.copying_failed, error), Toast.LENGTH_LONG)
-                    .show()
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxHeight(TOP_CONTENT_HEIGHT_FRACTION),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Bottom
+                ) {
+                    MainScreenTopContent(
+                        state.systemBuildDate,
+                        state.systemBuildVersion,
+                        state.isCheckingForUpdate.collectAsState(false),
+                        state.lastCheckedTime.collectAsState(null),
+                        onUpdateCheckRequest = {
+                            state.checkForUpdates()
+                        }
+                    )
+                }
+                val showCardState = state.shouldShowCard.collectAsState(initial = false)
+                val visible by remember { showCardState }
+                AnimatedVisibility(
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    visible = visible,
+                    enter = slideInVertically { fullHeight ->
+                        fullHeight
+                    } + fadeIn(),
+                    exit = slideOutVertically { fullHeight ->
+                        fullHeight
+                    } + fadeOut()
+                ) {
+                    ElevatedCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(1 - TOP_CONTENT_HEIGHT_FRACTION)
+                            .padding(start = 12.dp, top = 32.dp, end = 12.dp, bottom = 12.dp),
+                        shape = RoundedCornerShape(32.dp),
+                        content = {
+                            val showUpdateUI = state.showUpdateUI.collectAsState(false)
+                            val showDownloadUI =
+                                state.showDownloadUI.collectAsState(false)
+                            when {
+                                // Order matters, update ui takes preference over download and so on
+                                showUpdateUI.value -> {
+                                    val updateCardState = rememberUpdateCardState(
+                                        viewModels<UpdateViewModel>().value,
+                                        updateInstallerService,
+                                        state.snackbarHostState,
+                                        rememberCoroutineScope()
+                                    )
+                                    UpdateCard(updateCardState)
+                                }
+                                showDownloadUI.value -> {
+                                    val downloadCardState = rememberDownloadCardState(
+                                        viewModels<MainViewModel>().value,
+                                        viewModels<DownloadViewModel>().value,
+                                        state.snackbarHostState,
+                                        rememberCoroutineScope()
+                                    )
+                                    DownloadCard(downloadCardState)
+                                }
+                                else -> NoUpdateCard()
+                            }
+                        }
+                    )
+                }
             }
         }
     }
 
-    private fun createProgressDialog(@StringRes titleId: Int): AlertDialog =
-        AlertDialog.Builder(this)
-            .setTitle(titleId)
-            .setCancelable(false)
-            .create().also {
-                it.setView(
-                    LayoutInflater.from(this).inflate(
-                        R.layout.copy_progress_bar,
-                        it.findViewById<FrameLayout>(R.id.customPanel),
-                        true
+    @Composable
+    fun AppBar(onRequestLocalUpgrade: (Uri) -> Unit) {
+        val localUpgradeLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.OpenDocument(),
+            onResult = {
+                if (it != null) onRequestLocalUpgrade(it)
+            }
+        )
+        SmallTopAppBar(
+            title = {},
+            actions = {
+                AppBarMenu(
+                    menuIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Menu,
+                            stringResource(R.string.menu_button_content_desc)
+                        )
+                    },
+                    menuItems = listOf(
+                        MenuItem(
+                            title = stringResource(id = R.string.local_upgrade),
+                            icon = painterResource(id = R.drawable.ic_baseline_folder_24),
+                            contentDescription = stringResource(id = R.string.local_upgrade_menu_item_desc),
+                            onClick = {
+                                localUpgradeLauncher.launch(ZIP_MIME)
+                            }
+                        ),
+                        MenuItem(
+                            title = stringResource(id = R.string.settings),
+                            iconImageVector = Icons.Filled.Settings,
+                            contentDescription = stringResource(id = R.string.settings_menu_item_desc),
+                            onClick = {
+                                startActivity(
+                                    Intent(
+                                        applicationContext,
+                                        SettingsActivity::class.java
+                                    )
+                                )
+                            }
+                        ),
                     )
                 )
-                it.window?.setBackgroundDrawable(
-                    ResourcesCompat.getDrawable(
-                        resources,
-                        R.drawable.alert_dialog_background,
-                        resources.newTheme().apply {
-                            applyStyle(R.style.Theme_Updater, true)
-                        })
+            }
+        )
+    }
+
+    @OptIn(ExperimentalUnitApi::class)
+    @Composable
+    fun ProgressDialog(title: String) {
+        AlertDialog(
+            onDismissRequest = {},
+            properties = DialogProperties(
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false
+            ),
+            confirmButton = {},
+            title = {
+                Text(text = title, style = MaterialTheme.typography.titleMedium)
+            },
+            shape = RoundedCornerShape(32.dp),
+            text = {
+                LinearProgressIndicator()
+            },
+        )
+    }
+
+    @Composable
+    fun UpdaterLogo() {
+        Box(modifier = Modifier.size(200.dp)) {
+            Icon(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .align(Alignment.TopCenter),
+                painter = painterResource(id = R.drawable.ic_updater_logo_part_0),
+                tint = MaterialTheme.colorScheme.surfaceVariant,
+                contentDescription = stringResource(R.string.updater_logo_content_desc)
+            )
+            Icon(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .align(Alignment.Center)
+                    .padding(top = 1.dp),
+                painter = painterResource(id = R.drawable.ic_updater_logo_part_1),
+                tint = MaterialTheme.colorScheme.onSurface,
+                contentDescription = stringResource(R.string.updater_logo_content_desc)
+            )
+            Icon(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .align(Alignment.BottomCenter),
+                painter = painterResource(id = R.drawable.ic_updater_logo_part_2),
+                tint = MaterialTheme.colorScheme.primary,
+                contentDescription = stringResource(R.string.updater_logo_content_desc)
+            )
+        }
+    }
+
+    @Composable
+    @Preview
+    fun PreviewUpdaterLogo() {
+        AppTheme {
+            UpdaterLogo()
+        }
+    }
+
+    @Composable
+    fun MainScreenTopContent(
+        buildDate: String,
+        buildVersion: String,
+        isCheckingForUpdate: State<Boolean>,
+        lastCheckedTime: State<String?>,
+        onUpdateCheckRequest: () -> Unit,
+    ) {
+        UpdaterLogo()
+        Text(
+            modifier = Modifier.padding(top = 32.dp),
+            text = stringResource(
+                id = R.string.system_build_info_format,
+                buildDate,
+                buildVersion
+            ),
+            fontWeight = FontWeight.Bold
+        )
+        CustomButton(
+            modifier = Modifier.padding(top = 32.dp),
+            enabled = !isCheckingForUpdate.value,
+            text = stringResource(id = R.string.check_for_updates),
+            onClick = onUpdateCheckRequest
+        )
+        if (isCheckingForUpdate.value) {
+            Text(
+                modifier = Modifier.padding(top = 32.dp),
+                text = stringResource(id = R.string.checking_for_update)
+            )
+        } else {
+            lastCheckedTime.value?.let {
+                Text(
+                    modifier = Modifier.padding(top = 32.dp),
+                    text = stringResource(
+                        id = R.string.last_checked_time_format,
+                        it
+                    )
                 )
             }
-
-    private fun updateCardFragment() {
-        when {
-            updateViewModel.isUpdating.value == true ||
-                    updateViewModel.readyForUpdate.value == true -> showUpdateFragment()
-            mainViewModel.newUpdateAvailable.value == true -> showDownloadFragment()
-            mainViewModel.noUpdateAvailable.value == true -> showNoUpdateFragment()
-            else -> transitionToStart()
         }
     }
 
-    fun showPopupMenu(view: View) {
-        PopupMenu(this, view).apply {
-            menuInflater.inflate(R.menu.updater_menu, menu)
-            setOnMenuItemClickListener {
-                when (it.itemId) {
-                    R.id.local_upgrade -> {
-                        if (!downloadViewModel.isDownloading) {
-                            localUpgradeFileContract.launch(ZIP_MIME)
-                        }
-                        true
-                    }
-                    R.id.settings -> {
-                        startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
-                        true
-                    }
-                    else -> false
-                }
-            }
-            show()
-        }
-    }
-
-    private fun refreshUpdateView() {
-        when {
-            mainViewModel.isCheckingForUpdate.value == true ->
-                binding.updateStatus.apply {
-                    text = getString(R.string.checking_for_update)
-                    visibility = View.VISIBLE
-                }
-            mainViewModel.lastCheckedTime.value != null -> {
-                binding.updateStatus.post {
-                    binding.updateStatus.apply {
-                        text = getString(
-                            R.string.last_checked_time_format,
-                            mainViewModel.lastCheckedTime.value
-                        )
-                        visibility = View.VISIBLE
-                    }
-                }
-            }
-            else -> binding.updateStatus.visibility = View.GONE
-        }
-    }
-
-    private fun showNoUpdateFragment() {
-        logD("showNoUpdateFragment")
-        showFragment(NoUpdateFragment(), NO_UPDATE_FRAGMENT_TAG)
-    }
-
-    private fun showDownloadFragment() {
-        logD("showDownloadFragment")
-        showFragment(DownloadFragment(), DOWNLOAD_FRAGMENT_TAG)
-    }
-
-    private fun showUpdateFragment() {
-        logD("showUpdateFragment")
-        showFragment(UpdateFragment(), UPDATE_FRAGMENT_TAG)
-    }
-
-    private fun showFragment(fragment: Fragment, tag: String) {
-        val root = (binding.root as MotionLayout)
-        val fragmentAttached = supportFragmentManager.findFragmentByTag(tag) != null
-        if (fragmentAttached) {
-            if (root.currentState != root.endState) {
-                root.transitionToEnd()
-            }
-            return
-        }
-        if (root.currentState == root.endState) {
-            supportFragmentManager.commit {
-                setReorderingAllowed(true)
-                setCustomAnimations(R.anim.slide_in, R.anim.slide_out)
-                replace(R.id.card_fragment_container, fragment, tag)
-            }
-        } else {
-            transitionPending = true
-            supportFragmentManager.commit {
-                setReorderingAllowed(true)
-                setCustomAnimations(0, R.anim.slide_out)
-                replace(R.id.card_fragment_container, fragment, tag)
-            }
-        }
-    }
-
-    private fun transitionToStart() {
-        transitionPending = false
-        supportFragmentManager.fragments.forEach {
-            supportFragmentManager.commitNow { remove(it) }
-        }
-        (binding.root as MotionLayout).transitionToStart()
-    }
-
-    override fun onStop() {
-        fileCopyProgressDialog?.dismiss()
-        fileExportProgressDialog?.dismiss()
-        stateRestoreProgressDialog?.dismiss()
-        super.onStop()
+    @Composable
+    fun NoUpdateCard() {
+        CardContent(
+            title = stringResource(id = R.string.up_to_date),
+            subtitle = stringResource(id = R.string.come_back_later)
+        )
     }
 
     companion object {
+        private const val TOP_CONTENT_HEIGHT_FRACTION = 0.6f
         private val ZIP_MIME = arrayOf("application/zip")
-
-        private const val NO_UPDATE_FRAGMENT_TAG = "no_update_fragment"
-        private const val DOWNLOAD_FRAGMENT_TAG = "download_fragment"
-        private const val UPDATE_FRAGMENT_TAG = "update_fragment"
 
         private const val TAG = "MainActivity"
         private val DEBUG: Boolean

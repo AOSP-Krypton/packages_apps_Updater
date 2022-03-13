@@ -2,12 +2,10 @@ package com.krypton.updater.viewmodel
 
 import android.net.Uri
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 
-import com.krypton.updater.data.Event
+import com.krypton.updater.data.FileCopyStatus
 import com.krypton.updater.data.update.UpdateRepository
 import com.krypton.updater.data.update.UpdateState
 
@@ -15,7 +13,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 
 import javax.inject.Inject
 
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -23,60 +23,29 @@ class UpdateViewModel @Inject constructor(
     private val updateRepository: UpdateRepository,
 ) : ViewModel() {
 
-    private val _updateState = MutableLiveData<UpdateState>()
-    val updateState: LiveData<UpdateState>
-        get() = _updateState
+    val updateState: StateFlow<UpdateState>
+        get() = updateRepository.updateState
 
-    private val _updateFailed = MutableLiveData<Event<String?>>()
-    val updateFailed: LiveData<Event<String?>>
-        get() = _updateFailed
+    val updateProgress: StateFlow<Float>
+        get() = updateRepository.updateProgress
 
-    private val _updateProgress = MutableLiveData<Float>()
-    val updateProgress: LiveData<Float>
-        get() = _updateProgress
+    val showUpdateUI: Flow<Boolean>
+        get() = combine(
+            updateRepository.updateState,
+            updateRepository.readyForUpdate,
+        ) { state, readyForUpdate ->
+            readyForUpdate || !state.idle
+        }
 
-    private val _copyingFile = MutableLiveData<Boolean>()
-    val copyingFile: LiveData<Boolean>
-        get() = _copyingFile
+    val fileCopyStatus: Channel<FileCopyStatus>
+        get() = updateRepository.fileCopyStatus
 
-    private val _copyFailed = MutableLiveData<Event<String?>>()
-    val copyFailed: LiveData<Event<String?>>
-        get() = _copyFailed
-
-    private val _readyForUpdate = MutableLiveData<Boolean>()
-    val readyForUpdate: LiveData<Boolean>
-        get() = _readyForUpdate
-
-    private val _isUpdating = MutableLiveData<Boolean>()
-    val isUpdating: LiveData<Boolean>
-        get() = _isUpdating
+    val updateFailedReason = Channel<String?>(2, BufferOverflow.DROP_OLDEST)
 
     init {
         viewModelScope.launch {
-            updateRepository.copyingFile.collect {
-                _copyingFile.value = it
-            }
-        }
-        viewModelScope.launch {
-            for (result in updateRepository.copyResultChannel) {
-                if (result.isFailure) _copyFailed.value = Event(result.exceptionOrNull()?.message)
-            }
-        }
-        viewModelScope.launch {
-            updateRepository.updateState.collect {
-                _updateState.value = it
-                _isUpdating.value = !it.idle
-                if (it.failed) _updateFailed.value = Event(it.exception?.message)
-            }
-        }
-        viewModelScope.launch {
-            updateRepository.updateProgress.collect {
-                _updateProgress.value = it
-            }
-        }
-        viewModelScope.launch {
-            updateRepository.readyForUpdate.collect {
-                _readyForUpdate.value = it
+            updateRepository.updateState.filter { it.failed }.collect {
+                updateFailedReason.send(it.exception?.localizedMessage)
             }
         }
     }

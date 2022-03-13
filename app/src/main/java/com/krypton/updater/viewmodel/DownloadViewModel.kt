@@ -25,12 +25,16 @@ import com.krypton.updater.data.BuildInfo
 import com.krypton.updater.data.download.DownloadRepository
 import com.krypton.updater.data.download.DownloadState
 import com.krypton.updater.data.Event
+import com.krypton.updater.data.FileCopyStatus
 
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 
 import javax.inject.Inject
 
-import kotlinx.coroutines.flow.collect
+import kotlin.math.roundToInt
+
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -38,61 +42,28 @@ class DownloadViewModel @Inject constructor(
     private val downloadRepository: DownloadRepository,
 ) : ViewModel() {
 
-    private val _downloadState = MutableLiveData<DownloadState>()
-    val downloadState: LiveData<DownloadState>
-        get() = _downloadState
+    val downloadState: StateFlow<DownloadState>
+        get() = downloadRepository.downloadState
 
-    private val _downloadFailedEvent = MutableLiveData<Event<String?>>()
-    val downloadFailed: LiveData<Event<String?>>
-        get() = _downloadFailedEvent
+    val downloadFailedEvent: Flow<Event<String?>>
+        get() = downloadRepository.downloadState.filter { it.failed }.map {
+            Event(it.exception?.localizedMessage)
+        }
 
-    private val _downloadProgress = MutableLiveData<Int>()
-    val downloadProgress: LiveData<Int>
-        get() = _downloadProgress
-
-    val isDownloading: Boolean
-        get() = _downloadState.value?.let { it.waiting || it.downloading } ?: false
+    val downloadProgress: StateFlow<Float>
+        get() = downloadRepository.downloadProgressFlow
 
     private val _stateRestoreFinished = MutableLiveData<Boolean>()
     val stateRestoreFinished: LiveData<Boolean>
         get() = _stateRestoreFinished
 
-    private val _exportingFile = MutableLiveData<Boolean>()
-    val exportingFile: LiveData<Boolean>
-        get() = _exportingFile
-
-    private val _exportingFailed = MutableLiveData<Event<String?>>()
-    val exportingFailed: LiveData<Event<String?>>
-        get() = _exportingFailed
+    val fileCopyStatus: Channel<FileCopyStatus>
+        get() = downloadRepository.fileCopyStatus
 
     init {
         viewModelScope.launch {
-            downloadRepository.exportingFile.collect {
-                _exportingFile.value = it
-            }
-        }
-        viewModelScope.launch {
-            for (result in downloadRepository.fileExportResult) {
-                if (result.isFailure) _exportingFailed.value = Event(result.exceptionOrNull()?.message)
-            }
-        }
-        viewModelScope.launch {
             downloadRepository.stateRestoreFinished.collect {
                 _stateRestoreFinished.value = it
-            }
-        }
-        viewModelScope.launch {
-            downloadRepository.downloadState.collect {
-                _downloadState.value = it
-                if (it.failed) {
-                    _downloadFailedEvent.value = Event(it.exception?.message)
-                }
-            }
-        }
-        viewModelScope.launch {
-            downloadRepository.downloadProgressFlow.collect {
-                val totalSize = downloadRepository.downloadSize
-                _downloadProgress.value = if (totalSize > 0) ((it * 100) / totalSize).toInt() else 0
             }
         }
     }

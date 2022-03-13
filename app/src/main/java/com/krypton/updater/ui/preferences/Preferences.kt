@@ -47,7 +47,7 @@ fun Preference(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = clickable, onClick = { onClick() }),
+            .clickable(enabled = clickable, onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (startWidget != null) {
@@ -115,7 +115,7 @@ fun SwitchPreference(
         endWidget = {
             Switch(
                 checked = checked,
-                onCheckedChange = { onCheckedChange(it) },
+                onCheckedChange = onCheckedChange,
                 colors = SwitchDefaults.colors(
                     checkedTrackColor = MaterialTheme.colorScheme.primary,
                     checkedThumbColor = MaterialTheme.colorScheme.primary,
@@ -138,9 +138,8 @@ fun DiscreteSeekBarPreference(
     value: Int,
     showProgressText: Boolean = false,
     onProgressChanged: (Int) -> Unit = {},
-    onChangeFinished: (Int) -> Unit = {}
+    onProgressChangeFinished: () -> Unit = {},
 ) {
-    var position by remember { mutableStateOf(value) }
     Preference(
         title = title,
         summary = summary,
@@ -151,23 +150,22 @@ fun DiscreteSeekBarPreference(
                 Slider(
                     modifier = Modifier.weight(1f),
                     onValueChange = {
-                        position = if (it > position) {
-                            floor(it).toInt()
-                        } else {
-                            ceil(it).toInt()
-                        }
-                        onProgressChanged(position)
+                        onProgressChanged(
+                            if (it > value) {
+                                floor(it).toInt()
+                            } else {
+                                ceil(it).toInt()
+                            }
+                        )
                     },
-                    onValueChangeFinished = {
-                        onChangeFinished(position)
-                    },
+                    onValueChangeFinished = onProgressChangeFinished,
                     valueRange = min.toFloat()..max.toFloat(),
-                    value = position.toFloat(),
+                    value = value.toFloat(),
                 )
                 if (showProgressText) {
                     Text(
                         modifier = Modifier.width(36.dp),
-                        text = position.toString(),
+                        text = value.toString(),
                         color = MaterialTheme.colorScheme.onSurface,
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 1,

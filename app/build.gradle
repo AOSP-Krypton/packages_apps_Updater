@@ -32,10 +32,6 @@ android {
     }
     buildFeatures {
         compose true
-        dataBinding true
-    }
-    dataBinding {
-        addKtx = false
     }
     composeOptions {
         kotlinCompilerExtensionVersion '1.1.1'
@@ -66,7 +62,7 @@ protobuf {
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.4.1'
     implementation 'androidx.activity:activity-ktx:1.4.0'
-    implementation 'androidx.compose.material3:material3:1.0.0-alpha06'
+    implementation 'androidx.compose.material3:material3:1.0.0-alpha09'
     implementation 'androidx.compose.ui:ui:1.1.1'
     debugImplementation 'androidx.compose.ui:ui-tooling:1.1.1'
     implementation 'androidx.compose.ui:ui-tooling-preview:1.1.1'
@@ -84,6 +80,7 @@ dependencies {
     implementation 'androidx.preference:preference-ktx:1.2.0'
     implementation("androidx.room:room-ktx:2.4.2")
     implementation("androidx.room:room-runtime:2.4.2")
+    implementation 'com.google.accompanist:accompanist-systemuicontroller:0.17.0'
     implementation 'com.google.android.material:material:1.5.0'
     implementation 'com.google.dagger:hilt-android:2.38.1'
     implementation("com.google.code.gson:gson:2.8.9")
