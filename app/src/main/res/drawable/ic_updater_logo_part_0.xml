@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2021-2022 AOSP-Krypton Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="m24,12.0112a12.0747,12.0735 89.9839,0 1,-0.1081 1.6135c-0.6247,0.8019 -1.5454,1.6762 -2.7543,1.8109 -1.4411,0.161 -1.9015,-0.7764 -3.827,-1.1257 -2.4793,-0.4503 -2.9224,0.9381 -5.5154,0.6004 -2.3262,-0.3002 -2.629,-1.5032 -4.3523,-1.2383 -1.6381,0.2518 -1.9345,1.4259 -3.4143,1.6135 -1.135,0.1445 -2.4369,-0.3576 -3.9351,-1.7981a12.0852,12.084 90.0204,0 1,-0.0904 -1.4781c0,-6.6214 5.3717,-11.9888 11.9985,-11.9888 6.6268,0 11.9985,5.3693 11.9985,11.9907z"
+        android:fillColor="#FFFFFF" />
+</vector>

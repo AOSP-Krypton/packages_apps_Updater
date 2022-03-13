@@ -16,8 +16,6 @@
 
 package com.krypton.updater.viewmodel
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 
@@ -28,8 +26,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 
 import javax.inject.Inject
 
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
@@ -37,26 +35,11 @@ class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
-    private val _updateCheckInterval = MutableLiveData<Int>()
-    val updateCheckInterval: LiveData<Int>
-        get() = _updateCheckInterval
+    val updateCheckInterval: Flow<Int>
+        get() = settingsRepository.updateCheckInterval
 
-    private val _optOutIncremental = MutableLiveData<Boolean>()
-    val optOutIncremental: LiveData<Boolean>
-        get() = _optOutIncremental
-
-    init {
-        viewModelScope.launch {
-            settingsRepository.updateCheckInterval.collect {
-                _updateCheckInterval.value = it
-            }
-        }
-        viewModelScope.launch {
-            settingsRepository.optOutIncremental.collect {
-                _optOutIncremental.value = it
-            }
-        }
-    }
+    val optOutIncremental: Flow<Boolean>
+        get() = settingsRepository.optOutIncremental
 
     /**
      * Set interval (in days) for automatic update checking.

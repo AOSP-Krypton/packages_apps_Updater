@@ -18,6 +18,7 @@ package com.krypton.updater.data.update
 
 import android.content.Context
 import android.net.Uri
+import com.krypton.updater.data.FileCopyStatus
 
 import com.krypton.updater.data.download.DownloadManager
 import com.krypton.updater.data.savedStateDataStore
@@ -67,11 +68,7 @@ class UpdateRepository @Inject constructor(
     val readyForUpdate: StateFlow<Boolean>
         get() = _readyForUpdate
 
-    private val _copyingFile = MutableStateFlow(false)
-    val copyingFile: StateFlow<Boolean>
-        get() = _copyingFile
-
-    val copyResultChannel = Channel<Result<Unit>>(2, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val fileCopyStatus = Channel<FileCopyStatus>(2, BufferOverflow.DROP_OLDEST)
 
     init {
         applicationScope.launch {
@@ -130,17 +127,15 @@ class UpdateRepository @Inject constructor(
         updateManager.reset()
         clearSavedUpdateState()
         _readyForUpdate.value = false
-        _copyingFile.value = true
+        fileCopyStatus.send(FileCopyStatus.Copying)
         val result = withContext(Dispatchers.IO) {
-            runCatching {
-                val result = otaFileManager.copyToOTAPackageDir(uri)
-                if (result.isFailure) {
-                    throw result.exceptionOrNull()!!
-                }
-            }
+            otaFileManager.copyToOTAPackageDir(uri)
         }
-        _copyingFile.value = false
-        copyResultChannel.send(result)
+        if (result.isSuccess) {
+            fileCopyStatus.send(FileCopyStatus.Success)
+        } else {
+            fileCopyStatus.send(FileCopyStatus.Failure(result.exceptionOrNull()?.localizedMessage))
+        }
         _readyForUpdate.value = result.isSuccess
     }
 

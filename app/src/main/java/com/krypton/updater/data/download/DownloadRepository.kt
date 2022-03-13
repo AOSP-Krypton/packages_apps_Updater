@@ -22,6 +22,7 @@ import android.util.Log
 
 import com.krypton.updater.data.BuildInfo
 import com.krypton.updater.data.FileCopier
+import com.krypton.updater.data.FileCopyStatus
 import com.krypton.updater.data.room.AppDatabase
 import com.krypton.updater.data.savedStateDataStore
 
@@ -60,11 +61,8 @@ class DownloadRepository @Inject constructor(
     val downloadEventChannel: Channel<DownloadResult>
         get() = downloadManager.eventChannel
 
-    val downloadProgressFlow: StateFlow<Long>
+    val downloadProgressFlow: StateFlow<Float>
         get() = downloadManager.progressFlow
-
-    val downloadSize: Long
-        get() = downloadManager.downloadSize
 
     val downloadFileName: String?
         get() = downloadManager.downloadFileName
@@ -75,11 +73,7 @@ class DownloadRepository @Inject constructor(
     val stateRestoreFinished: StateFlow<Boolean>
         get() = _stateRestoreFinished
 
-    private val _exportingFile = MutableStateFlow(false)
-    val exportingFile: StateFlow<Boolean>
-        get() = _exportingFile
-
-    val fileExportResult = Channel<Result<Unit>>(2, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val fileCopyStatus = Channel<FileCopyStatus>(2, BufferOverflow.DROP_OLDEST)
 
     init {
         applicationScope.launch {
@@ -101,13 +95,15 @@ class DownloadRepository @Inject constructor(
 
     private suspend fun exportFile() {
         downloadManager.downloadFile?.let { file ->
-            _exportingFile.value = true
-            fileExportResult.send(
-                withContext(Dispatchers.IO) {
-                    fileCopier.copyToExportDir(file)
-                }
-            )
-            _exportingFile.value = false
+            fileCopyStatus.send(FileCopyStatus.Copying)
+            val result = withContext(Dispatchers.IO) {
+                fileCopier.copyToExportDir(file)
+            }
+            if (result.isSuccess) {
+                fileCopyStatus.send(FileCopyStatus.Success)
+            } else {
+                fileCopyStatus.send(FileCopyStatus.Failure(result.exceptionOrNull()?.localizedMessage))
+            }
         }
     }
 

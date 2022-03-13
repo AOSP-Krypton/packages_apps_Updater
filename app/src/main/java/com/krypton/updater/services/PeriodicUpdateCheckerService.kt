@@ -82,8 +82,8 @@ class PeriodicUpdateCheckerService : Service() {
             val result = mainRepository.fetchUpdateInfo()
             if (result.isFailure)
                 notifyUser(
-                    R.string.update_check_failed,
-                    R.string.update_check_failed_description
+                    R.string.auto_update_check_failed,
+                    R.string.auto_update_check_failed_desc
                 )
             val updateInfo = mainRepository.getUpdateInfo().first()
             if (updateInfo.type == UpdateInfo.Type.NEW_UPDATE) {

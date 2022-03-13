@@ -16,59 +16,29 @@
 
 package com.krypton.updater.viewmodel
 
-import android.content.Context
-
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 
 import com.krypton.updater.data.MainRepository
 
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 
 import java.util.Date
-import java.text.DateFormat
-import java.util.Locale
 
 import javax.inject.Inject
 
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.Flow
 
 @HiltViewModel
 class ChangelogViewModel @Inject constructor(
-    @ApplicationContext context: Context,
-    mainRepository: MainRepository,
+    private val mainRepository: MainRepository,
 ) : ViewModel() {
 
-    private val locale = context.resources.configuration.locales[0]
-
-    private val _changelog = MutableLiveData<List<Pair<String, String?>>>(emptyList())
-    val changelog: LiveData<List<Pair<String, String?>>>
-        get() = _changelog
-
-    init {
-        viewModelScope.launch {
-            mainRepository.getUpdateInfo().collect {
-                _changelog.value = joinChangelog(it.changelog)
+    val changelog: Flow<List<Pair<Date, String?>>>
+        get() = mainRepository.getUpdateInfo().map {
+            val changelog = it.changelog ?: return@map emptyList()
+            changelog.keys.sorted().map { date ->
+                Pair(Date(date), changelog[date])
             }
         }
-    }
-
-    private fun joinChangelog(changelogs: Map<Long, String?>?): List<Pair<String, String?>> {
-        val changelogList = mutableListOf<Pair<String, String?>>()
-        changelogs?.keys?.sorted()?.forEach {
-            changelogList.add(Pair(getFormattedDate(locale, Date(it)), changelogs[it]))
-        }
-        return changelogList.toList()
-    }
-
-    companion object {
-        private fun getFormattedDate(
-            locale: Locale,
-            time: Date,
-        ) = DateFormat.getDateInstance(DateFormat.DEFAULT, locale).format(time)
-    }
 }

@@ -38,6 +38,8 @@ import dagger.hilt.android.AndroidEntryPoint
 
 import javax.inject.Inject
 
+import kotlin.math.roundToInt
+
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -208,9 +210,7 @@ class UpdateDownloadService : JobService() {
         }
     }
 
-    private fun updateProgressNotification(downloadedBytes: Long) {
-        val size = downloadRepository.downloadSize
-        val progress = if (size > 0) ((downloadedBytes * 100) / size).toInt() else 0
+    private fun updateProgressNotification(progress: Float) {
         notificationManager.notify(
             DOWNLOAD_NOTIFICATION_ID,
             NotificationCompat.Builder(this, DOWNLOAD_NOTIFICATION_CHANNEL_ID)
@@ -219,7 +219,7 @@ class UpdateDownloadService : JobService() {
                 .setSmallIcon(R.drawable.ic_baseline_system_update_24)
                 .setContentTitle(getString(R.string.downloading_update))
                 .setContentText(downloadRepository.downloadFileName)
-                .setProgress(100, progress, false)
+                .setProgress(100, progress.roundToInt(), false)
                 .setOngoing(true)
                 .setSilent(true)
                 .addAction(

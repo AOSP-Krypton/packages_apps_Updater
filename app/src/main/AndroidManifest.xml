@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
      Copyright (C) 2021-2022 AOSP-Krypton Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,12 +33,13 @@
 
     <application
         android:name=".UpdaterApp"
+        android:defaultToDeviceProtectedStorage="true"
+        android:directBootAware="true"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Updater"
-        android:directBootAware="true"
-        android:defaultToDeviceProtectedStorage="true"
+        android:theme="@style/Theme.Material3.DayNight.NoActionBar"
         tools:ignore="AllowBackup,MissingApplicationIcon">
+
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
@@ -48,12 +48,18 @@
             <intent-filter>
                 <action android:name="com.android.settings.action.EXTRA_SETTINGS" />
             </intent-filter>
-            <meta-data android:name="com.android.settings.order" android:value="-270"/>
-            <meta-data android:name="com.android.settings.category"
+
+            <meta-data
+                android:name="com.android.settings.order"
+                android:value="-270" />
+            <meta-data
+                android:name="com.android.settings.category"
                 android:value="com.android.settings.category.ia.system" />
-            <meta-data android:name="com.android.settings.title"
-                android:resource="@string/app_name"/>
-            <meta-data android:name="com.android.settings.icon"
+            <meta-data
+                android:name="com.android.settings.title"
+                android:resource="@string/app_name" />
+            <meta-data
+                android:name="com.android.settings.icon"
                 android:resource="@drawable/ic_baseline_system_update_24" />
         </activity>
 
@@ -62,14 +68,15 @@
             android:exported="false"
             android:parentActivityName=".ui.MainActivity" />
 
-        <activity android:name=".ui.SettingsActivity"
+        <activity
+            android:name=".ui.SettingsActivity"
             android:exported="false"
             android:parentActivityName=".ui.MainActivity" />
 
         <receiver
             android:name=".BootCompleteReceiver"
-            android:exported="false"
-            android:directBootAware="true">
+            android:directBootAware="true"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
             </intent-filter>

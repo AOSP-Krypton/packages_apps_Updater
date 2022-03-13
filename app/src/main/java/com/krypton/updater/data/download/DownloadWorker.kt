@@ -52,7 +52,7 @@ class DownloadWorker(
 ) {
     private var downloadedBytes = 0L
 
-    val channel = Channel<Long>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val channel = Channel<Float>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     /**
      * Run the worker.
@@ -69,7 +69,7 @@ class DownloadWorker(
             if (downloadedBytes == fileSize) {
                 logD("file already downloaded, verifying hash")
                 if (HashVerifier.verifyHash(downloadFile, fileHash)) {
-                    channel.send(downloadedBytes)
+                    channel.send(100f)
                     return DownloadResult.success()
                 }
                 Log.w(TAG, "File is corrupt, deleting")
@@ -95,17 +95,18 @@ class DownloadWorker(
                         logD("input stream opened")
                         val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
                         var bytesRead = inStream.read(buffer)
-                        while (currentCoroutineContext().isActive && bytesRead > 0) {
+                        while (currentCoroutineContext().isActive && bytesRead >= 0) {
                             outStream.write(buffer, 0, bytesRead)
                             downloadedBytes += bytesRead
-                            channel.send(downloadedBytes)
+                            channel.send((downloadedBytes * 100f) / fileSize)
                             bytesRead = inStream.read(buffer)
                         }
                         logD("isActive = ${currentCoroutineContext().isActive}")
                         outStream.flush()
                     }
+                    logD("input stream closed")
                 }
-                logD("streams closed, download finished")
+                logD("output stream closed")
                 connection.disconnect()
                 logD("connection disconnected")
             }
@@ -113,6 +114,7 @@ class DownloadWorker(
         channel.close()
         logD("channel closed")
         if (downloadResult.isFailure) {
+            Log.e(TAG, "Download failed", downloadResult.exceptionOrNull())
             return DownloadResult.failure(downloadResult.exceptionOrNull())
         }
         return if (downloadedBytes == fileSize) {
@@ -148,6 +150,7 @@ class DownloadWorker(
                     }
                     val responseCode =
                         responseResult.getOrDefault(HttpsURLConnection.HTTP_INTERNAL_ERROR)
+                    logD("response code = $responseCode")
                     if (responseCode == HttpsURLConnection.HTTP_OK ||
                         responseCode == HttpsURLConnection.HTTP_CREATED ||
                         responseCode == HttpsURLConnection.HTTP_ACCEPTED ||
@@ -156,6 +159,9 @@ class DownloadWorker(
                         return@withTimeoutOrNull Result.success(conn)
                     } else {
                         Log.e(TAG, "Connection failed with response code $responseCode")
+                        runCatching { conn.responseMessage }.onSuccess {
+                            Log.e(TAG, "Response message = $it")
+                        }
                     }
                 }
             }
@@ -170,7 +176,7 @@ class DownloadWorker(
         private val DEBUG: Boolean
             get() = Log.isLoggable(TAG, Log.DEBUG)
 
-        private val DOWNLOAD_BUFFER_SIZE = DataUnit.KIBIBYTES.toBytes(256).toInt()
+        private val DOWNLOAD_BUFFER_SIZE = DataUnit.MEBIBYTES.toBytes(1).toInt()
 
         private val CONNECTION_RETRY_TIMEOUT = TimeUnit.SECONDS.toMillis(5)
 

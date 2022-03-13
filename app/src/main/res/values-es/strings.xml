@@ -20,8 +20,8 @@
     <!-- Update checker -->
     <string name="new_system_update">Se ha detectado una nueva actualización del sistema</string>
     <string name="new_system_update_description">Haga clic aquí para descargar e instalar la actualización</string>
-    <string name="update_check_failed">Fallo en la comprobación de la actualización automática</string>
-    <string name="update_check_failed_description">Compruebe las actualizaciones manualmente</string>
+    <string name="auto_update_check_failed">Fallo en la comprobación de la actualización automática</string>
+    <string name="auto_update_check_failed_desc">Compruebe las actualizaciones manualmente</string>
 
     <!-- Download -->
     <string name="downloading">Descargando</string>
@@ -35,12 +35,12 @@
         <xliff:g example="12-11-2021" id="date">%1$s</xliff:g>\u0020\u0020|\u0020\u0020KOSP v<xliff:g example="2.3" id="version">%2$s</xliff:g>
     </string>
     <string name="check_for_updates">Comprobar las actualizaciones</string>
-    <string name="checking_for_update">Comprobando las actualizaciones...</string>
+    <string name="checking_for_update">Comprobando las actualizaciones…</string>
     <string name="last_checked_time_format">
         Última comprobación en <xliff:g example="11:02 AM" id="time">%1$s</xliff:g>
     </string>
     <string name="up_to_date">Su dispositivo está actualizado</string>
-    <string name="come_back_later">Vuelve más tarde...</string>
+    <string name="come_back_later">Vuelve más tarde…</string>
     <string name="new_update_available">Nueva actualización disponible</string>
     <string name="new_update_description_format">
         v<xliff:g example="2.3" id="version">%1$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="12-11-2021" id="date">%2$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="1.3GB" id="size">%3$s</xliff:g>
@@ -48,7 +48,7 @@
     <string name="download">Descargar</string>
     <string name="update">Actualizar</string>
     <string name="download_text_format">
-        Descargando - <xliff:g example="100" id="percent">%1$d%%</xliff:g>
+        Descargando - <xliff:g example="100" id="percent">%1$s%%</xliff:g>
     </string>
     <string name="waiting">Esperando</string>
     <string name="restoring_state">Restaurando el estado</string>
@@ -68,7 +68,7 @@
     <string name="installing_update">Instalando la actualización</string>
     <string name="installation_failed">Instalación fallida</string>
     <string name="reboot">Reiniciar</string>
-    <string name="initializing">Iniciando...</string>
+    <string name="initializing">Iniciando…</string>
     <string name="installation_finished">Instalación terminada</string>
     <string name="installation_paused">Instalación en pausa</string>
     <string name="installing_update_format">Instalando la actualización - <xliff:g example="100" id="percent">%1$s%%</xliff:g></string>

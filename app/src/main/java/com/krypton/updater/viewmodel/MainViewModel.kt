@@ -16,137 +16,60 @@
 
 package com.krypton.updater.viewmodel
 
-import android.content.Context
-import android.util.DataUnit
-
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 
-import com.krypton.updater.data.Event
 import com.krypton.updater.data.MainRepository
 import com.krypton.updater.data.UpdateInfo
 import com.krypton.updater.data.download.DownloadRepository
 import com.krypton.updater.data.update.UpdateRepository
 
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 
-import java.text.DateFormat
-import java.text.DecimalFormat
 import java.util.Date
-import java.util.Locale
 
 import javax.inject.Inject
 
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    @ApplicationContext context: Context,
     private val mainRepository: MainRepository,
     private val downloadRepository: DownloadRepository,
     private val updateRepository: UpdateRepository,
 ) : ViewModel() {
 
-    private val locale = context.resources.configuration.locales[0]
+    val updateInfoNew: Flow<UpdateInfo>
+        get() = mainRepository.getUpdateInfo()
 
-    private val _updateInfo = MutableLiveData<UpdateInfo>()
-    val updateInfo: LiveData<UpdateInfo>
-        get() = _updateInfo
-
-    private val _updateFailedEvent = MutableLiveData<Event<String?>>()
-    val updateFailedEvent: LiveData<Event<String?>>
-        get() = _updateFailedEvent
-
-    val systemBuildDate: String
-        get() = getFormattedDate(
-            locale,
-            time = mainRepository.systemBuildDate,
-        )
+    val systemBuildDate: Date
+        get() = mainRepository.systemBuildDate
 
     val systemBuildVersion: String = mainRepository.systemBuildVersion
 
-    private val _lastCheckedTime = MutableLiveData<String?>()
-    val lastCheckedTime: LiveData<String?>
-        get() = _lastCheckedTime
+    val lastCheckedTimeNew: Flow<Long>
+        get() = mainRepository.lastCheckedTime.map { it.time }.filter { it > 0 }
 
     private var updateCheckJob: Job? = null
 
-    private val _isCheckingForUpdate = MutableLiveData(false)
-    val isCheckingForUpdate: LiveData<Boolean>
+    private val _isCheckingForUpdate = MutableStateFlow(false)
+    val isCheckingForUpdate: StateFlow<Boolean>
         get() = _isCheckingForUpdate
 
-    private val _newUpdateAvailable = MutableLiveData<Boolean>()
-    val newUpdateAvailable: LiveData<Boolean>
-        get() = _newUpdateAvailable
+    val updateAvailable: Flow<Boolean>
+        get() = mainRepository.getUpdateInfo().map { it.type == UpdateInfo.Type.NEW_UPDATE }
 
-    private val _noUpdateAvailable = MutableLiveData<Boolean>()
-    val noUpdateAvailable: LiveData<Boolean>
-        get() = _noUpdateAvailable
-
-    val updateVersion: LiveData<String?>
-        get() = Transformations.map(updateInfo) { it.buildInfo?.version }
-
-    val updateDate: LiveData<String?>
-        get() = Transformations.map(updateInfo) {
-            it.buildInfo?.date?.let { date ->
-                getFormattedDate(locale, time = Date(date))
-            }
+    val updateResultAvailable: Flow<Boolean>
+        get() = mainRepository.getUpdateInfo().map {
+            it.type == UpdateInfo.Type.NEW_UPDATE || it.type == UpdateInfo.Type.NO_UPDATE
         }
 
-    val updateSize: LiveData<String?>
-        get() = Transformations.map(updateInfo) {
-            it.buildInfo?.fileSize?.let { size ->
-                formatBytes(size)
-            }
-        }
+    val updateFailedEvent = Channel<String?>(2, BufferOverflow.DROP_OLDEST)
 
-    private val _allowUpdateCheck = MutableLiveData(true)
-    val allowUpdateCheck: LiveData<Boolean>
-        get() = _allowUpdateCheck
-
-    init {
-        viewModelScope.launch {
-            mainRepository.lastCheckedTime.collect {
-                _lastCheckedTime.value =
-                    if (it.time > 0) getFormattedDate(
-                        locale,
-                        timeStyle = DateFormat.SHORT,
-                        time = it
-                    ) else null
-            }
-        }
-        viewModelScope.launch {
-            mainRepository.getUpdateInfo().collect {
-                _updateInfo.value = it
-                _newUpdateAvailable.value = it.type == UpdateInfo.Type.NEW_UPDATE
-                _noUpdateAvailable.value = it.type == UpdateInfo.Type.NO_UPDATE
-            }
-        }
-        viewModelScope.launch {
-            downloadRepository.downloadState.combine(
-                updateRepository.updateState
-            ) { downloadState, updateState ->
-                !downloadState.waiting &&
-                        !downloadState.downloading &&
-                        !updateState.initializing &&
-                        !updateState.updating
-            }.collect {
-                _allowUpdateCheck.value = it
-            }
-        }
-    }
-
-    /**
-     * Check for updates and post result in [updateInfo] (if successful) or
-     * [updateFailedEvent] (if failed).
-     */
     fun checkForUpdates() {
         updateCheckJob?.let {
             if (it.isActive) it.cancel()
@@ -157,50 +80,9 @@ class MainViewModel @Inject constructor(
             updateRepository.resetState()
             val result = mainRepository.fetchUpdateInfo()
             _isCheckingForUpdate.value = false
-            if (result.isFailure) _updateFailedEvent.value =
-                Event(result.exceptionOrNull()?.message)
-        }
-    }
-
-    companion object {
-        private val units = arrayOf("KiB", "MiB", "GiB")
-        private val singleDecimalFmt = DecimalFormat("00.0")
-        private val doubleDecimalFmt = DecimalFormat("0.00")
-        private val KiB: Long = DataUnit.KIBIBYTES.toBytes(1)
-
-        private fun formatBytes(bytes: Long): String {
-            val unit: String
-            var rate = (bytes / KiB).toFloat()
-            var i = 0
-            while (true) {
-                rate /= KiB
-                if (rate >= 0.9f && rate < 1) {
-                    unit = units[i + 1]
-                    break
-                } else if (rate < 0.9f) {
-                    rate *= KiB
-                    unit = units[i]
-                    break
-                }
-                i++
+            if (result.isFailure) {
+                updateFailedEvent.send(result.exceptionOrNull()?.localizedMessage)
             }
-            val formattedSize = when {
-                rate < 10 -> doubleDecimalFmt.format(rate)
-                rate < 100 -> singleDecimalFmt.format(rate)
-                rate < 1000 -> rate.toInt().toString()
-                else -> rate.toString()
-            }
-            return "$formattedSize $unit"
-        }
-
-        private fun getFormattedDate(
-            locale: Locale,
-            timeStyle: Int = -1,
-            time: Date,
-        ) = if (timeStyle == -1) {
-            DateFormat.getDateInstance(DateFormat.DEFAULT, locale).format(time)
-        } else {
-            DateFormat.getDateTimeInstance(DateFormat.DEFAULT, timeStyle, locale).format(time)
         }
     }
 }

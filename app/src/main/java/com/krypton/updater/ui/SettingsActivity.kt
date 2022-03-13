@@ -18,17 +18,14 @@ package com.krypton.updater.ui
 
 import android.os.Bundle
 
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,7 +39,7 @@ import com.krypton.updater.viewmodel.SettingsViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class SettingsActivity : AppCompatActivity() {
+class SettingsActivity : ComponentActivity() {
 
     private val settingsViewModel: SettingsViewModel by viewModels()
 
@@ -58,10 +55,6 @@ class SettingsActivity : AppCompatActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun SettingsScreen() {
-        val updateCheckIntervalState = settingsViewModel.updateCheckInterval.observeAsState(7)
-        val updateCheckInterval by remember { updateCheckIntervalState }
-        val optOutIncrementalState = settingsViewModel.optOutIncremental.observeAsState(false)
-        val optOutIncremental by remember { optOutIncrementalState }
         Scaffold(
             topBar = {
                 SmallTopAppBar(
@@ -84,21 +77,23 @@ class SettingsActivity : AppCompatActivity() {
             }
         ) {
             Column {
+                val updateCheckInterval = settingsViewModel.updateCheckInterval.collectAsState(7)
                 DiscreteSeekBarPreference(
                     title = stringResource(R.string.update_check_interval_title),
                     summary = stringResource(R.string.update_check_interval_summary),
                     min = 1,
                     max = 30,
-                    value = updateCheckInterval,
+                    value = updateCheckInterval.value,
                     showProgressText = true,
-                    onChangeFinished = {
+                    onProgressChanged = {
                         settingsViewModel.setUpdateCheckInterval(it)
-                    }
+                    },
                 )
+                val optOutIncremental = settingsViewModel.optOutIncremental.collectAsState(false)
                 SwitchPreference(
                     title = stringResource(R.string.opt_out_incremental_title),
                     summary = stringResource(R.string.opt_out_incremental_summary),
-                    checked = optOutIncremental,
+                    checked = optOutIncremental.value,
                     onCheckedChange = {
                         settingsViewModel.setOptOutIncremental(it)
                     }
