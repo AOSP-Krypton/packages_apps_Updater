@@ -21,6 +21,13 @@ import android.util.Log
 
 import com.krypton.updater.data.HashVerifier
 
+import java.io.File
+import java.io.FileOutputStream
+import java.net.URL
+import java.util.concurrent.TimeUnit
+
+import javax.net.ssl.HttpsURLConnection
+
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
@@ -28,13 +35,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-
-import java.io.File
-import java.io.FileOutputStream
-import java.net.URL
-import java.util.concurrent.TimeUnit
-
-import javax.net.ssl.HttpsURLConnection
 
 /**
  * A worker whose job is to download the file from the given url.
@@ -72,7 +72,7 @@ class DownloadWorker(
                     channel.send(downloadedBytes)
                     return DownloadResult.success()
                 }
-                Log.w(TAG,"file is corrupt, deleting")
+                Log.w(TAG, "File is corrupt, deleting")
                 downloadFile.delete()
                 downloadedBytes = 0
                 resume = false
@@ -126,25 +126,33 @@ class DownloadWorker(
     }
 
     private suspend fun openConnection(range: String?): Result<HttpsURLConnection> {
-        val connection: HttpsURLConnection? = withTimeoutOrNull(CONNECTION_RETRY_TIMEOUT) {
-            while (isActive) {
-                val connectionResult = runCatching {
-                    url.openConnection() as HttpsURLConnection
-                }
-                if (connectionResult.isSuccess) {
-                    val conn = connectionResult.getOrThrow()
-                    if (range != null) {
-                        conn.setRequestProperty("Range", "bytes=$range")
+        val connectionResult: Result<HttpsURLConnection>? =
+            withTimeoutOrNull(CONNECTION_RETRY_TIMEOUT) {
+                while (isActive) {
+                    val openResult = runCatching {
+                        url.openConnection() as HttpsURLConnection
                     }
-                    if (conn.responseCode == 200) {
-                        return@withTimeoutOrNull conn
+                    if (openResult.isSuccess) {
+                        val conn = openResult.getOrThrow()
+                        if (range != null) {
+                            conn.setRequestProperty("Range", "bytes=$range")
+                        }
+                        val responseCode = conn.responseCode
+                        if (responseCode == HttpsURLConnection.HTTP_OK ||
+                            responseCode == HttpsURLConnection.HTTP_CREATED ||
+                            responseCode == HttpsURLConnection.HTTP_ACCEPTED ||
+                            responseCode == HttpsURLConnection.HTTP_PARTIAL
+                        ) {
+                            Result.success(conn)
+                        } else {
+                            Log.e(TAG, "Connection failed with response code $responseCode")
+                        }
                     }
                 }
+                Result.failure(Throwable("Current download job was cancelled"))
             }
-            null
-        }
-        return connection?.let { Result.success(it) }
-            ?: Result.failure(Throwable("Failed to establish a connection with the url"))
+        return connectionResult
+            ?: Result.failure(Throwable("Timeout while establishing connection, retry"))
     }
 
     companion object {
