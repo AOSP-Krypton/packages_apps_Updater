@@ -88,6 +88,6 @@
     <string name="settings">更新設定</string>
     <string name="update_check_interval_title">定期檢查更新間隔</string>
     <string name="update_check_interval_summary">設定此應用檢查更新頻率（天）</string>
-    <string name="opt_out_incremental_title">增量更新</string>
+    <string name="opt_out_incremental_title">全量更新</string>
     <string name="opt_out_incremental_summary">只下載安裝全量包。若您已 root 或以任何形式修改過系統，則您必須開啟此選項。</string>
 </resources>
