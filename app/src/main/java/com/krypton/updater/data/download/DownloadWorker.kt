@@ -126,31 +126,41 @@ class DownloadWorker(
     }
 
     private suspend fun openConnection(range: String?): Result<HttpsURLConnection> {
-        val connectionResult: Result<HttpsURLConnection>? =
-            withTimeoutOrNull(CONNECTION_RETRY_TIMEOUT) {
-                while (isActive) {
-                    val openResult = runCatching {
-                        url.openConnection() as HttpsURLConnection
+        val connectionResult = withTimeoutOrNull(CONNECTION_RETRY_TIMEOUT) {
+            while (isActive) {
+                val openResult = runCatching {
+                    url.openConnection() as HttpsURLConnection
+                }
+                if (openResult.isSuccess) {
+                    openResult.getOrElse { }
+                    val conn = openResult.getOrThrow()
+                    if (range != null) {
+                        conn.setRequestProperty("Range", "bytes=$range")
                     }
-                    if (openResult.isSuccess) {
-                        val conn = openResult.getOrThrow()
-                        if (range != null) {
-                            conn.setRequestProperty("Range", "bytes=$range")
-                        }
-                        val responseCode = conn.responseCode
-                        if (responseCode == HttpsURLConnection.HTTP_OK ||
-                            responseCode == HttpsURLConnection.HTTP_CREATED ||
-                            responseCode == HttpsURLConnection.HTTP_ACCEPTED ||
-                            responseCode == HttpsURLConnection.HTTP_PARTIAL
-                        ) {
-                            Result.success(conn)
-                        } else {
-                            Log.e(TAG, "Connection failed with response code $responseCode")
-                        }
+                    val responseResult = runCatching { conn.responseCode }
+                    if (responseResult.isFailure) {
+                        Log.e(
+                            TAG,
+                            "Failed to get response code, error = " +
+                                    responseResult.exceptionOrNull()?.message
+                        )
+                        continue
+                    }
+                    val responseCode =
+                        responseResult.getOrDefault(HttpsURLConnection.HTTP_INTERNAL_ERROR)
+                    if (responseCode == HttpsURLConnection.HTTP_OK ||
+                        responseCode == HttpsURLConnection.HTTP_CREATED ||
+                        responseCode == HttpsURLConnection.HTTP_ACCEPTED ||
+                        responseCode == HttpsURLConnection.HTTP_PARTIAL
+                    ) {
+                        return@withTimeoutOrNull Result.success(conn)
+                    } else {
+                        Log.e(TAG, "Connection failed with response code $responseCode")
                     }
                 }
-                Result.failure(Throwable("Current download job was cancelled"))
             }
+            null
+        }
         return connectionResult
             ?: Result.failure(Throwable("Timeout while establishing connection, retry"))
     }
