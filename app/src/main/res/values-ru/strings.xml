@@ -18,15 +18,15 @@
     <string name="app_name">Обновление</string>
 
     <!-- Update checker -->
-    <string name="new_system_update">Обнаружено новое системное обновление</string>
+    <string name="new_system_update">Обнаружено новое обновление системы</string>
     <string name="new_system_update_description">Нажмите здесь, чтобы загрузить и установить обновление</string>
-    <string name="update_check_failed">Автоматическая проверка обновлений не удалась</string>
+    <string name="update_check_failed">Ошибка автоматической проверки обновлений</string>
     <string name="update_check_failed_description">Пожалуйста, проверьте наличие обновлений вручную</string>
 
     <!-- Download -->
     <string name="downloading">Загрузка</string>
     <string name="downloading_update">Загрузка обновления</string>
-    <string name="downloading_failed">Загрузка не удалась</string>
+    <string name="downloading_failed">Ошибка загрузки</string>
     <string name="downloading_finished">Загрузка завершена</string>
 
     <!-- Main activity -->
@@ -40,7 +40,7 @@
         Последняя проверка в <xliff:g example="11:02 AM" id="time">%1$s</xliff:g>
     </string>
     <string name="up_to_date">Ваше устройство обновлено</string>
-    <string name="come_back_later">Вернуться позже…</string>
+    <string name="come_back_later">Вернитесь позже…</string>
     <string name="new_update_available">Доступно новое обновление</string>
     <string name="new_update_description_format">
         v<xliff:g example="2.3" id="version">%1$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="12-11-2021" id="date">%2$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="1.3GB" id="size">%3$s</xliff:g>
@@ -66,7 +66,7 @@
     <string name="not_enough_space">Недостаточно места на устройстве</string>
     <string name="applying_payload_failed">Не удалось применить payload: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
     <string name="installing_update">Установка обновления</string>
-    <string name="installation_failed">Установка не удалась</string>
+    <string name="installation_failed">Ошибка установки</string>
     <string name="reboot">Перезагрузить</string>
     <string name="initializing">Инициализация…</string>
     <string name="installation_finished">Установка завершена</string>
@@ -82,4 +82,12 @@
     <string name="copying_file">Копирование файла</string>
     <string name="copying_failed">Не удалось скопировать: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
     <string name="install_update">Установить обновление</string>
+    <string name="update_installation_failed_with_code">Ошибка обновления <xliff:g example="20" id="error_code">%1$d</xliff:g></string>
+
+    <!-- Settings -->
+    <string name="settings">Настройки</string>
+    <string name="update_check_interval_title">Частота поиска обновлений</string>
+    <string name="update_check_interval_summary">Промежуток времени в днях между поисками доступных обновлений</string>
+    <string name="opt_out_incremental_title">Отказаться от OTA обновлений</string>
+    <string name="opt_out_incremental_summary">Всегда устанавливать полные обновления. Нужно для пользователей с root или для тех кто как-то модифицировал систему</string>
 </resources>
