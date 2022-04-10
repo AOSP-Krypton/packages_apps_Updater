@@ -88,6 +88,6 @@
     <string name="settings">Настройки</string>
     <string name="update_check_interval_title">Частота поиска обновлений</string>
     <string name="update_check_interval_summary">Промежуток времени в днях между поисками доступных обновлений</string>
-    <string name="opt_out_incremental_title">Отказаться от OTA обновлений</string>
-    <string name="opt_out_incremental_summary">Всегда устанавливать полные обновления. Нужно для пользователей с root или для тех кто как-то модифицировал систему</string>
+    <string name="opt_out_incremental_title">Отказаться от мини-OTA обновлений</string>
+    <string name="opt_out_incremental_summary">Всегда устанавливать полные OTA. Нужно для пользователей с root или для тех кто как-то модифицировал систему</string>
 </resources>
