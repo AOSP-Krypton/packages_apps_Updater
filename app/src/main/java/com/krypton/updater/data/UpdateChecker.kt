@@ -82,7 +82,7 @@ class UpdateChecker @Inject constructor(
         val changelogMap = result.getOrNull()?.takeIf { it.isNotEmpty() } ?: return null
         val filteredMap = mutableMapOf<Long, String?>()
         changelogMap.forEach { (name, content) ->
-            val date = getDateFromChangelogFileName(name) ?: return@forEach
+            val date = getDateFromChangelogFileName(name)?.time ?: return@forEach
             if (compareTillDay(
                     date,
                     SYSTEM_BUILD_DATE
@@ -93,13 +93,15 @@ class UpdateChecker @Inject constructor(
                 ) > 0 /* Changelog is newer than OTA */) {
                 return@forEach
             }
-            filteredMap[date.time] = content
+            filteredMap[date] = content
         }
         return filteredMap.toMap()
     }
 
     companion object {
         private const val TAG = "UpdateChecker"
+        private val DEBUG: Boolean
+            get() = Log.isLoggable(TAG, Log.DEBUG)
 
         private val SYSTEM_BUILD_DATE: Long
             get() = DeviceInfo.getBuildDate()
@@ -120,19 +122,29 @@ class UpdateChecker @Inject constructor(
                 null
             }
 
-        private fun compareTillDay(first: Date, second: Long): Int {
-            val firstCalendar = Calendar.getInstance().apply { time = first }
+        /**
+         * Compares to unix timestamps by stripping of time until it
+         * represents midnight of the day it corresponds to.
+         */
+        private fun compareTillDay(first: Long, second: Long): Int {
+            if (DEBUG) Log.d(TAG, "Comparing: first = $first, second = $second")
+            val calendarForFirst = setTimeAndResetTillDay(first)
+            val calendarForSecond = setTimeAndResetTillDay(second)
+            if (DEBUG) {
+                Log.d(TAG, "calendarForFirst = $calendarForFirst")
+                Log.d(TAG, "calendarForSecond = $calendarForSecond")
+            }
+            return calendarForFirst.compareTo(calendarForSecond)
+        }
 
-            val secondCalendar = Calendar.getInstance().apply {
-                timeInMillis = second
+        private fun setTimeAndResetTillDay(time: Long) =
+            Calendar.getInstance().apply {
+                timeInMillis = time
                 set(Calendar.HOUR_OF_DAY, 0)
                 set(Calendar.MINUTE, 0)
                 set(Calendar.SECOND, 0)
                 set(Calendar.MILLISECOND, 0)
             }
-
-            return firstCalendar.compareTo(secondCalendar)
-        }
 
         fun isNewUpdate(buildInfo: BuildInfo, incremental: Boolean): Boolean =
             if (incremental) {
