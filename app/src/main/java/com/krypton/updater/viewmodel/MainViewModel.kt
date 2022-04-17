@@ -16,7 +16,7 @@
 
 package com.krypton.updater.viewmodel
 
-import android.annotation.SuppressLint
+import android.content.Context
 import android.util.DataUnit
 
 import androidx.lifecycle.LiveData
@@ -32,9 +32,12 @@ import com.krypton.updater.data.download.DownloadRepository
 import com.krypton.updater.data.update.UpdateRepository
 
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 
-import java.text.SimpleDateFormat
+import java.text.DateFormat
+import java.text.DecimalFormat
 import java.util.Date
+import java.util.Locale
 
 import javax.inject.Inject
 
@@ -42,14 +45,16 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import java.text.DecimalFormat
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
+    @ApplicationContext context: Context,
     private val mainRepository: MainRepository,
     private val downloadRepository: DownloadRepository,
     private val updateRepository: UpdateRepository,
 ) : ViewModel() {
+
+    private val locale = context.resources.configuration.locales[0]
 
     private val _updateInfo = MutableLiveData<UpdateInfo>()
     val updateInfo: LiveData<UpdateInfo>
@@ -59,7 +64,11 @@ class MainViewModel @Inject constructor(
     val updateFailedEvent: LiveData<Event<String?>>
         get() = _updateFailedEvent
 
-    val systemBuildDate: String = BUILD_DATE_FORMAT.format(mainRepository.systemBuildDate)
+    val systemBuildDate: String
+        get() = getFormattedDate(
+            locale,
+            time = mainRepository.systemBuildDate,
+        )
 
     val systemBuildVersion: String = mainRepository.systemBuildVersion
 
@@ -87,9 +96,7 @@ class MainViewModel @Inject constructor(
     val updateDate: LiveData<String?>
         get() = Transformations.map(updateInfo) {
             it.buildInfo?.date?.let { date ->
-                BUILD_DATE_FORMAT.format(
-                    Date(date)
-                )
+                getFormattedDate(locale, time = Date(date))
             }
         }
 
@@ -107,7 +114,12 @@ class MainViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             mainRepository.lastCheckedTime.collect {
-                _lastCheckedTime.value = if (it.time > 0) TIME_FORMAT.format(it) else null
+                _lastCheckedTime.value =
+                    if (it.time > 0) getFormattedDate(
+                        locale,
+                        timeStyle = DateFormat.SHORT,
+                        time = it
+                    ) else null
             }
         }
         viewModelScope.launch {
@@ -151,18 +163,12 @@ class MainViewModel @Inject constructor(
     }
 
     companion object {
-        @SuppressLint("SimpleDateFormat")
-        private val BUILD_DATE_FORMAT = SimpleDateFormat("dd-MM-yyyy")
-
-        @SuppressLint("SimpleDateFormat")
-        private val TIME_FORMAT = SimpleDateFormat("dd/MM/yy h:mm a")
-
         private val units = arrayOf("KiB", "MiB", "GiB")
         private val singleDecimalFmt = DecimalFormat("00.0")
         private val doubleDecimalFmt = DecimalFormat("0.00")
         private val KiB: Long = DataUnit.KIBIBYTES.toBytes(1)
 
-        fun formatBytes(bytes: Long): String {
+        private fun formatBytes(bytes: Long): String {
             val unit: String
             var rate = (bytes / KiB).toFloat()
             var i = 0
@@ -187,6 +193,14 @@ class MainViewModel @Inject constructor(
             return "$formattedSize $unit"
         }
 
-
+        private fun getFormattedDate(
+            locale: Locale,
+            timeStyle: Int = -1,
+            time: Date,
+        ) = if (timeStyle == -1) {
+            DateFormat.getDateInstance(DateFormat.DEFAULT, locale).format(time)
+        } else {
+            DateFormat.getDateTimeInstance(DateFormat.DEFAULT, timeStyle, locale).format(time)
+        }
     }
 }
