@@ -18,12 +18,9 @@ package com.krypton.updater.data
 
 import android.content.Context
 
-import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
-
-import com.google.protobuf.InvalidProtocolBufferException
 
 import java.io.InputStream
 import java.io.OutputStream
@@ -35,20 +32,28 @@ object SettingsSerializer : Serializer<Settings> {
         .setUpdateCheckInterval(UPDATE_CHECK_INTERVAL_DEFAULT)
         .build()
 
-    @Suppress("BlockingMethodInNonBlockingContext")
     override suspend fun readFrom(input: InputStream): Settings {
-        try {
-            return Settings.parseFrom(input)
-        } catch (exception: InvalidProtocolBufferException) {
-            throw CorruptionException("Cannot read proto.", exception)
+        val readResult = runCatching {
+            Settings.parseFrom(input)
         }
+        if (readResult.isSuccess) {
+            return readResult.getOrThrow()
+        }
+        throw readResult.exceptionOrNull() ?: Throwable("Failed to read from input stream")
     }
 
-    @Suppress("BlockingMethodInNonBlockingContext")
     override suspend fun writeTo(
         t: Settings,
         output: OutputStream
-    ) = t.writeTo(output)
+    ) {
+        val writeResult = runCatching {
+            t.writeTo(output)
+        }
+        if (writeResult.isSuccess) {
+            return writeResult.getOrThrow()
+        }
+        throw writeResult.exceptionOrNull() ?: Throwable("Failed to write to output stream")
+    }
 }
 
 val Context.appSettings: DataStore<Settings> by dataStore(
