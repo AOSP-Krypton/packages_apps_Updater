@@ -136,6 +136,7 @@ class UpdateManager @Inject constructor(
     }
 
     fun start() {
+        logD("start: updateScheduled = $updateScheduled")
         if (updateScheduled) return
         // Partially cancel any ongoing updates we are not aware of
         cancelPartially()
@@ -172,13 +173,15 @@ class UpdateManager @Inject constructor(
 
     private fun logAndUpdateState(msg: String) {
         val tr = Throwable(msg)
-        Log.e(TAG, tr.message!!)
+        Log.e(TAG, msg)
         _updateState.value = UpdateState.failure(tr)
     }
 
     fun pause() {
+        logD("Pause: updateScheduled = $updateScheduled, isUpdatePaused = $isUpdatePaused")
         if (!updateScheduled || isUpdatePaused) return
         try {
+            logD("Suspending update engine")
             updateEngine.suspend()
             _updateState.value = UpdateState.paused()
         } catch (e: ServiceSpecificException) {
@@ -187,8 +190,10 @@ class UpdateManager @Inject constructor(
     }
 
     fun resume() {
+        logD("Resume: updateScheduled = $updateScheduled, isUpdatePaused = $isUpdatePaused")
         if (!updateScheduled || !isUpdatePaused) return
         try {
+            logD("Resuming update engine")
             updateEngine.resume()
             _updateState.value = UpdateState.updating()
         } catch (e: ServiceSpecificException) {
@@ -197,6 +202,7 @@ class UpdateManager @Inject constructor(
     }
 
     fun cancel() {
+        logD("Cancel")
         cancelPartially()
         updateEngine.apply {
             cleanupAppliedPayload()

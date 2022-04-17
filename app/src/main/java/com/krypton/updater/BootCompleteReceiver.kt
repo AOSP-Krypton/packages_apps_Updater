@@ -48,7 +48,7 @@ class BootCompleteReceiver : BroadcastReceiver() {
     lateinit var otaFileManager: OTAFileManager
 
     override fun onReceive(context: Context?, intent: Intent?) {
-        if (context == null || intent?.action != Intent.ACTION_BOOT_COMPLETED) return
+        if (context == null || intent?.action != Intent.ACTION_LOCKED_BOOT_COMPLETED) return
         Log.i(TAG, "Boot completed")
         applicationScope.launch(Dispatchers.IO) {
             val updateFinished = context.savedStateDataStore.data.map { it.updateFinished }.first()
