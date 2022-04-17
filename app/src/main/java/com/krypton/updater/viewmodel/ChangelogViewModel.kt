@@ -16,7 +16,7 @@
 
 package com.krypton.updater.viewmodel
 
-import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.Typeface
 import android.text.Spannable
 import android.text.SpannableStringBuilder
@@ -30,9 +30,11 @@ import androidx.lifecycle.viewModelScope
 import com.krypton.updater.data.MainRepository
 
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 
-import java.text.SimpleDateFormat
 import java.util.Date
+import java.text.DateFormat
+import java.util.Locale
 
 import javax.inject.Inject
 
@@ -41,8 +43,12 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class ChangelogViewModel @Inject constructor(
+    @ApplicationContext context: Context,
     mainRepository: MainRepository,
 ) : ViewModel() {
+
+    private val locale = context.resources.configuration.locales[0]
+
     private val _changelog = MutableLiveData<SpannableStringBuilder?>(null)
     val changelog: LiveData<SpannableStringBuilder?>
         get() = _changelog
@@ -59,7 +65,7 @@ class ChangelogViewModel @Inject constructor(
         SpannableStringBuilder().apply {
             changelogs?.forEach { (date, changelog) ->
                 val startIndex = length
-                append(formatDate(date))
+                append(getFormattedDate(locale, Date(date)))
                 setSpan(
                     StyleSpan(Typeface.BOLD),
                     startIndex,
@@ -71,9 +77,9 @@ class ChangelogViewModel @Inject constructor(
         }
 
     companion object {
-        @SuppressLint("SimpleDateFormat")
-        private val DATE_FORMAT = SimpleDateFormat("dd-MM-yyyy")
-
-        private fun formatDate(time: Long) = DATE_FORMAT.format(Date(time))
+        private fun getFormattedDate(
+            locale: Locale,
+            time: Date,
+        ) = DateFormat.getDateInstance(DateFormat.DEFAULT, locale).format(time)
     }
 }
