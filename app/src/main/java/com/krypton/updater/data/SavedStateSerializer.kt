@@ -18,12 +18,9 @@ package com.krypton.updater.data
 
 import android.content.Context
 
-import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
-
-import com.google.protobuf.InvalidProtocolBufferException
 
 import java.io.InputStream
 import java.io.OutputStream
@@ -31,20 +28,28 @@ import java.io.OutputStream
 object SavedStateSerializer : Serializer<SavedState> {
     override val defaultValue: SavedState = SavedState.getDefaultInstance()
 
-    @Suppress("BlockingMethodInNonBlockingContext")
     override suspend fun readFrom(input: InputStream): SavedState {
-        try {
-            return SavedState.parseFrom(input)
-        } catch (exception: InvalidProtocolBufferException) {
-            throw CorruptionException("Cannot read proto.", exception)
+        val readResult = runCatching {
+            SavedState.parseFrom(input)
         }
+        if (readResult.isSuccess) {
+            return readResult.getOrThrow()
+        }
+        throw readResult.exceptionOrNull() ?: Throwable("Failed to read from input stream")
     }
 
-    @Suppress("BlockingMethodInNonBlockingContext")
     override suspend fun writeTo(
         t: SavedState,
         output: OutputStream
-    ) = t.writeTo(output)
+    ) {
+        val writeResult = runCatching {
+            t.writeTo(output)
+        }
+        if (writeResult.isSuccess) {
+            return writeResult.getOrThrow()
+        }
+        throw writeResult.exceptionOrNull() ?: Throwable("Failed to write to output stream")
+    }
 }
 
 val Context.savedStateDataStore: DataStore<SavedState> by dataStore(
