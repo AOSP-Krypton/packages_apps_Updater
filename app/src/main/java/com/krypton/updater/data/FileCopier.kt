@@ -69,10 +69,10 @@ class FileCopier @Inject constructor(
         }
         val exportFile = treeFile.createFile("application/zip", name)
             ?: return Result.failure(Exception("Failed to create export file"))
-        return context.contentResolver.openOutputStream(exportFile.uri)?.use out@{ outStream ->
+        return context.contentResolver.openOutputStream(exportFile.uri)?.use { outStream ->
             FileInputStream(inputFile).use { inStream ->
                 val copiedBytes = FileUtils.copy(inStream, outStream)
-                return@out if (copiedBytes != inputFile.length()) {
+                if (copiedBytes != inputFile.length()) {
                     Result.failure(Exception("Failed to copy entire file"))
                 } else {
                     Result.success(Unit)
