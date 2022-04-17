@@ -75,7 +75,10 @@ class DownloadRepository @Inject constructor(
     val stateRestoreFinished: StateFlow<Boolean>
         get() = _stateRestoreFinished
 
-    val exportingFile = Channel<Boolean>(2, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _exportingFile = MutableStateFlow(false)
+    val exportingFile: StateFlow<Boolean>
+        get() = _exportingFile
+
     val fileExportResult = Channel<Result<Unit>>(2, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     init {
@@ -98,13 +101,13 @@ class DownloadRepository @Inject constructor(
 
     private suspend fun exportFile() {
         downloadManager.downloadFile?.let { file ->
-            exportingFile.send(true)
+            _exportingFile.value = true
             fileExportResult.send(
                 withContext(Dispatchers.IO) {
                     fileCopier.copyToExportDir(file)
                 }
             )
-            exportingFile.send(false)
+            _exportingFile.value = false
         }
     }
 

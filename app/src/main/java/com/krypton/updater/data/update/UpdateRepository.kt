@@ -67,7 +67,10 @@ class UpdateRepository @Inject constructor(
     val readyForUpdate: StateFlow<Boolean>
         get() = _readyForUpdate
 
-    val copyingFile = Channel<Boolean>(2, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _copyingFile = MutableStateFlow(false)
+    val copyingFile: StateFlow<Boolean>
+        get() = _copyingFile
+
     val copyResultChannel = Channel<Result<Unit>>(2, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     init {
@@ -127,7 +130,7 @@ class UpdateRepository @Inject constructor(
         updateManager.reset()
         clearSavedUpdateState()
         _readyForUpdate.value = false
-        copyingFile.send(true)
+        _copyingFile.value = true
         val result = withContext(Dispatchers.IO) {
             runCatching {
                 val result = otaFileManager.copyToOTAPackageDir(uri)
@@ -136,7 +139,7 @@ class UpdateRepository @Inject constructor(
                 }
             }
         }
-        copyingFile.send(false)
+        _copyingFile.value = false
         copyResultChannel.send(result)
         _readyForUpdate.value = result.isSuccess
     }
