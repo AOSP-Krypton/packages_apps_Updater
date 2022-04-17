@@ -144,12 +144,12 @@ class UpdateManager @Inject constructor(
             return
         }
         _updateState.value = UpdateState.initializing()
-        val payloadInfoResult = PayloadInfoFactory.createPayloadInfo(otaFileManager.otaFileUri)
+        val payloadInfoResult = PayloadInfo.Factory.createPayloadInfo(context, otaFileManager.otaFileUri)
         if (payloadInfoResult.isFailure) {
             logAndUpdateState(
                 context.getString(
                     R.string.payload_generation_failed,
-                    payloadInfoResult.exceptionOrNull()?.message
+                    payloadInfoResult.exceptionOrNull()?.localizedMessage
                 )
             )
             return
