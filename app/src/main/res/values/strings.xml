@@ -62,6 +62,13 @@
     <!-- Update -->
     <string name="low_battery_plug_in">Low battery, plug in to continue</string>
     <string name="payload_generation_failed">Payload info generation failed: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="failed_to_retrieve_offset_and_size">Failed to retrieve offset and size from metadata file</string>
+    <string name="failed_to_retrieve_header_key_value_pair">Failed to retrieve header key value pair from payload properties file</string>
+    <string name="zip_does_not_contain_metadata_file">Zip file does not contain metadata file</string>
+    <string name="metadata_file_empty">Metadata file is empty</string>
+    <string name="failed_to_extract_offset_and_size">Failed to extract offset and size from metadata</string>
+    <string name="zip_file_does_not_contain_payload_properties">Zip file does not contain payload properties file</string>
+    <string name="payload_properties_file_does_not_have_key_value_pairs">Payload properties file does not contain required header key value pairs</string>
     <string name="metadata_verification_failed">Metadata verification failed</string>
     <string name="not_enough_space">Not enough space in device</string>
     <string name="applying_payload_failed">Applying payload failed: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
