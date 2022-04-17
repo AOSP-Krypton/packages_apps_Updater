@@ -53,8 +53,8 @@ class UpdateViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            for (event in updateRepository.copyingFile) {
-                _copyingFile.value = event
+            updateRepository.copyingFile.collect {
+                _copyingFile.value = it
             }
         }
         viewModelScope.launch {

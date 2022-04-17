@@ -67,8 +67,8 @@ class DownloadViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            for (event in downloadRepository.exportingFile) {
-                _exportingFile.value = event
+            downloadRepository.exportingFile.collect {
+                _exportingFile.value = it
             }
         }
         viewModelScope.launch {
