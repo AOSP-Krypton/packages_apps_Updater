@@ -16,19 +16,25 @@
 
 package com.krypton.updater.data
 
-import android.annotation.SuppressLint
+import android.content.Context
 import android.util.Log
+
+import com.krypton.updater.R
+
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
+import java.util.Locale
 
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class UpdateChecker @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val githubApiHelper: GithubApiHelper,
 ) {
 
@@ -43,17 +49,21 @@ class UpdateChecker @Inject constructor(
      *   [UpdateInfo.Type] will indicate whether there is a new update or not.
      */
     fun checkForUpdate(incremental: Boolean): Result<UpdateInfo?> {
-        var result = githubApiHelper.getBuildInfo(DeviceInfo.getDevice(), incremental)
-        var isIncremental = incremental
+        val result = githubApiHelper.getBuildInfo(DeviceInfo.getDevice(), incremental)
         if (result.isFailure) {
-            return Result.failure(result.exceptionOrNull()!!)
-        }
-        if (result.getOrNull() == null) {
-            // Fallback to full OTA if incremental is unavailable
-            isIncremental = false
-            result = githubApiHelper.getBuildInfo(DeviceInfo.getDevice(), false)
+            return if (incremental) {
+                // Fallback to full OTA hoping that it may work
+                checkForUpdate(false)
+            } else {
+                Log.e(TAG, "Update check failed", result.exceptionOrNull())
+                Result.failure(
+                    result.exceptionOrNull()
+                        ?: Throwable(context.getString(R.string.update_check_failed))
+                )
+            }
         }
         val otaJsonContent = result.getOrNull() ?: return Result.success(null)
+        logD("incremental = $incremental, otaJsonContent = $otaJsonContent")
         val buildInfo = BuildInfo(
             version = otaJsonContent.version,
             date = otaJsonContent.date,
@@ -64,7 +74,7 @@ class UpdateChecker @Inject constructor(
             sha512 = otaJsonContent.sha512,
         )
         updateBuildDate = buildInfo.date
-        val newUpdate = isNewUpdate(buildInfo, isIncremental)
+        val newUpdate = isNewUpdate(buildInfo, incremental)
         return Result.success(
             UpdateInfo(
                 buildInfo = buildInfo,
@@ -109,8 +119,11 @@ class UpdateChecker @Inject constructor(
         // Changelog files are of the format changelog_2021_12_30
         private const val CHANGELOG_FILE_NAME_PREFIX = "changelog_"
 
-        @SuppressLint("SimpleDateFormat")
-        private val CHANGELOG_FILE_DATE_FORMAT = SimpleDateFormat("yyyy_MM_dd")
+        private val CHANGELOG_FILE_DATE_FORMAT = SimpleDateFormat("yyyy_MM_dd", Locale.US)
+
+        private fun logD(msg: String) {
+            if (DEBUG) Log.d(TAG, msg)
+        }
 
         private fun getDateFromChangelogFileName(name: String): Date? =
             try {
@@ -127,13 +140,10 @@ class UpdateChecker @Inject constructor(
          * represents midnight of the day it corresponds to.
          */
         private fun compareTillDay(first: Long, second: Long): Int {
-            if (DEBUG) Log.d(TAG, "Comparing: first = $first, second = $second")
+            logD("Comparing: first = $first, second = $second")
             val calendarForFirst = setTimeAndResetTillDay(first)
             val calendarForSecond = setTimeAndResetTillDay(second)
-            if (DEBUG) {
-                Log.d(TAG, "calendarForFirst = $calendarForFirst")
-                Log.d(TAG, "calendarForSecond = $calendarForSecond")
-            }
+            logD("calendarForFirst = $calendarForFirst, calendarForSecond = $calendarForSecond")
             return calendarForFirst.compareTo(calendarForSecond)
         }
 

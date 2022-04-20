@@ -16,9 +16,11 @@
 
 package com.krypton.updater.data.retrofit
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
 
-class Content(
-    @SerializedName("name") val name: String,
-    @SerializedName("download_url") val url: String,
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class Content(
+    @JsonProperty("name") val name: String,
+    @JsonProperty("download_url") val url: String,
 )
