@@ -16,10 +16,13 @@
 
 package com.krypton.updater.data.retrofit
 
+import androidx.annotation.Keep
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Keep
 data class OTAJsonContent(
     @JsonProperty("version") val version: String,
     @JsonProperty("date") val date: Long,

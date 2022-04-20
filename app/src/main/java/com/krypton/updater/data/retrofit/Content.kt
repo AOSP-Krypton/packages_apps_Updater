@@ -16,10 +16,13 @@
 
 package com.krypton.updater.data.retrofit
 
+import androidx.annotation.Keep
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Keep
 data class Content(
     @JsonProperty("name") val name: String,
     @JsonProperty("download_url") val url: String,
