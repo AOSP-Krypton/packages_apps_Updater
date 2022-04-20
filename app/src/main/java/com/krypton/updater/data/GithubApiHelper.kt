@@ -18,6 +18,7 @@ package com.krypton.updater.data
 
 import android.util.Log
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.krypton.updater.data.retrofit.Content
 import com.krypton.updater.data.retrofit.OTAJsonContent
 import com.krypton.updater.data.retrofit.GithubApiService
@@ -28,8 +29,7 @@ import javax.inject.Singleton
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.OkHttpClient
 
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.converter.scalars.ScalarsConverterFactory
+import retrofit2.converter.jackson.JacksonConverterFactory
 import retrofit2.Retrofit
 
 @Singleton
@@ -43,8 +43,7 @@ class GithubApiHelper @Inject constructor() {
 
     private val retrofit = Retrofit.Builder()
         .baseUrl(GITHUB_API_URL)
-        .addConverterFactory(ScalarsConverterFactory.create())
-        .addConverterFactory(GsonConverterFactory.create())
+        .addConverterFactory(JacksonConverterFactory.create(jacksonObjectMapper()))
         .client(okHttpClient)
         .build()
 

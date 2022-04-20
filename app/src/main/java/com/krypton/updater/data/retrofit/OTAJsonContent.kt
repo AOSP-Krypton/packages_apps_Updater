@@ -16,14 +16,16 @@
 
 package com.krypton.updater.data.retrofit
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
 
-class OTAJsonContent(
-    @SerializedName("version") val version: String,
-    @SerializedName("date") val date: Long,
-    @SerializedName("pre_build_incremental") val preBuildIncremental: Long?,
-    @SerializedName("url") val url: String,
-    @SerializedName("file_name") val fileName: String,
-    @SerializedName("file_size") val fileSize: Long,
-    @SerializedName("sha_512") val sha512: String,
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class OTAJsonContent(
+    @JsonProperty("version") val version: String,
+    @JsonProperty("date") val date: Long,
+    @JsonProperty("pre_build_incremental") val preBuildIncremental: Long?,
+    @JsonProperty("url") val url: String,
+    @JsonProperty("file_name") val fileName: String,
+    @JsonProperty("file_size") val fileSize: Long,
+    @JsonProperty("sha_512") val sha512: String,
 )
