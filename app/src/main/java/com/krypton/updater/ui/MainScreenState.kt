@@ -88,6 +88,17 @@ class MainScreenState(
     val showCopyingDialog: StateFlow<Boolean>
         get() = _showCopyingDialog
 
+    val shouldAllowLocalUpgrade: Flow<Boolean>
+        get() = combine(
+            downloadViewModel.downloadState,
+            updateViewModel.updateState
+        ) { downloadState, updateState ->
+            !downloadState.waiting &&
+                    !downloadState.downloading &&
+                    !updateState.initializing &&
+                    !updateState.updating
+        }
+
     init {
         coroutineScope.launch {
             for (event in mainViewModel.updateFailedEvent) {

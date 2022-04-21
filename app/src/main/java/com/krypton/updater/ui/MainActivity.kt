@@ -130,11 +130,15 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun MainScreen(state: MainScreenState) {
+        val shouldAllowLocalUpgrade = state.shouldAllowLocalUpgrade.collectAsState(initial = false)
         Scaffold(
             topBar = {
-                AppBar(onRequestLocalUpgrade = {
-                    state.startLocalUpgrade(it)
-                })
+                AppBar(
+                    onRequestLocalUpgrade = {
+                        state.startLocalUpgrade(it)
+                    },
+                    shouldAllowLocalUpgrade.value
+                )
             },
             snackbarHost = { SnackbarHost(state.snackbarHostState) }
         ) {
@@ -216,7 +220,10 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun AppBar(onRequestLocalUpgrade: (Uri) -> Unit) {
+    fun AppBar(
+        onRequestLocalUpgrade: (Uri) -> Unit,
+        shouldAllowLocalUpgrade: Boolean
+    ) {
         val localUpgradeLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.OpenDocument(),
             onResult = {
@@ -238,6 +245,7 @@ class MainActivity : ComponentActivity() {
                             title = stringResource(id = R.string.local_upgrade),
                             icon = painterResource(id = R.drawable.ic_baseline_folder_24),
                             contentDescription = stringResource(id = R.string.local_upgrade_menu_item_desc),
+                            enabled = shouldAllowLocalUpgrade,
                             onClick = {
                                 localUpgradeLauncher.launch(ZIP_MIME)
                             }
