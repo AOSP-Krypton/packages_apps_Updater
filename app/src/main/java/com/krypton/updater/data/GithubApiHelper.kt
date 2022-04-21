@@ -29,6 +29,7 @@ import javax.inject.Singleton
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.OkHttpClient
 
+import retrofit2.converter.scalars.ScalarsConverterFactory
 import retrofit2.converter.jackson.JacksonConverterFactory
 import retrofit2.Retrofit
 
@@ -43,6 +44,7 @@ class GithubApiHelper @Inject constructor() {
 
     private val retrofit = Retrofit.Builder()
         .baseUrl(GITHUB_API_URL)
+        .addConverterFactory(ScalarsConverterFactory.create())
         .addConverterFactory(JacksonConverterFactory.create(jacksonObjectMapper()))
         .client(okHttpClient)
         .build()

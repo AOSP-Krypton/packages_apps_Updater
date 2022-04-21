@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 
 import com.krypton.updater.R
+import com.krypton.updater.data.UpdateInfo
 import com.krypton.updater.viewmodel.DownloadViewModel
 import com.krypton.updater.viewmodel.MainViewModel
 
@@ -53,7 +54,7 @@ class DownloadCardState(
         get() = resources.getString(R.string.new_update_available)
 
     val subtitleText: Flow<String>
-        get() = mainViewModel.updateInfoNew.map { it.buildInfo }.filterNotNull().map {
+        get() = mainViewModel.updateInfo.map { it.buildInfo }.filterNotNull().map {
             resources.getString(
                 R.string.new_update_description_format,
                 it.version,
@@ -94,6 +95,16 @@ class DownloadCardState(
             }
         }
 
+    private val _shouldShowDownloadSourceDialog = MutableStateFlow(false)
+    val shouldShowDownloadSourceDialog: StateFlow<Boolean>
+        get() = _shouldShowDownloadSourceDialog
+
+    val downloadSources: Flow<Set<String>>
+        get() = mainViewModel.updateInfo
+            .filter { it.type == UpdateInfo.Type.NEW_UPDATE }
+            .map { it.buildInfo?.downloadSources?.keys }
+            .filterNotNull()
+
     init {
         coroutineScope.launch {
             downloadViewModel.downloadFailedEvent.collect {
@@ -115,7 +126,13 @@ class DownloadCardState(
         downloadViewModel.downloadState.value.let {
             when {
                 it.idle || it.failed -> coroutineScope.launch {
-                    startDownload()
+                    val hasAlternateDownloadSource =
+                        mainViewModel.updateInfo.firstOrNull()?.buildInfo?.downloadSources != null
+                    if (hasAlternateDownloadSource) {
+                        _shouldShowDownloadSourceDialog.value = true
+                    } else {
+                        startDownload()
+                    }
                 }
                 it.waiting || it.downloading -> downloadViewModel.cancelDownload()
             }
@@ -123,9 +140,20 @@ class DownloadCardState(
         }
     }
 
-    private suspend fun startDownload() {
-        val buildInfo = mainViewModel.updateInfoNew.firstOrNull()?.buildInfo ?: return
-        downloadViewModel.startDownload(buildInfo)
+    fun dismissDownloadSourceDialog() {
+        _shouldShowDownloadSourceDialog.value = false
+    }
+
+    fun startDownloadWithSource(source: String) {
+        dismissDownloadSourceDialog()
+        coroutineScope.launch {
+            startDownload(source)
+        }
+    }
+
+    private suspend fun startDownload(source: String? = null) {
+        val buildInfo = mainViewModel.updateInfo.firstOrNull()?.buildInfo ?: return
+        downloadViewModel.startDownload(buildInfo, source)
     }
 
     companion object {

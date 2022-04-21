@@ -17,19 +17,36 @@
 package com.krypton.updater.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 
 import com.krypton.updater.R
 
 @Composable
 fun DownloadCard(state: DownloadCardState) {
+    val shouldShowDownloadSourceDialog = state.shouldShowDownloadSourceDialog.collectAsState(false)
+    if (shouldShowDownloadSourceDialog.value) {
+        val sources = state.downloadSources.collectAsState(initial = emptySet())
+        if (sources.value.isNotEmpty()) {
+            DownloadSourceDialog(
+                dismissRequest = {
+                    state.dismissDownloadSourceDialog()
+                },
+                confirmRequest = {
+                    state.startDownloadWithSource(it)
+                },
+                sources = sources.value
+            )
+        }
+    }
     val subtitleText = state.subtitleText.collectAsState(null)
     CardContent(
         title = state.titleText,
@@ -82,4 +99,76 @@ fun DownloadCard(state: DownloadCardState) {
             )
         }
     )
+}
+
+@Composable
+fun DownloadSourceDialog(
+    dismissRequest: () -> Unit,
+    confirmRequest: (String) -> Unit,
+    sources: Set<String>
+) {
+    var selectedSource by remember {
+        mutableStateOf(sources.first())
+    }
+    AlertDialog(
+        onDismissRequest = dismissRequest,
+        confirmButton = {
+            TextButton(onClick = { confirmRequest(selectedSource) }) {
+                Text(text = stringResource(id = android.R.string.ok))
+            }
+        },
+        properties = DialogProperties(),
+        shape = RoundedCornerShape(32.dp),
+        title = {
+            Text(text = stringResource(R.string.select_download_source))
+        },
+        text = {
+            Column(
+                Modifier
+                    .selectableGroup()
+                    .fillMaxWidth()
+            ) {
+                sources.forEach {
+                    RadioListItem(
+                        selected = it == selectedSource,
+                        onClick = {
+                            selectedSource = it
+                        },
+                        title = it
+                    )
+                }
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RadioListItem(
+    selected: Boolean,
+    onClick: () -> Unit,
+    title: String,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        RadioButton(
+            selected = selected,
+            onClick = onClick,
+        )
+        Text(
+            text = title,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.titleMedium
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewRadioListItem() {
+    AppTheme {
+        RadioListItem(selected = true, onClick = { }, title = "Radio list item")
+    }
 }

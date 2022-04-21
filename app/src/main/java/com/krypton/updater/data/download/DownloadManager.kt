@@ -114,8 +114,10 @@ class DownloadManager @Inject constructor(
             URL(downloadInfo.getString(DownloadInfo.URL))
         }
         if (urlResult.isFailure) {
-            Log.e(TAG, "Failed to open url", urlResult.exceptionOrNull())
-            eventChannel.send(DownloadResult.failure(urlResult.exceptionOrNull()))
+            val exception = urlResult.exceptionOrNull()
+            Log.e(TAG, "Failed to open url", exception)
+            eventChannel.send(DownloadResult.failure(exception))
+            _downloadState.value = DownloadState.failed(exception)
             return
         }
         val fileSize = downloadInfo.getLong(DownloadInfo.FILE_SIZE)
@@ -191,25 +193,28 @@ class DownloadManager @Inject constructor(
             putLong(DownloadInfo.FILE_SIZE, downloadInfo.size)
         }
 
-    suspend fun restoreDownloadState(downloadInfo: DownloadInfo) {
-        logD("restoring state, buildInfo = $downloadInfo")
-        val file = File(cacheDir, downloadInfo.name)
+    suspend fun restoreDownloadState(
+        name: String,
+        size: Long,
+        sha512: String,
+    ) {
+        logD("restoring state, name = $name, size = $size, sha512 = $sha512")
+        val file = File(cacheDir, name)
         if (file.isFile) {
-            if (file.length() != downloadInfo.size) {
-                Log.w(TAG, "file size does not match, deleting")
+            if (file.length() != size) {
+                Log.w(TAG, "File size does not match, deleting")
                 file.delete()
                 return
             }
             val hashMatch = withContext(Dispatchers.IO) {
-                HashVerifier.verifyHash(file, downloadInfo.sha512)
+                HashVerifier.verifyHash(file, sha512)
             }
             if (!hashMatch) {
-                Log.w(TAG, "file hash does not match, deleting")
+                Log.w(TAG, "File hash does not match, deleting")
                 file.delete()
                 return
             } else {
                 logD("updating state")
-                this.downloadInfo = downloadInfo
                 downloadFile = file
                 _downloadState.emit(DownloadState.finished())
                 _progressFlow.emit(100f)

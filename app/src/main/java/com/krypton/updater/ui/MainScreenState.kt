@@ -59,7 +59,7 @@ class MainScreenState(
         get() = mainViewModel.systemBuildVersion
 
     val lastCheckedTime: Flow<String>
-        get() = mainViewModel.lastCheckedTimeNew.map {
+        get() = mainViewModel.lastCheckedTime.map {
             getFormattedDate(locale, DateFormat.SHORT, Date(it))
         }
 
@@ -98,6 +98,9 @@ class MainScreenState(
                     !updateState.initializing &&
                     !updateState.updating
         }
+
+    val showStateRestoreDialog: StateFlow<Boolean>
+        get() = downloadViewModel.restoringDownloadState
 
     init {
         coroutineScope.launch {

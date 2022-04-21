@@ -77,6 +77,7 @@ class MainRepository @Inject constructor(
                     it.date,
                     it.preBuildIncremental,
                     it.url,
+                    it.downloadSources,
                     it.fileName,
                     it.fileSize,
                     it.sha512,
@@ -110,6 +111,11 @@ class MainRepository @Inject constructor(
      */
     suspend fun fetchUpdateInfo(): Result<Unit> {
         deleteSavedUpdateInfo()
+        savedStateDatastore.updateData {
+            it.toBuilder()
+                .clear()
+                .build()
+        }
         val optOutIncremental = appSettings.data.map { it.optOutIncremental }.first()
         val result = withContext(Dispatchers.IO) {
             updateChecker.checkForUpdate(!optOutIncremental)
@@ -154,6 +160,7 @@ class MainRepository @Inject constructor(
                         date = it.date,
                         preBuildIncremental = it.preBuildIncremental,
                         url = it.url,
+                        downloadSources = it.downloadSources,
                         fileName = it.fileName,
                         fileSize = it.fileSize,
                         sha512 = it.sha512

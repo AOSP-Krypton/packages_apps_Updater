@@ -47,6 +47,7 @@
         v<xliff:g example="2.3" id="version">%1$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="12-11-2021" id="date">%2$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="1.3GB" id="size">%3$s</xliff:g>
     </string>
     <string name="download">Download</string>
+    <string name="select_download_source">Select download source</string>
     <string name="update">Update</string>
     <string name="download_text_format">
         Downloading - <xliff:g example="100" id="percent">%1$s%%</xliff:g>

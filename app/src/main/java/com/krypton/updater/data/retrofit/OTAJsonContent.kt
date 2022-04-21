@@ -19,15 +19,19 @@ package com.krypton.updater.data.retrofit
 import androidx.annotation.Keep
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Keep
+// TODO drop url field once we switch to A13
 data class OTAJsonContent(
     @JsonProperty("version") val version: String,
     @JsonProperty("date") val date: Long,
     @JsonProperty("pre_build_incremental") val preBuildIncremental: Long?,
-    @JsonProperty("url") val url: String,
+    @JsonProperty("url") val url: String?,
+    @JsonProperty("download_sources") val downloadSources: Map<String, String>?,
     @JsonProperty("file_name") val fileName: String,
     @JsonProperty("file_size") val fileSize: Long,
     @JsonProperty("sha_512") val sha512: String,

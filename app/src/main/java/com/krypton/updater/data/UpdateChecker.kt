@@ -69,6 +69,7 @@ class UpdateChecker @Inject constructor(
             date = otaJsonContent.date,
             preBuildIncremental = otaJsonContent.preBuildIncremental,
             url = otaJsonContent.url,
+            downloadSources = otaJsonContent.downloadSources,
             fileName = otaJsonContent.fileName,
             fileSize = otaJsonContent.fileSize,
             sha512 = otaJsonContent.sha512,
@@ -86,12 +87,18 @@ class UpdateChecker @Inject constructor(
 
     private fun getChangelog(): Map<Long, String?>? {
         val result = githubApiHelper.getChangelogs(DeviceInfo.getDevice())
+        logD("getChangelog: result = $result")
         if (result.isFailure) {
+            Log.e(TAG, "Failed to get changelog", result.exceptionOrNull())
             return null
         }
-        val changelogMap = result.getOrNull()?.takeIf { it.isNotEmpty() } ?: return null
+        val changelogMap = result.getOrNull()?.takeIf { it.isNotEmpty() } ?: run {
+            Log.w(TAG, "Empty changelog!")
+            return null
+        }
         val filteredMap = mutableMapOf<Long, String?>()
         changelogMap.forEach { (name, content) ->
+            logD("filtering $name")
             val date = getDateFromChangelogFileName(name)?.time ?: return@forEach
             if (compareTillDay(
                     date,
@@ -101,6 +108,7 @@ class UpdateChecker @Inject constructor(
                     date,
                     updateBuildDate
                 ) > 0 /* Changelog is newer than OTA */) {
+                logD("Skipping changelog since it doesn't satisfy constraints")
                 return@forEach
             }
             filteredMap[date] = content
@@ -119,31 +127,36 @@ class UpdateChecker @Inject constructor(
         // Changelog files are of the format changelog_2021_12_30
         private const val CHANGELOG_FILE_NAME_PREFIX = "changelog_"
 
-        private val CHANGELOG_FILE_DATE_FORMAT = SimpleDateFormat("yyyy_MM_dd", Locale.US)
-
         private fun logD(msg: String) {
             if (DEBUG) Log.d(TAG, msg)
         }
 
-        private fun getDateFromChangelogFileName(name: String): Date? =
-            try {
-                CHANGELOG_FILE_DATE_FORMAT.parse(
-                    name.substringAfter(CHANGELOG_FILE_NAME_PREFIX)
-                )
-            } catch (e: ParseException) {
-                Log.e(TAG, "ParseException while parsing date from $name")
-                null
-            }
+        private fun getDateFromChangelogFileName(name: String): Date? {
+            return runCatching {
+                val dateStringList =
+                    name.substringAfter(CHANGELOG_FILE_NAME_PREFIX).split("_", limit = 3)
+                logD("parsed dates = $dateStringList")
+                val calendar = Calendar.getInstance().apply {
+                    set(Calendar.YEAR, dateStringList[0].toInt())
+                    set(
+                        Calendar.MONTH,
+                        dateStringList[1].toInt() - 1 /* 0 is first month in gregorian calendar */
+                    )
+                    set(Calendar.DAY_OF_MONTH, dateStringList[2].toInt())
+                }
+                calendar.time
+            }.getOrNull()
+        }
 
         /**
-         * Compares to unix timestamps by stripping of time until it
+         * Compares two unix timestamps by stripping of time until it
          * represents midnight of the day it corresponds to.
          */
         private fun compareTillDay(first: Long, second: Long): Int {
             logD("Comparing: first = $first, second = $second")
             val calendarForFirst = setTimeAndResetTillDay(first)
             val calendarForSecond = setTimeAndResetTillDay(second)
-            logD("calendarForFirst = $calendarForFirst, calendarForSecond = $calendarForSecond")
+            logD("processed times: first = ${calendarForFirst.time.time}, second = ${calendarForSecond.time.time}")
             return calendarForFirst.compareTo(calendarForSecond)
         }
 

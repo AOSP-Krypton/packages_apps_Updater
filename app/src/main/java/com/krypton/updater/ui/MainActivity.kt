@@ -150,6 +150,10 @@ class MainActivity : ComponentActivity() {
             if (showCopyingDialog.value) {
                 ProgressDialog(title = stringResource(id = R.string.copying_file))
             }
+            val showStateRestoringDialog = state.showStateRestoreDialog.collectAsState(false)
+            if (showStateRestoringDialog.value) {
+                ProgressDialog(title = stringResource(id = R.string.restoring_state))
+            }
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(
                     modifier = Modifier
