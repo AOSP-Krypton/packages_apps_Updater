@@ -16,8 +16,6 @@
 
 package com.krypton.updater.ui
 
-import android.content.Context
-import android.content.Intent
 import android.content.res.Resources
 import android.util.DataUnit
 
@@ -26,6 +24,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavHostController
 
 import com.krypton.updater.R
 import com.krypton.updater.data.UpdateInfo
@@ -46,8 +45,8 @@ class DownloadCardState(
     private val downloadViewModel: DownloadViewModel,
     private val snackbarHostState: SnackbarHostState,
     private val coroutineScope: CoroutineScope,
-    private val context: Context,
     private val resources: Resources,
+    private val navHostController: NavHostController
 ) {
 
     val titleText: String
@@ -119,7 +118,7 @@ class DownloadCardState(
     }
 
     fun triggerLeadingAction() {
-        context.startActivity(Intent(context, ChangelogActivity::class.java))
+        navHostController.navigate(Routes.CHANGELOGS)
     }
 
     fun triggerTrailingAction() {
@@ -205,14 +204,13 @@ fun rememberDownloadCardState(
     downloadViewModel: DownloadViewModel,
     snackbarHostState: SnackbarHostState,
     coroutineScope: CoroutineScope,
-    context: Context = LocalContext.current,
-    resources: Resources = context.resources,
+    resources: Resources = LocalContext.current.resources,
+    navHostController: NavHostController
 ) = remember(
     mainViewModel,
     downloadViewModel,
     snackbarHostState,
     coroutineScope,
-    context,
     resources
 ) {
     DownloadCardState(
@@ -220,7 +218,7 @@ fun rememberDownloadCardState(
         downloadViewModel,
         snackbarHostState,
         coroutineScope,
-        context,
-        resources
+        resources,
+        navHostController
     )
 }

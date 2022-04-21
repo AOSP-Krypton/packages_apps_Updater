@@ -49,12 +49,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 
 import com.krypton.updater.R
 import com.krypton.updater.services.UpdateInstallerService
-import com.krypton.updater.viewmodel.DownloadViewModel
-import com.krypton.updater.viewmodel.MainViewModel
-import com.krypton.updater.viewmodel.UpdateViewModel
+import com.krypton.updater.viewmodel.*
 
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -105,7 +105,26 @@ class MainActivity : ComponentActivity() {
                     viewModels<DownloadViewModel>().value,
                     viewModels<UpdateViewModel>().value
                 )
-                MainScreen(mainScreenState)
+                NavHost(
+                    navController = mainScreenState.navHostController,
+                    startDestination = Routes.HOME
+                ) {
+                    composable(Routes.HOME) { MainScreen(mainScreenState) }
+                    composable(Routes.SETTINGS) {
+                        val settingsViewModel by remember { viewModels<SettingsViewModel>() }
+                        SettingsScreen(
+                            settingsViewModel = settingsViewModel,
+                            mainScreenState.navHostController
+                        )
+                    }
+                    composable(Routes.CHANGELOGS) {
+                        val changelogViewModel by remember { viewModels<ChangelogViewModel>() }
+                        ChangelogScreen(
+                            changelogViewModel = changelogViewModel,
+                            mainScreenState.navHostController
+                        )
+                    }
+                }
             }
         }
     }
@@ -137,7 +156,10 @@ class MainActivity : ComponentActivity() {
                     onRequestLocalUpgrade = {
                         state.startLocalUpgrade(it)
                     },
-                    shouldAllowLocalUpgrade.value
+                    shouldAllowLocalUpgrade.value,
+                    onSettingsLaunchRequest = {
+                        state.openSettings()
+                    }
                 )
             },
             snackbarHost = { SnackbarHost(state.snackbarHostState) }
@@ -210,7 +232,8 @@ class MainActivity : ComponentActivity() {
                                         viewModels<MainViewModel>().value,
                                         viewModels<DownloadViewModel>().value,
                                         state.snackbarHostState,
-                                        rememberCoroutineScope()
+                                        rememberCoroutineScope(),
+                                        navHostController = state.navHostController
                                     )
                                     DownloadCard(downloadCardState)
                                 }
@@ -226,7 +249,8 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun AppBar(
         onRequestLocalUpgrade: (Uri) -> Unit,
-        shouldAllowLocalUpgrade: Boolean
+        shouldAllowLocalUpgrade: Boolean,
+        onSettingsLaunchRequest: () -> Unit,
     ) {
         val localUpgradeLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.OpenDocument(),
@@ -258,14 +282,7 @@ class MainActivity : ComponentActivity() {
                             title = stringResource(id = R.string.settings),
                             iconImageVector = Icons.Filled.Settings,
                             contentDescription = stringResource(id = R.string.settings_menu_item_desc),
-                            onClick = {
-                                startActivity(
-                                    Intent(
-                                        applicationContext,
-                                        SettingsActivity::class.java
-                                    )
-                                )
-                            }
+                            onClick = onSettingsLaunchRequest
                         ),
                     )
                 )
