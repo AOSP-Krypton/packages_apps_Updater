@@ -25,6 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 
 import com.krypton.updater.R
 import com.krypton.updater.data.FileCopyStatus
@@ -47,6 +49,7 @@ class MainScreenState(
     private val updateViewModel: UpdateViewModel,
     private val resources: Resources,
     val snackbarHostState: SnackbarHostState,
+    val navHostController: NavHostController,
 ) {
 
     private val locale: Locale
@@ -179,6 +182,10 @@ class MainScreenState(
         updateViewModel.setupLocalUpgrade(uri)
     }
 
+    fun openSettings() {
+        navHostController.navigate(Routes.SETTINGS)
+    }
+
     companion object {
         private fun getFormattedDate(
             locale: Locale,
@@ -199,7 +206,8 @@ fun rememberMainScreenState(
     updateViewModel: UpdateViewModel,
     snackbarHostState: SnackbarHostState = SnackbarHostState(),
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
-    resources: Resources = LocalContext.current.resources
+    resources: Resources = LocalContext.current.resources,
+    navController: NavHostController = rememberNavController()
 ) = remember(
     mainViewModel,
     downloadViewModel,
@@ -214,5 +222,6 @@ fun rememberMainScreenState(
         updateViewModel,
         resources,
         snackbarHostState,
+        navController
     )
 }
