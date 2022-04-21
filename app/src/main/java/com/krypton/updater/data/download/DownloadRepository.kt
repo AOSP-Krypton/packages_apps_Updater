@@ -35,11 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -47,7 +43,7 @@ import kotlinx.coroutines.withContext
 class DownloadRepository @Inject constructor(
     private val downloadManager: DownloadManager,
     @ApplicationContext context: Context,
-    private val applicationScope: CoroutineScope,
+    applicationScope: CoroutineScope,
     private val fileCopier: FileCopier,
     appDatabase: AppDatabase,
 ) {
@@ -67,25 +63,17 @@ class DownloadRepository @Inject constructor(
     val downloadFileName: String?
         get() = downloadManager.downloadFileName
 
-    // To prevent state flow from download manager overwriting
-    // saved state in database.
-    private val _stateRestoreFinished = MutableStateFlow(false)
-    val stateRestoreFinished: StateFlow<Boolean>
-        get() = _stateRestoreFinished
+    private val _restoringDownloadState = MutableStateFlow(false)
+    val restoringDownloadState: StateFlow<Boolean>
+        get() = _restoringDownloadState
 
     val fileCopyStatus = Channel<FileCopyStatus>(2, BufferOverflow.DROP_OLDEST)
 
     init {
         applicationScope.launch {
-            _stateRestoreFinished.value = restoreDownloadState()
-        }
-        applicationScope.launch {
+            restoreDownloadState()
             downloadState.collect {
-                if (stateRestoreFinished.value) {
-                    applicationScope.launch {
-                        saveStateToDatabase(it)
-                    }
-                }
+                saveDownloadState(it)
                 if (it.finished) {
                     exportFile()
                 }
@@ -112,11 +100,15 @@ class DownloadRepository @Inject constructor(
      *
      * @param buildInfo a [BuildInfo] object containing the details of
      *   the file to download.
+     * @param downloadSource the mirror to download from. If non empty,
+     *   download url will be selected from [BuildInfo.downloadSources] map with
+     *   [downloadSource] as key or else, defaults to [BuildInfo.url] field.
      */
-    fun triggerDownload(buildInfo: BuildInfo) {
+    // TODO remove support for [BuildInfo.url] once we switch to A13
+    fun triggerDownload(buildInfo: BuildInfo, downloadSource: String? = null) {
         downloadManager.download(
             DownloadInfo(
-                buildInfo.url,
+                downloadSource?.let { buildInfo.downloadSources!![it] } ?: buildInfo.url!!,
                 buildInfo.fileName,
                 buildInfo.fileSize,
                 buildInfo.sha512
@@ -141,7 +133,7 @@ class DownloadRepository @Inject constructor(
         downloadManager.cancelDownload()
     }
 
-    private suspend fun saveStateToDatabase(state: DownloadState) {
+    private suspend fun saveDownloadState(state: DownloadState) {
         logD("saveStateToDatabase")
         if (!state.finished) return
         savedStateDatastore.updateData {
@@ -152,32 +144,29 @@ class DownloadRepository @Inject constructor(
         logD("state saved")
     }
 
-    private suspend fun restoreDownloadState(): Boolean {
+    private suspend fun restoreDownloadState() {
         logD("restoreDownloadState")
+        _restoringDownloadState.value = true
         val downloadFinished = savedStateDatastore.data.map { it.downloadFinished }.first()
         if (!downloadFinished) {
             logD("no saved state available")
-            return true
+            _restoringDownloadState.value = false
+            return
         }
         withContext(Dispatchers.Default) {
-            val count = updateInfoDao.entityCount()
-            if (count == 0) {
+            if (updateInfoDao.entityCount() == 0) {
                 logD("Update info database is empty")
                 return@withContext
             }
-            val buildInfoEntity =
-                updateInfoDao.getBuildInfo().first() ?: return@withContext
+            val buildInfoEntity = updateInfoDao.getBuildInfo().firstOrNull() ?: return@withContext
             logD("restoring state")
             downloadManager.restoreDownloadState(
-                DownloadInfo(
-                    buildInfoEntity.url,
-                    buildInfoEntity.fileName,
-                    buildInfoEntity.fileSize,
-                    buildInfoEntity.sha512,
-                )
+                buildInfoEntity.fileName,
+                buildInfoEntity.fileSize,
+                buildInfoEntity.sha512,
             )
         }
-        return true
+        _restoringDownloadState.value = false
     }
 
     suspend fun resetState() {

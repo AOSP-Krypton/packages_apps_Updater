@@ -16,10 +16,7 @@
 
 package com.krypton.updater.viewmodel
 
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 
 import com.krypton.updater.data.BuildInfo
 import com.krypton.updater.data.download.DownloadRepository
@@ -28,14 +25,11 @@ import com.krypton.updater.data.Event
 import com.krypton.updater.data.FileCopyStatus
 
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.*
 
 import javax.inject.Inject
 
-import kotlin.math.roundToInt
-
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 
 @HiltViewModel
 class DownloadViewModel @Inject constructor(
@@ -53,23 +47,14 @@ class DownloadViewModel @Inject constructor(
     val downloadProgress: StateFlow<Float>
         get() = downloadRepository.downloadProgressFlow
 
-    private val _stateRestoreFinished = MutableLiveData<Boolean>()
-    val stateRestoreFinished: LiveData<Boolean>
-        get() = _stateRestoreFinished
-
     val fileCopyStatus: Channel<FileCopyStatus>
         get() = downloadRepository.fileCopyStatus
 
-    init {
-        viewModelScope.launch {
-            downloadRepository.stateRestoreFinished.collect {
-                _stateRestoreFinished.value = it
-            }
-        }
-    }
+    val restoringDownloadState: StateFlow<Boolean>
+        get() = downloadRepository.restoringDownloadState
 
-    fun startDownload(buildInfo: BuildInfo) {
-        downloadRepository.triggerDownload(buildInfo)
+    fun startDownload(buildInfo: BuildInfo, source: String?) {
+        downloadRepository.triggerDownload(buildInfo, source)
     }
 
     fun cancelDownload() {

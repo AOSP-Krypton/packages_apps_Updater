@@ -16,11 +16,13 @@
 
 package com.krypton.updater.data
 
+// TODO drop url field once we switch to A13
 data class BuildInfo(
     val version: String,
     val date: Long,
     val preBuildIncremental: Long?,
-    val url: String,
+    val url: String?,
+    val downloadSources: Map<String, String>?,
     val fileName: String,
     val fileSize: Long,
     val sha512: String,

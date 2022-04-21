@@ -43,7 +43,7 @@ class MainViewModel @Inject constructor(
     private val updateRepository: UpdateRepository,
 ) : ViewModel() {
 
-    val updateInfoNew: Flow<UpdateInfo>
+    val updateInfo: Flow<UpdateInfo>
         get() = mainRepository.getUpdateInfo()
 
     val systemBuildDate: Date
@@ -51,7 +51,7 @@ class MainViewModel @Inject constructor(
 
     val systemBuildVersion: String = mainRepository.systemBuildVersion
 
-    val lastCheckedTimeNew: Flow<Long>
+    val lastCheckedTime: Flow<Long>
         get() = mainRepository.lastCheckedTime.map { it.time }.filter { it > 0 }
 
     private var updateCheckJob: Job? = null

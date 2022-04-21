@@ -24,12 +24,15 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "build_info_table")
 @Fts4
+// TODO remove url field once we switch to A13
 data class BuildInfoEntity(
     var version: String,
     var date: Long,
     @ColumnInfo(name = "pre_build_incremental")
     var preBuildIncremental: Long?,
-    var url: String,
+    var url: String?,
+    @ColumnInfo(name = "download_sources")
+    var downloadSources: Map<String, String>?,
     @ColumnInfo(name = "file_name")
     var fileName: String,
     @ColumnInfo(name = "file_size")
