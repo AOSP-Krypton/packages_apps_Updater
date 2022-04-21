@@ -320,6 +320,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalAnimationApi::class)
     @Composable
     fun MainScreenTopContent(
         buildDate: String,
@@ -338,26 +339,54 @@ class MainActivity : ComponentActivity() {
             ),
             fontWeight = FontWeight.Bold
         )
-        CustomButton(
-            modifier = Modifier.padding(top = 32.dp),
-            enabled = !isCheckingForUpdate.value,
-            text = stringResource(id = R.string.check_for_updates),
-            onClick = onUpdateCheckRequest
-        )
-        if (isCheckingForUpdate.value) {
-            Text(
+        AnimatedContent(targetState = isCheckingForUpdate.value) {
+            CustomButton(
                 modifier = Modifier.padding(top = 32.dp),
-                text = stringResource(id = R.string.checking_for_update)
+                enabled = !it,
+                text = stringResource(id = R.string.check_for_updates),
+                onClick = onUpdateCheckRequest
             )
-        } else {
-            lastCheckedTime.value?.let {
-                Text(
-                    modifier = Modifier.padding(top = 32.dp),
-                    text = stringResource(
-                        id = R.string.last_checked_time_format,
+        }
+        UpdateStatusContent(
+            when {
+                isCheckingForUpdate.value -> UpdateStatus.CheckingForUpdate
+                lastCheckedTime.value != null -> lastCheckedTime.value?.let {
+                    UpdateStatus.LastCheckedTimeAvailable(
                         it
                     )
-                )
+                } ?: UpdateStatus.Idle
+                else -> UpdateStatus.Idle
+            }
+        )
+    }
+
+    sealed interface UpdateStatus {
+        object Idle : UpdateStatus
+        object CheckingForUpdate : UpdateStatus
+        class LastCheckedTimeAvailable(val lastCheckedTime: String) : UpdateStatus
+    }
+
+    @OptIn(ExperimentalAnimationApi::class)
+    @Composable
+    fun UpdateStatusContent(updateStatus: UpdateStatus) {
+        AnimatedContent(targetState = updateStatus) {
+            when (it) {
+                is UpdateStatus.Idle -> {}
+                is UpdateStatus.CheckingForUpdate -> {
+                    Text(
+                        modifier = Modifier.padding(top = 32.dp),
+                        text = stringResource(id = R.string.checking_for_update)
+                    )
+                }
+                is UpdateStatus.LastCheckedTimeAvailable -> {
+                    Text(
+                        modifier = Modifier.padding(top = 32.dp),
+                        text = stringResource(
+                            id = R.string.last_checked_time_format,
+                            it.lastCheckedTime
+                        )
+                    )
+                }
             }
         }
     }
