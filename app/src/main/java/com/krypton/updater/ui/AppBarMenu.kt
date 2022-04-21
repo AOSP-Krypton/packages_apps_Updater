@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 class MenuItem(
     val title: String,
     val contentDescription: String,
+    val enabled: Boolean = true,
     val icon: Painter? = null,
     val iconImageVector: ImageVector? = null,
     val onClick: () -> Unit = {},
@@ -58,6 +59,7 @@ fun AppBarMenu(
     ) {
         menuItems.forEach {
             DropdownMenuItem(
+                enabled = it.enabled,
                 leadingIcon = {
                     when {
                         it.icon != null -> Icon(
