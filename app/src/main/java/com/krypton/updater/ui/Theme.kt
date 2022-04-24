@@ -23,23 +23,14 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
-
 @Composable
 fun AppTheme(content: @Composable () -> Unit) {
-    val sysUIController = rememberSystemUiController()
     MaterialTheme(
         colorScheme = if (isSystemInDarkTheme()) {
             dynamicDarkColorScheme(LocalContext.current)
         } else {
             dynamicLightColorScheme(LocalContext.current)
         },
-        content = {
-            sysUIController.setSystemBarsColor(
-                color = MaterialTheme.colorScheme.surface,
-                darkIcons = !isSystemInDarkTheme()
-            )
-            content()
-        }
+        content = content
     )
 }

@@ -33,6 +33,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.*
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -105,15 +106,28 @@ class MainActivity : ComponentActivity() {
                     viewModels<DownloadViewModel>().value,
                     viewModels<UpdateViewModel>().value
                 )
+                mainScreenState.systemUiController.setSystemBarsColor(
+                    color = MaterialTheme.colorScheme.surface,
+                    darkIcons = !isSystemInDarkTheme()
+                )
                 NavHost(
                     navController = mainScreenState.navHostController,
                     startDestination = Routes.HOME
                 ) {
-                    composable(Routes.HOME) { MainScreen(mainScreenState) }
+                    composable(Routes.HOME) {
+                        // We should update system bar colors since it might have bee
+                        // changed from other screens
+                        mainScreenState.systemUiController.setSystemBarsColor(
+                            color = MaterialTheme.colorScheme.surface,
+                            darkIcons = !isSystemInDarkTheme()
+                        )
+                        MainScreen(mainScreenState)
+                    }
                     composable(Routes.SETTINGS) {
                         val settingsViewModel by remember { viewModels<SettingsViewModel>() }
                         SettingsScreen(
                             settingsViewModel = settingsViewModel,
+                            mainScreenState.systemUiController,
                             mainScreenState.navHostController
                         )
                     }
@@ -121,6 +135,7 @@ class MainActivity : ComponentActivity() {
                         val changelogViewModel by remember { viewModels<ChangelogViewModel>() }
                         ChangelogScreen(
                             changelogViewModel = changelogViewModel,
+                            mainScreenState.systemUiController,
                             mainScreenState.navHostController
                         )
                     }

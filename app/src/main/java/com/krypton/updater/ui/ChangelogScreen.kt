@@ -16,13 +16,13 @@
 
 package com.krypton.updater.ui
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -38,70 +38,58 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 
+import com.google.accompanist.systemuicontroller.SystemUiController
 import com.krypton.updater.R
 import com.krypton.updater.viewmodel.ChangelogViewModel
 
-
 import java.text.DateFormat
-import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChangelogScreen(
     changelogViewModel: ChangelogViewModel,
+    systemUiController: SystemUiController,
     navHostController: NavHostController
 ) {
-    Scaffold(
-        topBar = {
-            SmallTopAppBar(
-                title = {
-                    Text(
-                        modifier = Modifier.padding(start = 16.dp),
-                        text = stringResource(R.string.changelog)
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navHostController.popBackStack() }) {
-                        Icon(
-                            modifier = Modifier.padding(start = 12.dp),
-                            imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.changelog_back_button_desc)
-                        )
-                    }
-                },
-            )
-        }
-    ) {
-        val changelogListState = changelogViewModel.changelog.collectAsState(emptyList())
-        val changelogList by remember { changelogListState }
-        Box(modifier = Modifier.padding(start = 24.dp, end = 16.dp)) {
-            if (changelogList.isEmpty()) {
-                Text(text = stringResource(id = R.string.changelog_unavailable))
-            } else {
-                ChangelogList(changelogList)
-            }
-        }
-    }
-}
-
-@Composable
-fun ChangelogList(changelogList: List<Pair<Date, String?>>) {
+    val isSystemInDarkTheme = isSystemInDarkTheme()
     val locale = LocalContext.current.resources.configuration.locales[0]
-    val dateFormatInstance = DateFormat.getDateInstance(DateFormat.DEFAULT, locale)
-    LazyColumn {
-        items(changelogList) {
-            SelectionContainer {
-                Text(
-                    text = buildAnnotatedString {
-                        if (it.second != null) {
-                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                append(dateFormatInstance.format(it.first))
+    val changelogListState = changelogViewModel.changelog.collectAsState(emptyList())
+    val changelogList by remember { changelogListState }
+    CollapsingToolbarScreen(
+        title = stringResource(R.string.changelog),
+        backButtonContentDescription = stringResource(R.string.changelog_back_button_desc),
+        onBackButtonPressed = { navHostController.popBackStack() },
+        onStatusBarColorUpdateRequest = {
+            systemUiController.setStatusBarColor(
+                color = it,
+                darkIcons = !isSystemInDarkTheme
+            )
+        },
+    ) {
+        val dateFormatInstance = DateFormat.getDateInstance(DateFormat.DEFAULT, locale)
+        if (changelogList.isEmpty()) {
+            item {
+                Text(text = stringResource(id = R.string.changelog_unavailable))
+            }
+        } else {
+            items(changelogList) {
+                SelectionContainer {
+                    Text(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 24.dp),
+                        text = buildAnnotatedString {
+                            it.second?.let { changelog ->
+                                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                    append(dateFormatInstance.format(it.first))
+                                }
+                                append("\n")
+                                append(changelog)
                             }
-                            append("\n")
-                            append(it.second!!)
-                        }
-                    }
-                )
+                        },
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
         }
     }
