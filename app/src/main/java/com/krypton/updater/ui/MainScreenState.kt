@@ -27,6 +27,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.google.accompanist.systemuicontroller.SystemUiController
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 import com.krypton.updater.R
 import com.krypton.updater.data.FileCopyStatus
@@ -48,6 +50,7 @@ class MainScreenState(
     private val downloadViewModel: DownloadViewModel,
     private val updateViewModel: UpdateViewModel,
     private val resources: Resources,
+    val systemUiController: SystemUiController,
     val snackbarHostState: SnackbarHostState,
     val navHostController: NavHostController,
 ) {
@@ -204,6 +207,7 @@ fun rememberMainScreenState(
     mainViewModel: MainViewModel,
     downloadViewModel: DownloadViewModel,
     updateViewModel: UpdateViewModel,
+    systemUiController: SystemUiController = rememberSystemUiController(),
     snackbarHostState: SnackbarHostState = SnackbarHostState(),
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
     resources: Resources = LocalContext.current.resources,
@@ -221,6 +225,7 @@ fun rememberMainScreenState(
         downloadViewModel,
         updateViewModel,
         resources,
+        systemUiController,
         snackbarHostState,
         navController
     )

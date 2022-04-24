@@ -37,12 +37,12 @@ import kotlin.math.floor
 @Composable
 fun Preference(
     title: String,
-    summary: String,
+    summary: String? = null,
     clickable: Boolean = true,
     onClick: () -> Unit = {},
-    startWidget: @Composable (() -> Unit)? = null,
-    endWidget: @Composable (() -> Unit)? = null,
-    bottomWidget: @Composable (() -> Unit)? = null,
+    startWidget: @Composable (BoxScope.() -> Unit)? = null,
+    endWidget: @Composable (BoxScope.() -> Unit)? = null,
+    bottomWidget: @Composable (BoxScope.() -> Unit)? = null,
 ) {
     Row(
         modifier = Modifier
@@ -52,19 +52,17 @@ fun Preference(
     ) {
         if (startWidget != null) {
             Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .align(Alignment.CenterVertically)
-            ) {
-                startWidget()
-            }
-        } else {
-            Spacer(modifier = Modifier.width(48.dp))
+                modifier = Modifier.size(48.dp),
+                contentAlignment = Alignment.Center,
+                content = startWidget
+            )
         }
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(top = 12.dp, bottom = 12.dp, start = 24.dp, end = 24.dp)
+                .padding(top = 12.dp, start = 24.dp, end = 24.dp),
+            verticalArrangement = Arrangement.SpaceEvenly,
+            horizontalAlignment = Alignment.Start
         ) {
             Text(
                 text = title,
@@ -73,26 +71,30 @@ fun Preference(
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 2,
             )
-            Text(
-                modifier = Modifier.padding(top = 6.dp),
-                text = summary,
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = .75f),
-                maxLines = 4
-            )
+            if (summary != null) {
+                Text(
+                    modifier = Modifier
+                        .padding(top = 6.dp),
+                    text = summary,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = .75f),
+                    maxLines = 4
+                )
+            }
             if (bottomWidget != null) {
-                Box(modifier = Modifier.padding(top = 6.dp), contentAlignment = Alignment.Center) {
-                    bottomWidget()
-                }
+                Box(
+                    modifier = Modifier.padding(top = 6.dp),
+                    contentAlignment = Alignment.Center,
+                    content = bottomWidget
+                )
             }
         }
         if (endWidget != null) {
             Box(
                 modifier = Modifier.padding(start = 6.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                endWidget()
-            }
+                contentAlignment = Alignment.Center,
+                content = endWidget
+            )
         }
         Spacer(modifier = Modifier.width(12.dp))
     }
