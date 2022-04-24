@@ -27,11 +27,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 
 import com.krypton.updater.R
+import com.krypton.updater.data.update.UpdateState
 import com.krypton.updater.services.UpdateInstallerService
 import com.krypton.updater.viewmodel.UpdateViewModel
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -49,42 +49,51 @@ class UpdateCardState(
         get() = resources.getString(R.string.install_update)
 
     val shouldShowProgress: Flow<Boolean>
-        get() = viewModel.updateState.map { !it.idle && !it.finished }
+        get() = viewModel.updateState.map { it !is UpdateState.Idle && it !is UpdateState.Finished }
+
+    val progress: Flow<Float>
+        get() = viewModel.updateState.map {
+            when (it) {
+                is UpdateState.Initializing, is UpdateState.Idle -> 0f
+                is UpdateState.Updating -> it.progress
+                is UpdateState.Paused -> it.progress
+                is UpdateState.Failed -> it.progress
+                is UpdateState.Finished -> 100f
+            }
+        }
 
     val progressDescriptionText: Flow<String>
-        get() = viewModel.updateState.combine(progress) { state, progress ->
-            when {
-                state.initializing -> resources.getString(R.string.initializing)
-                state.updating -> resources.getString(
+        get() = viewModel.updateState.map {
+            when (it) {
+                is UpdateState.Initializing -> resources.getString(R.string.initializing)
+                is UpdateState.Updating -> resources.getString(
                     R.string.installing_update_format,
-                    String.format("%.2f", progress)
+                    String.format("%.2f", it.progress)
                 )
-                state.paused -> resources.getString(R.string.installation_paused)
-                state.failed -> resources.getString(R.string.installation_failed)
+                is UpdateState.Paused -> resources.getString(R.string.installation_paused)
+                is UpdateState.Failed -> resources.getString(R.string.installation_failed)
                 else -> resources.getString(R.string.installing_update)
             }
         }
 
-    val progress: Flow<Float>
-        get() = viewModel.updateProgress
-
     val shouldShowLeadingActionButton: Flow<Boolean>
-        get() = viewModel.updateState.map { it.updating || it.paused }
+        get() = viewModel.updateState.map { it is UpdateState.Updating || it is UpdateState.Paused }
 
     val leadingActionButtonText: Flow<String?>
         get() = viewModel.updateState.map {
-            when {
-                it.updating -> resources.getString(R.string.pause)
-                it.paused -> resources.getString(R.string.resume)
+            when (it) {
+                is UpdateState.Updating -> resources.getString(R.string.pause)
+                is UpdateState.Paused -> resources.getString(R.string.resume)
                 else -> null
             }
         }
 
     val trailingActionButtonText: Flow<String>
         get() = viewModel.updateState.map {
-            when {
-                it.updating || it.paused -> resources.getString(android.R.string.cancel)
-                it.finished -> resources.getString(R.string.reboot)
+            when (it) {
+                is UpdateState.Updating, is UpdateState.Paused ->
+                    resources.getString(android.R.string.cancel)
+                is UpdateState.Finished -> resources.getString(R.string.reboot)
                 else -> resources.getString(R.string.update)
             }
         }
@@ -102,7 +111,7 @@ class UpdateCardState(
 
     fun leadingAction() {
         viewModel.updateState.value.let {
-            if (it.updating || it.paused) {
+            if (it is UpdateState.Updating || it is UpdateState.Paused) {
                 service?.pauseOrResumeUpdate()
             }
         }
@@ -110,12 +119,11 @@ class UpdateCardState(
 
     fun trailingAction() {
         viewModel.updateState.value.let {
-            when {
-                it.updating || it.paused -> service?.cancelUpdate()
-                it.idle || it.initializing || it.failed -> startUpdate()
-                it.finished -> service?.reboot()
+            when (it) {
+                is UpdateState.Updating, is UpdateState.Paused -> service?.cancelUpdate()
+                is UpdateState.Idle, is UpdateState.Initializing, is UpdateState.Failed -> startUpdate()
+                is UpdateState.Finished -> service?.reboot()
             }
-            return@let
         }
     }
 

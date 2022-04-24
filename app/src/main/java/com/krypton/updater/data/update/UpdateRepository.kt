@@ -55,9 +55,6 @@ class UpdateRepository @Inject constructor(
     val updateState: StateFlow<UpdateState>
         get() = updateManager.updateState
 
-    val updateProgress: StateFlow<Float>
-        get() = updateManager.progressFlow
-
     val isUpdating: Boolean
         get() = updateManager.isUpdating
 
@@ -80,7 +77,7 @@ class UpdateRepository @Inject constructor(
                     downloadManager.downloadFile?.let { file ->
                         copyOTAFile(Uri.fromFile(file))
                     }
-                } else if (it.idle && updateState.value.idle) {
+                } else if (it.idle && updateState.value is UpdateState.Idle) {
                     _readyForUpdate.value = false
                 }
             }
@@ -88,7 +85,7 @@ class UpdateRepository @Inject constructor(
         applicationScope.launch {
             updateState.collect {
                 if (stateRestoreFinished) {
-                    if (it.finished) saveUpdateFinishedState()
+                    if (it is UpdateState.Finished) saveUpdateFinishedState()
                 }
             }
         }

@@ -17,5 +17,6 @@
 <permissions>
     <privapp-permissions package="com.krypton.updater">
         <permission name="android.permission.REBOOT" />
+        <permission name="android.permission.RECOVERY" />
     </privapp-permissions>
 </permissions>

@@ -26,15 +26,12 @@ class UpdateViewModel @Inject constructor(
     val updateState: StateFlow<UpdateState>
         get() = updateRepository.updateState
 
-    val updateProgress: StateFlow<Float>
-        get() = updateRepository.updateProgress
-
     val showUpdateUI: Flow<Boolean>
         get() = combine(
             updateRepository.updateState,
             updateRepository.readyForUpdate,
         ) { state, readyForUpdate ->
-            readyForUpdate || !state.idle
+            readyForUpdate || state !is UpdateState.Idle
         }
 
     val fileCopyStatus: Channel<FileCopyStatus>
@@ -44,9 +41,8 @@ class UpdateViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            updateRepository.updateState.filter { it.failed }.collect {
-                updateFailedReason.send(it.exception?.localizedMessage)
-            }
+            updateRepository.updateState.filterIsInstance<UpdateState.Failed>()
+                .collect { updateFailedReason.send(it.exception.localizedMessage) }
         }
     }
 

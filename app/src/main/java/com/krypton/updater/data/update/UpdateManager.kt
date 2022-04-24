@@ -17,11 +17,9 @@
 package com.krypton.updater.data.update
 
 import android.content.Context
-import android.os.ServiceSpecificException
-import android.os.UpdateEngine
+import android.os.*
 import android.os.UpdateEngine.ErrorCodeConstants
 import android.os.UpdateEngine.UpdateStatusConstants
-import android.os.UpdateEngineCallback
 import android.util.Log
 
 import com.krypton.updater.R
@@ -51,25 +49,36 @@ class UpdateManager @Inject constructor(
             logD("onStatusUpdate, status = $status, percent = $percent")
             when (status) {
                 UpdateStatusConstants.IDLE,
-                UpdateStatusConstants.CLEANUP_PREVIOUS_UPDATE,
+                UpdateStatusConstants.CLEANUP_PREVIOUS_UPDATE -> {
+                    updateSystemUpdateInfo(SystemUpdateManager.STATUS_IDLE)
+                }
                 UpdateStatusConstants.UPDATE_AVAILABLE -> {
                     isUpdating = true
-                    _updateState.value = UpdateState.updating()
+                    progress = 0f
+                    _updateState.value = UpdateState.Initializing
+                    updateSystemUpdateInfo(SystemUpdateManager.STATUS_WAITING_INSTALL)
                 }
                 // Step 1
                 UpdateStatusConstants.DOWNLOADING -> {
-                    _progressFlow.value = (percent / 3) * 100
+                    progress = (percent / 3) * 100
+                    _updateState.value = UpdateState.Updating(progress)
+                    updateSystemUpdateInfo(SystemUpdateManager.STATUS_IN_PROGRESS)
                 }
                 // Step 2
                 UpdateStatusConstants.VERIFYING -> {
-                    _progressFlow.value = ((percent + 1) * 100) / 3
+                    progress = ((percent + 1) * 100) / 3
+                    _updateState.value = UpdateState.Updating(progress)
+                    updateSystemUpdateInfo(SystemUpdateManager.STATUS_IN_PROGRESS)
                 }
                 // Step 3
                 UpdateStatusConstants.FINALIZING -> {
-                    _progressFlow.value = ((percent + 2) * 100) / 3
+                    progress = ((percent + 2) * 100) / 3
+                    _updateState.value = UpdateState.Updating(progress)
+                    updateSystemUpdateInfo(SystemUpdateManager.STATUS_IN_PROGRESS)
                 }
                 UpdateStatusConstants.UPDATED_NEED_REBOOT -> {
-                    _progressFlow.value = 100f
+                    _updateState.value = UpdateState.Finished
+                    updateSystemUpdateInfo(SystemUpdateManager.STATUS_WAITING_REBOOT)
                 }
                 else -> Log.e(TAG, "onStatusUpdate: unknown status code $status")
             }
@@ -77,9 +86,18 @@ class UpdateManager @Inject constructor(
 
         override fun onPayloadApplicationComplete(errorCode: Int) {
             logD("onPayloadApplicationComplete, errorCode = $errorCode")
-            reset()
+            updateScheduled = false
+            isUpdating = false
             when (errorCode) {
-                ErrorCodeConstants.SUCCESS -> _updateState.value = UpdateState.finished()
+                ErrorCodeConstants.SUCCESS -> {
+                    _updateState.value = UpdateState.Finished
+                    systemUpdateService.updateSystemUpdateInfo(PersistableBundle().apply {
+                        putInt(
+                            SystemUpdateManager.KEY_STATUS,
+                            SystemUpdateManager.STATUS_WAITING_REBOOT
+                        )
+                    })
+                }
                 ErrorCodeConstants.DOWNLOAD_INVALID_METADATA_MAGIC_STRING,
                 ErrorCodeConstants.DOWNLOAD_METADATA_SIGNATURE_MISMATCH ->
                     reportFailure(context.getString(R.string.metadata_verification_failed))
@@ -91,7 +109,10 @@ class UpdateManager @Inject constructor(
                     reportFailure(context.getString(R.string.rootfs_verification_failed))
                 ErrorCodeConstants.DOWNLOAD_TRANSFER_ERROR ->
                     reportFailure(context.getString(R.string.update_transfer_error))
-                ErrorCodeConstants.USER_CANCELLED -> {}
+                ErrorCodeConstants.USER_CANCELLED -> {
+                    _updateState.value = UpdateState.Idle
+                    updateSystemUpdateInfo(SystemUpdateManager.STATUS_IDLE)
+                }
                 else -> reportFailure(
                     context.getString(
                         R.string.update_installation_failed_with_code,
@@ -106,21 +127,29 @@ class UpdateManager @Inject constructor(
         private set
 
     val isUpdatePaused: Boolean
-        get() = _updateState.value.paused
+        get() = _updateState.value is UpdateState.Paused
 
     private var updateScheduled = false
 
-    private val _updateState = MutableStateFlow(UpdateState.idle())
+    private val _updateState = MutableStateFlow<UpdateState>(UpdateState.Idle)
     val updateState: StateFlow<UpdateState>
         get() = _updateState
 
-    private val _progressFlow = MutableStateFlow(0f)
-    val progressFlow: StateFlow<Float>
-        get() = _progressFlow
+    private var progress = 0f
+
+    private val systemUpdateService = context.getSystemService(SystemUpdateManager::class.java)
 
     init {
-        // Partially cancel any ongoing updates we are not aware of
-        cancelPartially()
+        val updateInfo = systemUpdateService.retrieveSystemUpdateInfo()
+        when (updateInfo.getInt(SystemUpdateManager.KEY_STATUS)) {
+            SystemUpdateManager.STATUS_WAITING_REBOOT -> {
+                _updateState.value = UpdateState.Finished
+            }
+            SystemUpdateManager.STATUS_IN_PROGRESS -> {
+                _updateState.value = UpdateState.Updating(0f)
+                updateEngine.bind(updateEngineCallback)
+            }
+        }
         applicationScope.launch {
             batteryMonitor.batteryState.collect {
                 if (!it && isUpdating) {
@@ -131,21 +160,30 @@ class UpdateManager @Inject constructor(
         }
     }
 
+    private fun updateSystemUpdateInfo(statusCode: Int) {
+        systemUpdateService.updateSystemUpdateInfo(PersistableBundle().apply {
+            putInt(
+                SystemUpdateManager.KEY_STATUS,
+                statusCode
+            )
+        })
+    }
+
     private fun reportFailure(msg: String) {
-        _updateState.value = UpdateState.failure(Throwable(msg))
+        _updateState.value = UpdateState.Failed(progress, Throwable(msg))
+        updateSystemUpdateInfo(SystemUpdateManager.STATUS_IDLE)
     }
 
     fun start() {
         logD("start: updateScheduled = $updateScheduled")
         if (updateScheduled) return
-        // Partially cancel any ongoing updates we are not aware of
-        cancelPartially()
         if (!batteryMonitor.isBatteryOkay()) {
             logAndUpdateState(context.getString(R.string.low_battery_plug_in))
             return
         }
-        _updateState.value = UpdateState.initializing()
-        val payloadInfoResult = PayloadInfo.Factory.createPayloadInfo(context, otaFileManager.otaFileUri)
+        _updateState.value = UpdateState.Initializing
+        val payloadInfoResult =
+            PayloadInfo.Factory.createPayloadInfo(context, otaFileManager.otaFileUri)
         if (payloadInfoResult.isFailure) {
             logAndUpdateState(
                 context.getString(
@@ -174,7 +212,7 @@ class UpdateManager @Inject constructor(
     private fun logAndUpdateState(msg: String) {
         val tr = Throwable(msg)
         Log.e(TAG, msg)
-        _updateState.value = UpdateState.failure(tr)
+        _updateState.value = UpdateState.Failed(progress, tr)
     }
 
     fun pause() {
@@ -183,7 +221,7 @@ class UpdateManager @Inject constructor(
         try {
             logD("Suspending update engine")
             updateEngine.suspend()
-            _updateState.value = UpdateState.paused()
+            _updateState.value = UpdateState.Paused(progress)
         } catch (e: ServiceSpecificException) {
             Log.e(TAG, "Failed to suspend update", e)
         }
@@ -195,7 +233,7 @@ class UpdateManager @Inject constructor(
         try {
             logD("Resuming update engine")
             updateEngine.resume()
-            _updateState.value = UpdateState.updating()
+            _updateState.value = UpdateState.Updating(0f)
         } catch (e: ServiceSpecificException) {
             Log.e(TAG, "Failed to resume update", e)
         }
@@ -203,38 +241,32 @@ class UpdateManager @Inject constructor(
 
     fun cancel() {
         logD("Cancel")
-        cancelPartially()
-        updateEngine.apply {
-            cleanupAppliedPayload()
-            resetStatus()
-        }
-        reset()
-    }
-
-    private fun cancelPartially() {
         try {
-            updateEngine.apply {
-                cancel()
-                unbind()
-                setPerformanceMode(false)
-            }
+            updateEngine.cancel()
         } catch (e: ServiceSpecificException) {
             Log.e(TAG, "Failed to cancel partially: ${e.message}")
+        } finally {
+            updateEngine.apply {
+                unbind()
+                setPerformanceMode(false)
+                cleanupAppliedPayload()
+                resetStatus()
+            }
         }
+        reset()
     }
 
     fun reset() {
         updateScheduled = false
         isUpdating = false
-        _updateState.value = UpdateState.idle()
-        _progressFlow.value = 0f
+        _updateState.value = UpdateState.Idle
+        updateSystemUpdateInfo(SystemUpdateManager.STATUS_IDLE)
     }
 
     fun restoreUpdateFinishedState() {
         isUpdating = true
         updateScheduled = true
-        _updateState.value = UpdateState.finished()
-        _progressFlow.value = 100f
+        _updateState.value = UpdateState.Finished
     }
 
     companion object {
