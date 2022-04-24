@@ -35,6 +35,7 @@ import androidx.core.app.NotificationManagerCompat
 
 import com.krypton.updater.R
 import com.krypton.updater.data.update.UpdateRepository
+import com.krypton.updater.data.update.UpdateState
 import com.krypton.updater.ui.MainActivity
 
 import dagger.hilt.android.AndroidEntryPoint
@@ -77,8 +78,6 @@ class UpdateInstallerService : Service() {
             }
         }
     }
-
-    private var shouldShowProgressNotification = true
 
     override fun onCreate() {
         logD("onCreate")
@@ -139,21 +138,23 @@ class UpdateInstallerService : Service() {
     private fun listenForEvents() {
         serviceScope.launch {
             updateRepository.updateState.collect {
-                shouldShowProgressNotification = it.initializing || it.updating
-                when {
-                    it.initializing -> updateProgressNotification(0f, true)
-                    it.updating -> updateProgressNotification(0f)
-                    it.paused -> {
+                when (it) {
+                    is UpdateState.Initializing -> updateProgressNotification(0f, true)
+                    is UpdateState.Updating -> updateProgressNotification(it.progress)
+                    is UpdateState.Paused -> {
                         releaseAndStopFg()
                         showUpdatePausedNotification()
                     }
-                    it.failed -> {
+                    is UpdateState.Failed -> {
                         releaseAndStopFg()
-                        showUpdateFailedNotification(it.exception?.message)
+                        showUpdateFailedNotification(it.exception.localizedMessage)
                     }
-                    it.finished -> {
+                    is UpdateState.Finished -> {
                         releaseAndStopFg()
                         showUpdateFinishedNotification()
+                    }
+                    is UpdateState.Idle -> {
+                        // No-op
                     }
                 }
             }
@@ -210,16 +211,7 @@ class UpdateInstallerService : Service() {
         )
     }
 
-    private fun listenForProgressUpdates() {
-        serviceScope.launch {
-            updateRepository.updateProgress.collect {
-                updateProgressNotification(it)
-            }
-        }
-    }
-
     private fun updateProgressNotification(progress: Float, indeterminate: Boolean = false) {
-        if (!shouldShowProgressNotification) return
         notificationManager.notify(
             UPDATE_INSTALLATION_NOTIFICATION_ID,
             NotificationCompat.Builder(this, UPDATE_INSTALLATION_CHANNEL_ID)
@@ -259,7 +251,6 @@ class UpdateInstallerService : Service() {
     private fun startUpdate() {
         logD("starting update")
         listenForEvents()
-        listenForProgressUpdates()
         acquireAndStartFg()
         serviceScope.launch {
             updateRepository.start()

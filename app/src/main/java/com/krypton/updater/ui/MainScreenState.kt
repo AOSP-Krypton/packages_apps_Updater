@@ -32,6 +32,7 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 import com.krypton.updater.R
 import com.krypton.updater.data.FileCopyStatus
+import com.krypton.updater.data.update.UpdateState
 import com.krypton.updater.viewmodel.DownloadViewModel
 import com.krypton.updater.viewmodel.MainViewModel
 import com.krypton.updater.viewmodel.UpdateViewModel
@@ -101,8 +102,8 @@ class MainScreenState(
         ) { downloadState, updateState ->
             !downloadState.waiting &&
                     !downloadState.downloading &&
-                    !updateState.initializing &&
-                    !updateState.updating
+                    updateState !is UpdateState.Initializing &&
+                    updateState !is UpdateState.Updating
         }
 
     val showStateRestoreDialog: StateFlow<Boolean>
