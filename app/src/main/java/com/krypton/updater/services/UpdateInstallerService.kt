@@ -53,7 +53,6 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class UpdateInstallerService : Service() {
     private lateinit var notificationManager: NotificationManagerCompat
-    private lateinit var powerManager: PowerManager
     private lateinit var wakeLock: PowerManager.WakeLock
     private lateinit var updateLock: UpdateLock
     private lateinit var serviceScope: CoroutineScope
@@ -85,8 +84,10 @@ class UpdateInstallerService : Service() {
         serviceScope = CoroutineScope(Dispatchers.Main)
         setupNotificationChannel()
         setupIntents()
-        powerManager = getSystemService(PowerManager::class.java)
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKELOCK_TAG)
+        wakeLock = getSystemService(PowerManager::class.java).newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            WAKELOCK_TAG
+        )
         updateLock = UpdateLock(UPDATE_LOCK_TAG)
         binder = ServiceBinder()
         registerReceiver(broadcastReceiver, IntentFilter().apply {
@@ -140,6 +141,7 @@ class UpdateInstallerService : Service() {
             updateRepository.updateState.collect {
                 when (it) {
                     is UpdateState.Initializing -> updateProgressNotification(0f, true)
+                    is UpdateState.Verifying -> updateProgressNotification(it.progress)
                     is UpdateState.Updating -> updateProgressNotification(it.progress)
                     is UpdateState.Paused -> {
                         releaseAndStopFg()
@@ -258,6 +260,10 @@ class UpdateInstallerService : Service() {
     }
 
     fun pauseOrResumeUpdate() {
+        if (!updateRepository.supportsUpdateSuspension) {
+            logD("Does not support suspending update, aborting")
+            return
+        }
         logD("pauseOrResumeUpdate, paused = ${updateRepository.isUpdatePaused}")
         if (updateRepository.isUpdatePaused) {
             acquireAndStartFg()
@@ -284,7 +290,9 @@ class UpdateInstallerService : Service() {
 
     fun reboot() {
         logD("rebooting")
-        powerManager.reboot(null)
+        serviceScope.launch {
+            updateRepository.reboot()
+        }
     }
 
     private fun releaseLocks() {

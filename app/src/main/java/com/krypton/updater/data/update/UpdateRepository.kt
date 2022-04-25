@@ -18,8 +18,8 @@ package com.krypton.updater.data.update
 
 import android.content.Context
 import android.net.Uri
-import com.krypton.updater.data.FileCopyStatus
 
+import com.krypton.updater.data.FileCopyStatus
 import com.krypton.updater.data.download.DownloadManager
 import com.krypton.updater.data.savedStateDataStore
 
@@ -33,9 +33,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -50,7 +48,6 @@ class UpdateRepository @Inject constructor(
 ) {
 
     private val savedStateDataStore = context.savedStateDataStore
-    private var stateRestoreFinished = false
 
     val updateState: StateFlow<UpdateState>
         get() = updateManager.updateState
@@ -67,10 +64,10 @@ class UpdateRepository @Inject constructor(
 
     val fileCopyStatus = Channel<FileCopyStatus>(2, BufferOverflow.DROP_OLDEST)
 
+    val supportsUpdateSuspension: Boolean
+        get() = updateManager.supportsUpdateSuspension
+
     init {
-        applicationScope.launch {
-            restoreState()
-        }
         applicationScope.launch {
             downloadManager.downloadState.collect {
                 if (it.finished) {
@@ -84,34 +81,38 @@ class UpdateRepository @Inject constructor(
         }
         applicationScope.launch {
             updateState.collect {
-                if (stateRestoreFinished) {
-                    if (it is UpdateState.Finished) saveUpdateFinishedState()
-                }
+                if (it is UpdateState.Finished) saveUpdateFinishedState()
             }
         }
     }
 
     suspend fun start() {
-        withContext(Dispatchers.Default) {
+        withContext(Dispatchers.IO) {
             updateManager.start()
         }
     }
 
     suspend fun pause() {
-        withContext(Dispatchers.Default) {
+        withContext(Dispatchers.IO) {
             updateManager.pause()
         }
     }
 
     suspend fun resume() {
-        withContext(Dispatchers.Default) {
+        withContext(Dispatchers.IO) {
             updateManager.resume()
         }
     }
 
     suspend fun cancel() {
-        withContext(Dispatchers.Default) {
+        withContext(Dispatchers.IO) {
             updateManager.cancel()
+        }
+    }
+
+    suspend fun reboot() {
+        withContext(Dispatchers.IO) {
+            updateManager.reboot()
         }
     }
 
@@ -139,15 +140,6 @@ class UpdateRepository @Inject constructor(
     fun resetState() {
         _readyForUpdate.value = false
         updateManager.reset()
-    }
-
-    private suspend fun restoreState() {
-        val updateFinished =
-            savedStateDataStore.data.map { it.updateFinished }.firstOrNull() == true
-        if (updateFinished) {
-            updateManager.restoreUpdateFinishedState()
-        }
-        stateRestoreFinished = true
     }
 
     private fun saveUpdateFinishedState() {

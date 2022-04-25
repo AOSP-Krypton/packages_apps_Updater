@@ -88,6 +88,7 @@
     <string name="installation_finished">Installation finished</string>
     <string name="installation_paused">Installation paused</string>
     <string name="installing_update_format">Installing update - <xliff:g example="100.00" id="percent">%1$s%%</xliff:g></string>
+    <string name="verifying_update">Verifying - <xliff:g example="100.00" id="percent">%1$s%%</xliff:g></string>
     <string name="pause">Pause</string>
     <string name="downgrading_not_allowed">Downgrading is not allowed</string>
     <string name="rootfs_verification_failed">Rootfs verification failed, try again</string>
@@ -99,6 +100,7 @@
     <string name="copying_failed">Copying failed: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
     <string name="install_update">Install update</string>
     <string name="update_installation_failed_with_code">Update failed with error code <xliff:g example="20" id="error_code">%1$d</xliff:g></string>
+    <string name="failed_to_verify_update_file">Failed to verify update file</string>
 
     <!-- Settings -->
     <string name="settings">Settings</string>
