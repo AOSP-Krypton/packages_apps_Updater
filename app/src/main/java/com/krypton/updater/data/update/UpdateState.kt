@@ -19,6 +19,7 @@ package com.krypton.updater.data.update
 sealed interface UpdateState {
     object Idle : UpdateState
     object Initializing : UpdateState
+    data class Verifying(val progress: Float) : UpdateState
     data class Updating(val progress: Float) : UpdateState
     data class Paused(val progress: Float) : UpdateState
     data class Failed(val progress: Float, val exception: Throwable) : UpdateState

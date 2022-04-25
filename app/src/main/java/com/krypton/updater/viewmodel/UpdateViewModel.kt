@@ -39,6 +39,9 @@ class UpdateViewModel @Inject constructor(
 
     val updateFailedReason = Channel<String?>(2, BufferOverflow.DROP_OLDEST)
 
+    val supportsUpdateSuspension: Boolean
+        get() = updateRepository.supportsUpdateSuspension
+
     init {
         viewModelScope.launch {
             updateRepository.updateState.filterIsInstance<UpdateState.Failed>()

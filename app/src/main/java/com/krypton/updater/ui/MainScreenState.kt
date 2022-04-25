@@ -18,8 +18,8 @@ package com.krypton.updater.ui
 
 import android.content.res.Resources
 import android.net.Uri
-import androidx.compose.material3.SnackbarDuration
 
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -27,9 +27,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+
 import com.google.accompanist.systemuicontroller.SystemUiController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-
 import com.krypton.updater.R
 import com.krypton.updater.data.FileCopyStatus
 import com.krypton.updater.data.update.UpdateState

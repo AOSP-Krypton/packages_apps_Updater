@@ -55,6 +55,7 @@ class UpdateCardState(
         get() = viewModel.updateState.map {
             when (it) {
                 is UpdateState.Initializing, is UpdateState.Idle -> 0f
+                is UpdateState.Verifying -> it.progress
                 is UpdateState.Updating -> it.progress
                 is UpdateState.Paused -> it.progress
                 is UpdateState.Failed -> it.progress
@@ -65,24 +66,33 @@ class UpdateCardState(
     val progressDescriptionText: Flow<String>
         get() = viewModel.updateState.map {
             when (it) {
-                is UpdateState.Initializing -> resources.getString(R.string.initializing)
+                is UpdateState.Idle, is UpdateState.Initializing -> resources.getString(R.string.initializing)
+                is UpdateState.Verifying -> resources.getString(
+                    R.string.verifying_update,
+                    String.format("%.2f", it.progress)
+                )
                 is UpdateState.Updating -> resources.getString(
                     R.string.installing_update_format,
                     String.format("%.2f", it.progress)
                 )
                 is UpdateState.Paused -> resources.getString(R.string.installation_paused)
                 is UpdateState.Failed -> resources.getString(R.string.installation_failed)
-                else -> resources.getString(R.string.installing_update)
+                is UpdateState.Finished -> resources.getString(R.string.installation_finished)
             }
         }
 
     val shouldShowLeadingActionButton: Flow<Boolean>
-        get() = viewModel.updateState.map { it is UpdateState.Updating || it is UpdateState.Paused }
+        get() = viewModel.updateState.map {
+            viewModel.supportsUpdateSuspension &&
+                    (it is UpdateState.Verifying ||
+                            it is UpdateState.Updating ||
+                            it is UpdateState.Paused)
+        }
 
     val leadingActionButtonText: Flow<String?>
         get() = viewModel.updateState.map {
             when (it) {
-                is UpdateState.Updating -> resources.getString(R.string.pause)
+                is UpdateState.Verifying, is UpdateState.Updating -> resources.getString(R.string.pause)
                 is UpdateState.Paused -> resources.getString(R.string.resume)
                 else -> null
             }
@@ -91,10 +101,17 @@ class UpdateCardState(
     val trailingActionButtonText: Flow<String>
         get() = viewModel.updateState.map {
             when (it) {
-                is UpdateState.Updating, is UpdateState.Paused ->
+                is UpdateState.Verifying,
+                is UpdateState.Updating,
+                is UpdateState.Paused -> {
                     resources.getString(android.R.string.cancel)
+                }
                 is UpdateState.Finished -> resources.getString(R.string.reboot)
-                else -> resources.getString(R.string.update)
+                is UpdateState.Idle,
+                is UpdateState.Initializing,
+                is UpdateState.Failed -> {
+                    resources.getString(R.string.update)
+                }
             }
         }
 
@@ -120,7 +137,7 @@ class UpdateCardState(
     fun trailingAction() {
         viewModel.updateState.value.let {
             when (it) {
-                is UpdateState.Updating, is UpdateState.Paused -> service?.cancelUpdate()
+                is UpdateState.Verifying, is UpdateState.Updating, is UpdateState.Paused -> service?.cancelUpdate()
                 is UpdateState.Idle, is UpdateState.Initializing, is UpdateState.Failed -> startUpdate()
                 is UpdateState.Finished -> service?.reboot()
             }

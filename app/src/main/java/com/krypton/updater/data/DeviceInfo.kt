@@ -23,6 +23,7 @@ object DeviceInfo {
     private const val PROP_DATE = "ro.build.date.utc"
     private const val PROP_VERSION = "ro.krypton.build.version"
     private const val PROP_BUILD_VERSION_INCREMENTAL = "ro.build.version.incremental"
+    private const val PROP_AB_UPDATE = "ro.build.ab_update"
 
     /**
      * Get device code name.
@@ -43,4 +44,6 @@ object DeviceInfo {
      * Get current incremental build version.
      */
     fun getBuildVersionIncremental(): Long = SystemProperties.get(PROP_BUILD_VERSION_INCREMENTAL, "0").toLong()
+
+    fun isAB() = SystemProperties.getBoolean(PROP_AB_UPDATE, false)
 }

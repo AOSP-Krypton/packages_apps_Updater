@@ -39,8 +39,8 @@ class OTAFileManager @Inject constructor(
 ) {
 
     private val otaPackageDir = File(Environment.getDataDirectory(), OTA_DIR)
-    private val otaFile = File(otaPackageDir, UPDATE_FILE)
 
+    val otaFile = File(otaPackageDir, UPDATE_FILE)
     val otaFileUri: Uri = Uri.fromFile(otaFile)
 
     init {
