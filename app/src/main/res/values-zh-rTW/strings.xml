@@ -46,6 +46,7 @@
         v<xliff:g example="2.3" id="version">%1$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="12-11-2021" id="date">%2$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="1.3GB" id="size">%3$s</xliff:g>
     </string>
     <string name="download">下載</string>
+    <string name="select_download_source">下載源</string>
     <string name="update">更新</string>
     <string name="download_text_format">
         下載中 - <xliff:g example="100" id="percent">%1$s%%</xliff:g>
@@ -86,8 +87,8 @@
 
     <!-- Settings -->
     <string name="settings">更新設定</string>
-    <string name="update_check_interval_title">定期檢查更新間隔</string>
-    <string name="update_check_interval_summary">設定此應用檢查更新頻率（天）</string>
+    <string name="update_check_interval_title">定期檢查更新</string>
+    <string name="update_check_interval_summary">設定檢查系統更新頻率（天）</string>
     <string name="opt_out_incremental_title">全量更新</string>
-    <string name="opt_out_incremental_summary">只下載安裝全量包。若您已 root 或以任何形式修改過系統，則您必須開啟此選項。</string>
+    <string name="opt_out_incremental_summary">只下載安裝全量包\n若您已 ROOT 或以任何形式修改過系統，則您必須開啟此選項。</string>
 </resources>
