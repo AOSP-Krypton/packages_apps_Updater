@@ -22,10 +22,6 @@ android_app_import {
     required: [
         "privapp_permissions_updater",
     ],
-    optional_uses_libs: [
-        "androidx.window.extensions",
-        "androidx.window.sidecar",
-    ],
 }
 
 prebuilt_etc {

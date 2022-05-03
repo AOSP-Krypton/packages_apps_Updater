@@ -32,6 +32,7 @@ import androidx.core.app.NotificationManagerCompat
 
 import com.krypton.updater.R
 import com.krypton.updater.data.download.DownloadRepository
+import com.krypton.updater.data.download.DownloadResult
 import com.krypton.updater.ui.MainActivity
 
 import dagger.hilt.android.AndroidEntryPoint
@@ -43,7 +44,6 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -154,17 +154,18 @@ class UpdateDownloadService : JobService() {
         logD("listening for events")
         for (result in downloadRepository.downloadEventChannel) {
             logD("new result $result")
-            when {
-                result.isFailure -> {
+            when (result) {
+                is DownloadResult.Failure -> {
                     shouldShowProgressNotification = false
-                    showDownloadFailedNotification(result.exceptionOrNull()?.toString())
+                    showDownloadFailedNotification(result.exception?.localizedMessage)
                 }
-                result.isSuccess -> {
+                is DownloadResult.Success -> {
                     shouldShowProgressNotification = false
                     showDownloadFinishedNotification()
                 }
+                else -> {}
             }
-            notifyJobFinished(result.shouldRetry)
+            notifyJobFinished(result is DownloadResult.Retry)
         }
     }
 

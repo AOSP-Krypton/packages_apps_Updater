@@ -40,7 +40,7 @@ class DownloadViewModel @Inject constructor(
         get() = downloadRepository.downloadState
 
     val downloadFailedEvent: Flow<Event<String?>>
-        get() = downloadRepository.downloadState.filter { it.failed }.map {
+        get() = downloadRepository.downloadState.filterIsInstance<DownloadState.Failed>().map {
             Event(it.exception?.localizedMessage)
         }
 

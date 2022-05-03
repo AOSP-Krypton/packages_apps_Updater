@@ -70,7 +70,7 @@ class DownloadWorker(
                 logD("file already downloaded, verifying hash")
                 if (HashVerifier.verifyHash(downloadFile, fileHash)) {
                     channel.send(100f)
-                    return DownloadResult.success()
+                    return DownloadResult.Success
                 }
                 Log.w(TAG, "File is corrupt, deleting")
                 downloadFile.delete()
@@ -83,7 +83,7 @@ class DownloadWorker(
             openConnection(if (resume) "$downloadedBytes-" else null)
         }
         if (connectionResult.isFailure) {
-            return DownloadResult.failure(connectionResult.exceptionOrNull())
+            return DownloadResult.Failure(connectionResult.exceptionOrNull())
         }
         val connection = connectionResult.getOrThrow()
         logD("connection opened")
@@ -115,15 +115,15 @@ class DownloadWorker(
         logD("channel closed")
         if (downloadResult.isFailure) {
             Log.e(TAG, "Download failed", downloadResult.exceptionOrNull())
-            return DownloadResult.failure(downloadResult.exceptionOrNull())
+            return DownloadResult.Failure(downloadResult.exceptionOrNull())
         }
         return if (downloadedBytes == fileSize) {
             if (HashVerifier.verifyHash(downloadFile, fileHash))
-                DownloadResult.success()
+                DownloadResult.Success
             else
-                DownloadResult.failure(Throwable("SHA-512 hash doesn't match. Possible download corruption!"))
+                DownloadResult.Failure(Throwable("SHA-512 hash doesn't match. Possible download corruption!"))
         } else {
-            DownloadResult.retry()
+            DownloadResult.Retry
         }
     }
 
