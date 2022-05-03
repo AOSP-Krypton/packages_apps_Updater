@@ -21,6 +21,7 @@ import android.net.Uri
 
 import com.krypton.updater.data.FileCopyStatus
 import com.krypton.updater.data.download.DownloadManager
+import com.krypton.updater.data.download.DownloadState
 import com.krypton.updater.data.savedStateDataStore
 
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -32,7 +33,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -70,11 +70,11 @@ class UpdateRepository @Inject constructor(
     init {
         applicationScope.launch {
             downloadManager.downloadState.collect {
-                if (it.finished) {
+                if (it is DownloadState.Finished) {
                     downloadManager.downloadFile?.let { file ->
                         copyOTAFile(Uri.fromFile(file))
                     }
-                } else if (it.idle && updateState.value is UpdateState.Idle) {
+                } else if (it is DownloadState.Idle && updateState.value is UpdateState.Idle) {
                     _readyForUpdate.value = false
                 }
             }

@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.ui
+package com.krypton.updater.ui.screens
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -36,6 +34,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 
 import com.google.accompanist.systemuicontroller.SystemUiController
@@ -47,7 +46,7 @@ import java.text.DateFormat
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChangelogScreen(
-    changelogViewModel: ChangelogViewModel,
+    changelogViewModel: ChangelogViewModel = hiltViewModel(),
     systemUiController: SystemUiController,
     navHostController: NavHostController
 ) {

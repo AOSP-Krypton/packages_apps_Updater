@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.ui
+package com.krypton.updater.ui.states
 
-object Routes {
-    const val HOME = "home"
-    const val SETTINGS = "settings"
-    const val CHANGELOGS = "changelogs"
+sealed interface CardState {
+    object Gone: CardState
+    object NoUpdate : CardState
+    object Download : CardState
+    object Update : CardState
 }

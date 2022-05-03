@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.ui
+package com.krypton.updater.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectableGroup
@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 
 import com.krypton.updater.R
+import com.krypton.updater.ui.states.DownloadCardState
+import com.krypton.updater.ui.widgets.CustomButton
 
 @Composable
 fun DownloadCard(state: DownloadCardState) {
@@ -168,7 +170,5 @@ fun RadioListItem(
 @Preview
 @Composable
 fun PreviewRadioListItem() {
-    AppTheme {
-        RadioListItem(selected = true, onClick = { }, title = "Radio list item")
-    }
+    RadioListItem(selected = true, onClick = { }, title = "Radio list item")
 }

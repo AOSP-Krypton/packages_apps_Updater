@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.ui
+package com.krypton.updater.ui.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.MutableTransitionState

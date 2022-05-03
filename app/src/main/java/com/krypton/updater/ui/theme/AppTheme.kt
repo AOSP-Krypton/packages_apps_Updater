@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.ui
+package com.krypton.updater.ui.theme
+
+import android.content.Context
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -24,12 +26,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 @Composable
-fun AppTheme(content: @Composable () -> Unit) {
+fun AppTheme(
+    context: Context = LocalContext.current,
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit
+) {
     MaterialTheme(
-        colorScheme = if (isSystemInDarkTheme()) {
-            dynamicDarkColorScheme(LocalContext.current)
+        colorScheme = if (darkTheme) {
+            dynamicDarkColorScheme(context)
         } else {
-            dynamicLightColorScheme(LocalContext.current)
+            dynamicLightColorScheme(context)
         },
         content = content
     )

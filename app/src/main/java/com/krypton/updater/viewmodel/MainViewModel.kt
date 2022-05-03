@@ -52,7 +52,7 @@ class MainViewModel @Inject constructor(
     val systemBuildVersion: String = mainRepository.systemBuildVersion
 
     val lastCheckedTime: Flow<Long>
-        get() = mainRepository.lastCheckedTime.map { it.time }.filter { it > 0 }
+        get() = mainRepository.lastCheckedTime.map { it.time }
 
     private var updateCheckJob: Job? = null
 

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.ui
+package com.krypton.updater.ui.states
 
-object Routes {
-    const val HOME = "home"
-    const val SETTINGS = "settings"
-    const val CHANGELOGS = "changelogs"
+sealed interface CheckUpdatesContentState {
+    object Gone : CheckUpdatesContentState
+    object Checking : CheckUpdatesContentState
+    data class LastCheckedTimeAvailable(val lastCheckedTime: String) : CheckUpdatesContentState
 }

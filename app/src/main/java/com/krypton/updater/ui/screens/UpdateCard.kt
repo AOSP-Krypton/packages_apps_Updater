@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.ui
+package com.krypton.updater.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.LinearProgressIndicator
@@ -27,6 +27,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 
 import com.krypton.updater.R
+import com.krypton.updater.ui.states.UpdateCardState
+import com.krypton.updater.ui.widgets.CustomButton
 
 @Composable
 fun UpdateCard(state: UpdateCardState) {

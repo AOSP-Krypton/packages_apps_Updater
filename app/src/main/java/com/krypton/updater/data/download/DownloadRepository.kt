@@ -74,7 +74,7 @@ class DownloadRepository @Inject constructor(
             restoreDownloadState()
             downloadState.collect {
                 saveDownloadState(it)
-                if (it.finished) {
+                if (it is DownloadState.Finished) {
                     exportFile()
                 }
             }
@@ -135,7 +135,7 @@ class DownloadRepository @Inject constructor(
 
     private suspend fun saveDownloadState(state: DownloadState) {
         logD("saveStateToDatabase")
-        if (!state.finished) return
+        if (state !is DownloadState.Finished) return
         savedStateDatastore.updateData {
             it.toBuilder()
                 .setDownloadFinished(true)

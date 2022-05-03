@@ -16,39 +16,8 @@
 
 package com.krypton.updater.data.download
 
-import java.util.*
-
-data class DownloadResult private constructor(
-    private val exception: Throwable? = null,
-    val isSuccess: Boolean = false,
-    val isFailure: Boolean = false,
-    val shouldRetry: Boolean = false,
-) {
-    fun exceptionOrNull(): Throwable? = exception
-
-    override fun toString(): String =
-        "DownloadResult[ isSuccess = $isSuccess, " +
-                "isFailure = $isFailure, " +
-                "shouldRetry = $shouldRetry, " +
-                "exception = $exception ]"
-
-    override fun equals(other: Any?): Boolean =
-        other is DownloadResult &&
-                isSuccess == other.isSuccess &&
-                isFailure == other.isFailure &&
-                shouldRetry == other.shouldRetry &&
-                exception == other.exception
-
-    override fun hashCode(): Int = Objects.hash(exception, isSuccess, isFailure, shouldRetry)
-
-    companion object {
-        fun success(): DownloadResult =
-            DownloadResult(isSuccess = true)
-
-        fun failure(exception: Throwable?): DownloadResult =
-            DownloadResult(exception = exception, isFailure = true)
-
-        fun retry(): DownloadResult =
-            DownloadResult(shouldRetry = true)
-    }
+sealed interface DownloadResult {
+    object Success : DownloadResult
+    data class Failure(val exception: Throwable?) : DownloadResult
+    object Retry : DownloadResult
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.ui
+package com.krypton.updater.ui.states
 
 import android.content.res.Resources
 import android.util.DataUnit
@@ -23,11 +23,16 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 
 import com.krypton.updater.R
 import com.krypton.updater.data.UpdateInfo
+import com.krypton.updater.data.download.DownloadState
+import com.krypton.updater.ui.Routes
 import com.krypton.updater.viewmodel.DownloadViewModel
 import com.krypton.updater.viewmodel.MainViewModel
 
@@ -63,18 +68,18 @@ class DownloadCardState(
         }
 
     val shouldShowProgress: Flow<Boolean>
-        get() = downloadViewModel.downloadState.map { !it.idle }
+        get() = downloadViewModel.downloadState.map { it !is DownloadState.Idle }
 
     val progressDescriptionText: Flow<String>
         get() = downloadViewModel.downloadState.combine(progress) { state, progress ->
-            when {
-                state.waiting -> resources.getString(R.string.waiting)
-                state.downloading -> resources.getString(
+            when (state) {
+                is DownloadState.Waiting -> resources.getString(R.string.waiting)
+                is DownloadState.Downloading -> resources.getString(
                     R.string.download_text_format,
                     String.format("%.2f", progress)
                 )
-                state.finished -> resources.getString(R.string.downloading_finished)
-                state.failed -> resources.getString(R.string.downloading_failed)
+                is DownloadState.Finished -> resources.getString(R.string.downloading_finished)
+                is DownloadState.Failed -> resources.getString(R.string.downloading_failed)
                 else -> resources.getString(R.string.downloading)
             }
         }
@@ -87,10 +92,11 @@ class DownloadCardState(
 
     val trailingActionButtonText: Flow<String?>
         get() = downloadViewModel.downloadState.map {
-            when {
-                it.idle || it.failed -> resources.getString(R.string.download)
-                it.waiting || it.downloading || it.finished -> resources.getString(android.R.string.cancel)
-                else -> null
+            when (it) {
+                is DownloadState.Idle, is DownloadState.Failed -> resources.getString(R.string.download)
+                is DownloadState.Waiting, is DownloadState.Downloading, DownloadState.Finished -> resources.getString(
+                    android.R.string.cancel
+                )
             }
         }
 
@@ -123,8 +129,8 @@ class DownloadCardState(
 
     fun triggerTrailingAction() {
         downloadViewModel.downloadState.value.let {
-            when {
-                it.idle || it.failed -> coroutineScope.launch {
+            when (it) {
+                is DownloadState.Idle, is DownloadState.Failed, is DownloadState.Finished -> coroutineScope.launch {
                     val hasAlternateDownloadSource =
                         mainViewModel.updateInfo.firstOrNull()?.buildInfo?.downloadSources != null
                     if (hasAlternateDownloadSource) {
@@ -133,7 +139,7 @@ class DownloadCardState(
                         startDownload()
                     }
                 }
-                it.waiting || it.downloading -> downloadViewModel.cancelDownload()
+                is DownloadState.Waiting, is DownloadState.Downloading -> downloadViewModel.cancelDownload()
             }
             return@let
         }
@@ -200,18 +206,19 @@ class DownloadCardState(
 
 @Composable
 fun rememberDownloadCardState(
-    mainViewModel: MainViewModel,
-    downloadViewModel: DownloadViewModel,
-    snackbarHostState: SnackbarHostState,
-    coroutineScope: CoroutineScope,
+    mainViewModel: MainViewModel = hiltViewModel(),
+    downloadViewModel: DownloadViewModel = hiltViewModel(),
+    snackbarHostState: SnackbarHostState = SnackbarHostState(),
+    coroutineScope: CoroutineScope = rememberCoroutineScope(),
     resources: Resources = LocalContext.current.resources,
-    navHostController: NavHostController
+    navHostController: NavHostController = rememberNavController()
 ) = remember(
     mainViewModel,
     downloadViewModel,
     snackbarHostState,
     coroutineScope,
-    resources
+    resources,
+    navHostController
 ) {
     DownloadCardState(
         mainViewModel,

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.ui
+package com.krypton.updater.ui.screens
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
@@ -119,13 +119,13 @@ fun CollapsingToolbarScreen(
                 style = MaterialTheme.typography.titleLarge
             )
         }
-        Box(modifier = Modifier.weight(1f)) {
+        Surface(modifier = Modifier.weight(1f)) {
             Text(
                 title,
                 style = MaterialTheme.typography.headlineLarge,
                 modifier = Modifier
                     .height(bigTitlePadding)
-                    .padding(start = 24.dp)
+                    .padding(horizontal = 24.dp)
                     .alpha(bigTitleAlpha)
                     .offset {
                         IntOffset(
@@ -137,7 +137,11 @@ fun CollapsingToolbarScreen(
             )
             LazyColumn(
                 modifier = Modifier.nestedScroll(nestedScrollConnection),
-                contentPadding = PaddingValues(top = bigTitlePadding + 64.dp),
+                contentPadding = PaddingValues(
+                    top = bigTitlePadding + 64.dp,
+                    start = 24.dp,
+                    end = 24.dp
+                ),
                 content = content
             )
         }
@@ -148,19 +152,17 @@ fun CollapsingToolbarScreen(
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun PreviewCollapsingToolbarScreen() {
-    AppTheme {
-        CollapsingToolbarScreen(
-            title = "Collapsing toolbar",
-            backButtonContentDescription = "Back button",
-            onBackButtonPressed = {},
-            onStatusBarColorUpdateRequest = {}
-        ) {
-            items(50) { index ->
-                Preference(
-                    "Preference $index",
-                    summary = if (index % 2 == 0) "Preference summary" else null
-                )
-            }
+    CollapsingToolbarScreen(
+        title = "Collapsing toolbar",
+        backButtonContentDescription = "Back button",
+        onBackButtonPressed = {},
+        onStatusBarColorUpdateRequest = {}
+    ) {
+        items(50) { index ->
+            Preference(
+                "Preference $index",
+                summary = if (index % 2 == 0) "Preference summary" else null
+            )
         }
     }
 }

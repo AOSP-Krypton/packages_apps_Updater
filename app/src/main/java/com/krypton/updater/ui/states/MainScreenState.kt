@@ -14,25 +14,27 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.ui
+package com.krypton.updater.ui.states
 
 import android.content.res.Resources
 import android.net.Uri
 
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 
-import com.google.accompanist.systemuicontroller.SystemUiController
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.krypton.updater.R
 import com.krypton.updater.data.FileCopyStatus
+import com.krypton.updater.data.download.DownloadState
 import com.krypton.updater.data.update.UpdateState
+import com.krypton.updater.ui.Routes
 import com.krypton.updater.viewmodel.DownloadViewModel
 import com.krypton.updater.viewmodel.MainViewModel
 import com.krypton.updater.viewmodel.UpdateViewModel
@@ -51,7 +53,6 @@ class MainScreenState(
     private val downloadViewModel: DownloadViewModel,
     private val updateViewModel: UpdateViewModel,
     private val resources: Resources,
-    val systemUiController: SystemUiController,
     val snackbarHostState: SnackbarHostState,
     val navHostController: NavHostController,
 ) {
@@ -65,26 +66,18 @@ class MainScreenState(
     val systemBuildVersion: String
         get() = mainViewModel.systemBuildVersion
 
-    val lastCheckedTime: Flow<String>
-        get() = mainViewModel.lastCheckedTime.map {
-            getFormattedDate(locale, DateFormat.SHORT, Date(it))
-        }
-
-    val isCheckingForUpdate: StateFlow<Boolean>
-        get() = mainViewModel.isCheckingForUpdate
-
-    val showUpdateUI: Flow<Boolean>
-        get() = updateViewModel.showUpdateUI
-
-    val showDownloadUI: Flow<Boolean>
-        get() = mainViewModel.updateAvailable
-
-    val shouldShowCard: Flow<Boolean>
+    val cardState: Flow<CardState>
         get() = combine(
-            showUpdateUI,
-            mainViewModel.updateResultAvailable
-        ) { showUpdateUI, updateResultAvailable ->
-            showUpdateUI || updateResultAvailable
+            mainViewModel.updateResultAvailable,
+            mainViewModel.updateAvailable,
+            updateViewModel.showUpdateUI
+        ) { updateResultAvailable, updateAvailable, showUpdateUI ->
+            when {
+                showUpdateUI -> CardState.Update
+                updateAvailable -> CardState.Download
+                updateResultAvailable -> CardState.NoUpdate
+                else -> CardState.Gone
+            }
         }
 
     private val _showExportingDialog = MutableStateFlow(false)
@@ -100,14 +93,28 @@ class MainScreenState(
             downloadViewModel.downloadState,
             updateViewModel.updateState
         ) { downloadState, updateState ->
-            !downloadState.waiting &&
-                    !downloadState.downloading &&
+            downloadState !is DownloadState.Waiting &&
+                    downloadState !is DownloadState.Downloading &&
                     updateState !is UpdateState.Initializing &&
                     updateState !is UpdateState.Updating
         }
 
     val showStateRestoreDialog: StateFlow<Boolean>
         get() = downloadViewModel.restoringDownloadState
+
+    val checkUpdatesContentState: Flow<CheckUpdatesContentState>
+        get() = combine(
+            mainViewModel.isCheckingForUpdate,
+            mainViewModel.lastCheckedTime
+        ) { isCheckingForUpdate, lastCheckedTime ->
+            when {
+                isCheckingForUpdate -> CheckUpdatesContentState.Checking
+                lastCheckedTime > 0 -> CheckUpdatesContentState.LastCheckedTimeAvailable(
+                    getFormattedDate(locale, DateFormat.SHORT, Date(lastCheckedTime))
+                )
+                else -> CheckUpdatesContentState.Gone
+            }
+        }
 
     init {
         coroutineScope.launch {
@@ -203,22 +210,24 @@ class MainScreenState(
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun rememberMainScreenState(
-    mainViewModel: MainViewModel,
-    downloadViewModel: DownloadViewModel,
-    updateViewModel: UpdateViewModel,
-    systemUiController: SystemUiController = rememberSystemUiController(),
+    mainViewModel: MainViewModel = hiltViewModel(),
+    downloadViewModel: DownloadViewModel = hiltViewModel(),
+    updateViewModel: UpdateViewModel = hiltViewModel(),
     snackbarHostState: SnackbarHostState = SnackbarHostState(),
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
     resources: Resources = LocalContext.current.resources,
-    navController: NavHostController = rememberNavController()
+    navHostController: NavHostController = rememberAnimatedNavController()
 ) = remember(
     mainViewModel,
     downloadViewModel,
     updateViewModel,
     snackbarHostState,
-    resources
+    coroutineScope,
+    resources,
+    navHostController
 ) {
     MainScreenState(
         coroutineScope,
@@ -226,8 +235,7 @@ fun rememberMainScreenState(
         downloadViewModel,
         updateViewModel,
         resources,
-        systemUiController,
         snackbarHostState,
-        navController
+        navHostController
     )
 }

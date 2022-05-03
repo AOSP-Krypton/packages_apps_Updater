@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.ui
+package com.krypton.updater.ui.states
 
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.content.res.Resources
+import android.os.IBinder
 
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 
 import com.krypton.updater.R
 import com.krypton.updater.data.update.UpdateState
@@ -155,26 +158,46 @@ class UpdateCardState(
 
 @Composable
 fun rememberUpdateCardState(
-    updateViewModel: UpdateViewModel,
-    updateInstallerService: UpdateInstallerService?,
-    snackbarHostState: SnackbarHostState,
-    coroutineScope: CoroutineScope,
+    updateViewModel: UpdateViewModel = hiltViewModel(),
+    snackbarHostState: SnackbarHostState = SnackbarHostState(),
+    coroutineScope: CoroutineScope = rememberCoroutineScope(),
     context: Context = LocalContext.current,
     resources: Resources = context.resources
-) = remember(
-    updateViewModel,
-    updateInstallerService,
-    snackbarHostState,
-    coroutineScope,
-    context,
-    resources
-) {
-    UpdateCardState(
-        coroutineScope,
+): UpdateCardState {
+    var updateInstallerService by remember { mutableStateOf<UpdateInstallerService?>(null) }
+    val serviceConnection = remember {
+        object : ServiceConnection {
+            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+                updateInstallerService = (service as? UpdateInstallerService.ServiceBinder)?.service
+            }
+
+            override fun onServiceDisconnected(name: ComponentName?) {
+                updateInstallerService = null
+            }
+        }
+    }
+    DisposableEffect(context, updateInstallerService) {
+        context.bindService(
+            Intent(context, UpdateInstallerService::class.java),
+            serviceConnection,
+            Context.BIND_AUTO_CREATE
+        )
+        onDispose { context.unbindService(serviceConnection) }
+    }
+    return remember(
         updateViewModel,
-        updateInstallerService,
         snackbarHostState,
+        coroutineScope,
         context,
         resources
-    )
+    ) {
+        UpdateCardState(
+            coroutineScope,
+            updateViewModel,
+            updateInstallerService,
+            snackbarHostState,
+            context,
+            resources
+        )
+    }
 }

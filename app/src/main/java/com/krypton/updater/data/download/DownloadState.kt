@@ -16,49 +16,10 @@
 
 package com.krypton.updater.data.download
 
-import java.util.Objects
-
-class DownloadState private constructor(
-    private val statusCode: Int,
-    val exception: Throwable? = null,
-) {
-    val idle: Boolean
-        get() = statusCode == IDLE
-    val waiting: Boolean
-        get() = statusCode == WAITING
-    val downloading: Boolean
-        get() = statusCode == DOWNLOADING
-    val finished: Boolean
-        get() = statusCode == FINISHED
-    val failed: Boolean
-        get() = statusCode == FAILED
-
-    override fun toString(): String =
-        "DownloadState[ idle = $idle, " +
-                "waiting = $waiting, " +
-                "downloading = $downloading, " +
-                "finished = $finished, " +
-                "failed = $failed, " +
-                "exception = $exception ]"
-
-    override fun equals(other: Any?): Boolean =
-        other is DownloadState &&
-                statusCode == other.statusCode &&
-                exception == other.exception
-
-    override fun hashCode(): Int = Objects.hash(statusCode, exception)
-
-    companion object {
-        private const val IDLE = 0
-        private const val WAITING = 1
-        private const val DOWNLOADING = 2
-        private const val FINISHED = 3
-        private const val FAILED = 4
-
-        fun idle() = DownloadState(statusCode = IDLE)
-        fun waiting() = DownloadState(statusCode = WAITING)
-        fun downloading() = DownloadState(statusCode = DOWNLOADING)
-        fun failed(e: Throwable?) = DownloadState(statusCode = FAILED, exception = e)
-        fun finished() = DownloadState(statusCode = FINISHED)
-    }
+sealed interface DownloadState {
+    object Idle : DownloadState
+    object Waiting : DownloadState
+    object Downloading : DownloadState
+    data class Failed(val exception: Throwable?) : DownloadState
+    object Finished : DownloadState
 }

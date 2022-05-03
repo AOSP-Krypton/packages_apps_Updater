@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.ui
+package com.krypton.updater.ui.screens
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 
 import com.google.accompanist.systemuicontroller.SystemUiController
@@ -31,7 +32,7 @@ import com.krypton.updater.viewmodel.SettingsViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    settingsViewModel: SettingsViewModel,
+    settingsViewModel: SettingsViewModel = hiltViewModel(),
     systemUiController: SystemUiController,
     navController: NavHostController,
 ) {

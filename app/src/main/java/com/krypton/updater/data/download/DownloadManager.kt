@@ -64,7 +64,7 @@ class DownloadManager @Inject constructor(
     val downloadFileName: String?
         get() = downloadFile?.name
 
-    private val _downloadState = MutableStateFlow(DownloadState.idle())
+    private val _downloadState = MutableStateFlow<DownloadState>(DownloadState.Idle)
     val downloadState: StateFlow<DownloadState>
         get() = _downloadState
 
@@ -81,14 +81,14 @@ class DownloadManager @Inject constructor(
      */
     fun download(downloadInfo: DownloadInfo) {
         logD("download, downloadInitiated = ${downloadState.value}")
-        if (downloadState.value.downloading) return
-        _downloadState.value = DownloadState.idle()
+        if (downloadState.value is DownloadState.Downloading) return
+        _downloadState.value = DownloadState.Idle
         _progressFlow.value = 0f
         this.downloadInfo = downloadInfo
         try {
             val result = jobScheduler.schedule(buildJobInfo(downloadInfo))
             if (result == JobScheduler.RESULT_SUCCESS) {
-                _downloadState.value = DownloadState.waiting()
+                _downloadState.value = DownloadState.Waiting
                 logD("Download scheduled successfully")
             } else {
                 Log.e(TAG, "Failed to schedule download")
@@ -106,7 +106,7 @@ class DownloadManager @Inject constructor(
      */
     suspend fun runWorker(downloadInfo: Bundle) {
         logD("runWorker, downloadState = ${downloadState.value}")
-        _downloadState.value = DownloadState.downloading()
+        _downloadState.value = DownloadState.Downloading
 
         downloadFile = File(cacheDir, downloadInfo.getString(DownloadInfo.FILE_NAME)!!)
 
@@ -116,8 +116,8 @@ class DownloadManager @Inject constructor(
         if (urlResult.isFailure) {
             val exception = urlResult.exceptionOrNull()
             Log.e(TAG, "Failed to open url", exception)
-            eventChannel.send(DownloadResult.failure(exception))
-            _downloadState.value = DownloadState.failed(exception)
+            eventChannel.send(DownloadResult.Failure(exception))
+            _downloadState.value = DownloadState.Failed(exception)
             return
         }
         val fileSize = downloadInfo.getLong(DownloadInfo.FILE_SIZE)
@@ -139,11 +139,11 @@ class DownloadManager @Inject constructor(
             launch {
                 logD("starting worker")
                 val result = downloadWorker.run()
-                if (result.isSuccess) {
-                    _downloadState.value = DownloadState.finished()
-                } else if (result.isFailure) {
-                    Log.e(TAG, "Download failed", result.exceptionOrNull())
-                    _downloadState.value = DownloadState.failed(result.exceptionOrNull())
+                if (result is DownloadResult.Success) {
+                    _downloadState.value = DownloadState.Finished
+                } else if (result is DownloadResult.Failure) {
+                    Log.e(TAG, "Download failed", result.exception)
+                    _downloadState.value = DownloadState.Failed(result.exception)
                 }
                 logD("sending result $result")
                 withContext(Dispatchers.Main) {
@@ -158,10 +158,12 @@ class DownloadManager @Inject constructor(
      */
     fun cancelDownload() {
         logD("cancelDownload, downloadState = ${downloadState.value}")
-        if (downloadState.value.waiting || downloadState.value.downloading) {
+        if (downloadState.value is DownloadState.Waiting ||
+            downloadState.value is DownloadState.Downloading
+        ) {
             jobScheduler.cancel(JOB_ID)
             downloadInfo = null
-            _downloadState.value = DownloadState.idle()
+            _downloadState.value = DownloadState.Idle
         }
     }
 
@@ -170,7 +172,7 @@ class DownloadManager @Inject constructor(
      */
     suspend fun reset() {
         _progressFlow.emit(0f)
-        _downloadState.emit(DownloadState.idle())
+        _downloadState.emit(DownloadState.Idle)
         downloadFile = null
         downloadInfo = null
     }
@@ -216,7 +218,7 @@ class DownloadManager @Inject constructor(
             } else {
                 logD("updating state")
                 downloadFile = file
-                _downloadState.emit(DownloadState.finished())
+                _downloadState.emit(DownloadState.Finished)
                 _progressFlow.emit(100f)
             }
         }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.ui
+package com.krypton.updater.ui.widgets
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
