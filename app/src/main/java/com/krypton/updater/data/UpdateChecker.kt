@@ -23,11 +23,8 @@ import com.krypton.updater.R
 
 import dagger.hilt.android.qualifiers.ApplicationContext
 
-import java.text.ParseException
-import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
-import java.util.Locale
 
 import javax.inject.Inject
 import javax.inject.Singleton
