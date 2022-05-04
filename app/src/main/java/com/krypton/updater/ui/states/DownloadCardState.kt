@@ -112,13 +112,11 @@ class DownloadCardState(
 
     init {
         coroutineScope.launch {
-            downloadViewModel.downloadFailedEvent.collect {
-                if (!it.hasBeenHandled) {
-                    snackbarHostState.showSnackbar(
-                        it.getOrNull() ?: resources.getString(R.string.downloading_failed),
-                        duration = SnackbarDuration.Short
-                    )
-                }
+            for (exception in downloadViewModel.downloadFailedEventChannel) {
+                snackbarHostState.showSnackbar(
+                    exception ?: resources.getString(R.string.downloading_failed),
+                    duration = SnackbarDuration.Short
+                )
             }
         }
     }

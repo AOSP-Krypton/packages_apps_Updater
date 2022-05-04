@@ -17,19 +17,21 @@
 package com.krypton.updater.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 
 import com.krypton.updater.data.BuildInfo
 import com.krypton.updater.data.download.DownloadRepository
 import com.krypton.updater.data.download.DownloadState
-import com.krypton.updater.data.Event
 import com.krypton.updater.data.FileCopyStatus
 
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.BufferOverflow
 
 import javax.inject.Inject
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class DownloadViewModel @Inject constructor(
@@ -39,10 +41,7 @@ class DownloadViewModel @Inject constructor(
     val downloadState: StateFlow<DownloadState>
         get() = downloadRepository.downloadState
 
-    val downloadFailedEvent: Flow<Event<String?>>
-        get() = downloadRepository.downloadState.filterIsInstance<DownloadState.Failed>().map {
-            Event(it.exception?.localizedMessage)
-        }
+    val downloadFailedEventChannel = Channel<String?>(1, BufferOverflow.DROP_OLDEST)
 
     val downloadProgress: StateFlow<Float>
         get() = downloadRepository.downloadProgressFlow
@@ -52,6 +51,14 @@ class DownloadViewModel @Inject constructor(
 
     val restoringDownloadState: StateFlow<Boolean>
         get() = downloadRepository.restoringDownloadState
+
+    init {
+        viewModelScope.launch {
+            downloadRepository.downloadState.filterIsInstance<DownloadState.Failed>().collect {
+                downloadFailedEventChannel.send(it.exception?.localizedMessage)
+            }
+        }
+    }
 
     fun startDownload(buildInfo: BuildInfo, source: String?) {
         downloadRepository.triggerDownload(buildInfo, source)
