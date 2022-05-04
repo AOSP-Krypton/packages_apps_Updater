@@ -19,8 +19,6 @@ package com.krypton.updater.data.download
 import android.util.DataUnit
 import android.util.Log
 
-import com.krypton.updater.data.HashVerifier
-
 import java.io.File
 import java.io.FileOutputStream
 import java.net.URL
@@ -28,12 +26,8 @@ import java.util.concurrent.TimeUnit
 
 import javax.net.ssl.HttpsURLConnection
 
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
@@ -52,15 +46,13 @@ class DownloadWorker(
 ) {
     private var downloadedBytes = 0L
 
-    val channel = Channel<Float>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
     /**
      * Run the worker.
      *
      * @return a [DownloadResult] indicating whether the work failed,
      *   or whether we should retry, or whether it was a success.
      */
-    suspend fun run(): DownloadResult {
+    suspend fun run(updateCallback: (DownloadState) -> Unit) {
         logD("run")
         var resume = downloadFile.isFile
         if (resume) {
@@ -69,8 +61,8 @@ class DownloadWorker(
             if (downloadedBytes == fileSize) {
                 logD("file already downloaded, verifying hash")
                 if (HashVerifier.verifyHash(downloadFile, fileHash)) {
-                    channel.send(100f)
-                    return DownloadResult.Success
+                    updateCallback(DownloadState.Finished)
+                    return
                 }
                 Log.w(TAG, "File is corrupt, deleting")
                 downloadFile.delete()
@@ -79,52 +71,50 @@ class DownloadWorker(
             }
         }
         logD("resume = $resume")
-        val connectionResult = withContext(Dispatchers.IO) {
-            openConnection(if (resume) "$downloadedBytes-" else null)
-        }
+        val connectionResult = openConnection(if (resume) "$downloadedBytes-" else null)
         if (connectionResult.isFailure) {
-            return DownloadResult.Failure(connectionResult.exceptionOrNull())
+            updateCallback(DownloadState.Failed(connectionResult.exceptionOrNull()))
+            return
         }
         val connection = connectionResult.getOrThrow()
         logD("connection opened")
-        val downloadResult = withContext(Dispatchers.IO) {
-            runCatching {
-                FileOutputStream(downloadFile, resume).use { outStream ->
-                    logD("output stream opened")
-                    connection.inputStream.use { inStream ->
-                        logD("input stream opened")
-                        val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
-                        var bytesRead = inStream.read(buffer)
-                        while (currentCoroutineContext().isActive && bytesRead >= 0) {
-                            outStream.write(buffer, 0, bytesRead)
-                            downloadedBytes += bytesRead
-                            channel.send((downloadedBytes * 100f) / fileSize)
-                            bytesRead = inStream.read(buffer)
-                        }
-                        logD("isActive = ${currentCoroutineContext().isActive}")
-                        outStream.flush()
+        val downloadResult = runCatching {
+            FileOutputStream(downloadFile, resume).use { outStream ->
+                logD("output stream opened")
+                connection.inputStream.use { inStream ->
+                    logD("input stream opened")
+                    val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
+                    var bytesRead = inStream.read(buffer)
+                    while (currentCoroutineContext().isActive && bytesRead >= 0) {
+                        outStream.write(buffer, 0, bytesRead)
+                        downloadedBytes += bytesRead
+                        updateCallback(DownloadState.Downloading((downloadedBytes * 100f) / fileSize))
+                        bytesRead = inStream.read(buffer)
                     }
-                    logD("input stream closed")
+                    logD("isActive = ${currentCoroutineContext().isActive}")
+                    outStream.flush()
                 }
-                logD("output stream closed")
-                connection.disconnect()
-                logD("connection disconnected")
+                logD("input stream closed")
             }
+            logD("output stream closed")
+            connection.disconnect()
+            logD("connection disconnected")
         }
-        channel.close()
-        logD("channel closed")
         if (downloadResult.isFailure) {
             Log.e(TAG, "Download failed", downloadResult.exceptionOrNull())
-            return DownloadResult.Failure(downloadResult.exceptionOrNull())
+            updateCallback(DownloadState.Failed(downloadResult.exceptionOrNull()))
+            return
         }
-        return if (downloadedBytes == fileSize) {
-            if (HashVerifier.verifyHash(downloadFile, fileHash))
-                DownloadResult.Success
-            else
-                DownloadResult.Failure(Throwable("SHA-512 hash doesn't match. Possible download corruption!"))
-        } else {
-            DownloadResult.Retry
-        }
+        updateCallback(
+            if (downloadedBytes == fileSize) {
+                if (HashVerifier.verifyHash(downloadFile, fileHash))
+                    DownloadState.Finished
+                else
+                    DownloadState.Failed(Throwable("SHA-512 hash doesn't match. Possible download corruption!"))
+            } else {
+                DownloadState.Retry
+            }
+        )
     }
 
     private suspend fun openConnection(range: String?): Result<HttpsURLConnection> {

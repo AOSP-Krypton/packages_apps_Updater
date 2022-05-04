@@ -53,6 +53,7 @@
         Downloading - <xliff:g example="100" id="percent">%1$s%%</xliff:g>
     </string>
     <string name="waiting">Waiting</string>
+    <string name="retrying">Retrying</string>
     <string name="restoring_state">Restoring state</string>
     <string name="exporting_file">Exporting file to internal storage</string>
     <string name="exporting_failed">Exporting file failed: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>

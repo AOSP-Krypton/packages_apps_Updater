@@ -71,21 +71,27 @@ class DownloadCardState(
         get() = downloadViewModel.downloadState.map { it !is DownloadState.Idle }
 
     val progressDescriptionText: Flow<String>
-        get() = downloadViewModel.downloadState.combine(progress) { state, progress ->
-            when (state) {
-                is DownloadState.Waiting -> resources.getString(R.string.waiting)
+        get() = downloadViewModel.downloadState.map {
+            when (it) {
+                is DownloadState.Idle, is DownloadState.Waiting -> resources.getString(R.string.waiting)
                 is DownloadState.Downloading -> resources.getString(
                     R.string.download_text_format,
-                    String.format("%.2f", progress)
+                    String.format("%.2f", it.progress)
                 )
                 is DownloadState.Finished -> resources.getString(R.string.downloading_finished)
                 is DownloadState.Failed -> resources.getString(R.string.downloading_failed)
-                else -> resources.getString(R.string.downloading)
+                is DownloadState.Retry -> resources.getString(R.string.retrying)
             }
         }
 
     val progress: Flow<Float>
-        get() = downloadViewModel.downloadProgress
+        get() = downloadViewModel.downloadState.map {
+            when (it) {
+                is DownloadState.Downloading -> it.progress
+                is DownloadState.Finished -> 100f
+                else -> 0f
+            }
+        }
 
     val leadingActionButtonText: String
         get() = resources.getString(R.string.changelog)
@@ -94,9 +100,10 @@ class DownloadCardState(
         get() = downloadViewModel.downloadState.map {
             when (it) {
                 is DownloadState.Idle, is DownloadState.Failed -> resources.getString(R.string.download)
-                is DownloadState.Waiting, is DownloadState.Downloading, DownloadState.Finished -> resources.getString(
+                is DownloadState.Waiting, is DownloadState.Downloading, DownloadState.Retry -> resources.getString(
                     android.R.string.cancel
                 )
+                is DownloadState.Finished -> null
             }
         }
 
@@ -137,7 +144,7 @@ class DownloadCardState(
                         startDownload()
                     }
                 }
-                is DownloadState.Waiting, is DownloadState.Downloading -> downloadViewModel.cancelDownload()
+                is DownloadState.Waiting, is DownloadState.Downloading, is DownloadState.Retry -> downloadViewModel.cancelDownload()
             }
             return@let
         }

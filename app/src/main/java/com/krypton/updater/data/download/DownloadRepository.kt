@@ -54,12 +54,6 @@ class DownloadRepository @Inject constructor(
     val downloadState: StateFlow<DownloadState>
         get() = downloadManager.downloadState
 
-    val downloadEventChannel: Channel<DownloadResult>
-        get() = downloadManager.eventChannel
-
-    val downloadProgressFlow: StateFlow<Float>
-        get() = downloadManager.progressFlow
-
     val downloadFileName: String?
         get() = downloadManager.downloadFileName
 
@@ -123,7 +117,9 @@ class DownloadRepository @Inject constructor(
      *   necessary to download the file.
      */
     suspend fun startDownload(downloadConfig: Bundle) {
-        downloadManager.runWorker(downloadConfig)
+        withContext(Dispatchers.IO) {
+            downloadManager.runWorker(downloadConfig)
+        }
     }
 
     /**
@@ -153,7 +149,7 @@ class DownloadRepository @Inject constructor(
             _restoringDownloadState.value = false
             return
         }
-        withContext(Dispatchers.Default) {
+        withContext(Dispatchers.IO) {
             if (updateInfoDao.entityCount() == 0) {
                 logD("Update info database is empty")
                 return@withContext

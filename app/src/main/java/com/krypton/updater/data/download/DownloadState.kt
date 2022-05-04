@@ -19,7 +19,8 @@ package com.krypton.updater.data.download
 sealed interface DownloadState {
     object Idle : DownloadState
     object Waiting : DownloadState
-    object Downloading : DownloadState
+    data class Downloading(val progress: Float) : DownloadState
     data class Failed(val exception: Throwable?) : DownloadState
     object Finished : DownloadState
+    object Retry : DownloadState
 }

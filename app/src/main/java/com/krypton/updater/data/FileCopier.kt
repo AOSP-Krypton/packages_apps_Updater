@@ -20,6 +20,7 @@ import android.content.Context
 import android.os.FileUtils
 
 import androidx.documentfile.provider.DocumentFile
+import com.krypton.updater.data.download.HashVerifier
 
 import dagger.hilt.android.qualifiers.ApplicationContext
 
