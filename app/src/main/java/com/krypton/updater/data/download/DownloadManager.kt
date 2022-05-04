@@ -24,7 +24,6 @@ import android.os.Bundle
 import android.util.Log
 
 import com.krypton.updater.R
-import com.krypton.updater.data.HashVerifier
 
 import dagger.hilt.android.qualifiers.ApplicationContext
 
@@ -34,13 +33,8 @@ import java.net.URL
 import javax.inject.Inject
 import javax.inject.Singleton
 
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Singleton
 class DownloadManager @Inject constructor(
@@ -68,11 +62,6 @@ class DownloadManager @Inject constructor(
     val downloadState: StateFlow<DownloadState>
         get() = _downloadState
 
-    val eventChannel = Channel<DownloadResult>()
-    private val _progressFlow = MutableStateFlow(0f)
-    val progressFlow: StateFlow<Float>
-        get() = _progressFlow
-
     /**
      * Initiates the download by scheduling a job with [JobScheduler].
      *
@@ -83,7 +72,6 @@ class DownloadManager @Inject constructor(
         logD("download, downloadInitiated = ${downloadState.value}")
         if (downloadState.value is DownloadState.Downloading) return
         _downloadState.value = DownloadState.Idle
-        _progressFlow.value = 0f
         this.downloadInfo = downloadInfo
         try {
             val result = jobScheduler.schedule(buildJobInfo(downloadInfo))
@@ -106,7 +94,6 @@ class DownloadManager @Inject constructor(
      */
     suspend fun runWorker(downloadInfo: Bundle) {
         logD("runWorker, downloadState = ${downloadState.value}")
-        _downloadState.value = DownloadState.Downloading
 
         downloadFile = File(cacheDir, downloadInfo.getString(DownloadInfo.FILE_NAME)!!)
 
@@ -116,7 +103,6 @@ class DownloadManager @Inject constructor(
         if (urlResult.isFailure) {
             val exception = urlResult.exceptionOrNull()
             Log.e(TAG, "Failed to open url", exception)
-            eventChannel.send(DownloadResult.Failure(exception))
             _downloadState.value = DownloadState.Failed(exception)
             return
         }
@@ -128,27 +114,11 @@ class DownloadManager @Inject constructor(
             fileSize,
             sha512,
         )
-
-        coroutineScope {
-            launch(Dispatchers.Main) {
-                logD("listening to channel from worker")
-                for (progress in downloadWorker.channel) {
-                    _progressFlow.emit(progress)
-                }
-            }
-            launch {
-                logD("starting worker")
-                val result = downloadWorker.run()
-                if (result is DownloadResult.Success) {
-                    _downloadState.value = DownloadState.Finished
-                } else if (result is DownloadResult.Failure) {
-                    Log.e(TAG, "Download failed", result.exception)
-                    _downloadState.value = DownloadState.Failed(result.exception)
-                }
-                logD("sending result $result")
-                withContext(Dispatchers.Main) {
-                    eventChannel.send(result)
-                }
+        logD("starting worker")
+        downloadWorker.run {
+            _downloadState.value = it
+            if (it is DownloadState.Failed) {
+                Log.e(TAG, "Download failed", it.exception)
             }
         }
     }
@@ -171,7 +141,6 @@ class DownloadManager @Inject constructor(
      * Resets the manager to initial state.
      */
     suspend fun reset() {
-        _progressFlow.emit(0f)
         _downloadState.emit(DownloadState.Idle)
         downloadFile = null
         downloadInfo = null
@@ -208,9 +177,7 @@ class DownloadManager @Inject constructor(
                 file.delete()
                 return
             }
-            val hashMatch = withContext(Dispatchers.IO) {
-                HashVerifier.verifyHash(file, sha512)
-            }
+            val hashMatch = HashVerifier.verifyHash(file, sha512)
             if (!hashMatch) {
                 Log.w(TAG, "File hash does not match, deleting")
                 file.delete()
@@ -219,7 +186,6 @@ class DownloadManager @Inject constructor(
                 logD("updating state")
                 downloadFile = file
                 _downloadState.emit(DownloadState.Finished)
-                _progressFlow.emit(100f)
             }
         }
     }

@@ -43,9 +43,6 @@ class DownloadViewModel @Inject constructor(
 
     val downloadFailedEventChannel = Channel<String?>(1, BufferOverflow.DROP_OLDEST)
 
-    val downloadProgress: StateFlow<Float>
-        get() = downloadRepository.downloadProgressFlow
-
     val fileCopyStatus: Channel<FileCopyStatus>
         get() = downloadRepository.fileCopyStatus
 

@@ -32,7 +32,7 @@ import androidx.core.app.NotificationManagerCompat
 
 import com.krypton.updater.R
 import com.krypton.updater.data.download.DownloadRepository
-import com.krypton.updater.data.download.DownloadResult
+import com.krypton.updater.data.download.DownloadState
 import com.krypton.updater.ui.MainActivity
 
 import dagger.hilt.android.AndroidEntryPoint
@@ -66,11 +66,6 @@ class UpdateDownloadService : JobService() {
             downloadRepository.cancelDownload()
         }
     }
-
-    // This is to prevent download progress notification from
-    // overriding terminal download event notifications because
-    // of asynchronous updates.
-    private var shouldShowProgressNotification = true
 
     override fun onCreate() {
         super.onCreate()
@@ -135,37 +130,36 @@ class UpdateDownloadService : JobService() {
     private fun startJob() {
         jobParameters?.let {
             serviceScope.launch {
-                launch {
-                    listenForEvents()
-                }
-                shouldShowProgressNotification = true
-                launch {
-                    listenForProgressUpdates()
-                }
-                serviceScope.launch {
-                    logD("starting download")
-                    downloadRepository.startDownload(it.transientExtras)
-                }
+                listenForEvents()
+            }
+            serviceScope.launch {
+                logD("starting download")
+                downloadRepository.startDownload(it.transientExtras)
             }
         }
     }
 
     private suspend fun listenForEvents() {
         logD("listening for events")
-        for (result in downloadRepository.downloadEventChannel) {
-            logD("new result $result")
-            when (result) {
-                is DownloadResult.Failure -> {
-                    shouldShowProgressNotification = false
-                    showDownloadFailedNotification(result.exception?.localizedMessage)
+        downloadRepository.downloadState.collect {
+            logD("New state $it")
+            when (it) {
+                is DownloadState.Idle, is DownloadState.Waiting -> {}
+                is DownloadState.Downloading -> {
+                    updateProgressNotification(it.progress)
                 }
-                is DownloadResult.Success -> {
-                    shouldShowProgressNotification = false
+                is DownloadState.Failed -> {
+                    showDownloadFailedNotification(it.exception?.localizedMessage)
+                    notifyJobFinished(false)
+                }
+                is DownloadState.Finished -> {
                     showDownloadFinishedNotification()
+                    notifyJobFinished(false)
                 }
-                else -> {}
+                is DownloadState.Retry -> {
+                    notifyJobFinished(true)
+                }
             }
-            notifyJobFinished(result is DownloadResult.Retry)
         }
     }
 
@@ -202,13 +196,6 @@ class UpdateDownloadService : JobService() {
                 .setAutoCancel(true)
                 .build()
         )
-    }
-
-    private suspend fun listenForProgressUpdates() {
-        logD("listening for progress updates")
-        downloadRepository.downloadProgressFlow.collect {
-            if (shouldShowProgressNotification) updateProgressNotification(it)
-        }
     }
 
     private fun updateProgressNotification(progress: Float) {
