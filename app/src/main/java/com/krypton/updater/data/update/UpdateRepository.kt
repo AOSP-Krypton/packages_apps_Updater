@@ -72,7 +72,9 @@ class UpdateRepository @Inject constructor(
             downloadManager.downloadState.collect {
                 if (it is DownloadState.Finished) {
                     downloadManager.downloadFile?.let { file ->
-                        copyOTAFile(Uri.fromFile(file))
+                        withContext(Dispatchers.IO) {
+                            copyOTAFile(Uri.fromFile(file))
+                        }
                     }
                 } else if (it is DownloadState.Idle && updateState.value is UpdateState.Idle) {
                     _readyForUpdate.value = false
