@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.data
+package com.krypton.updater.data.settings
 
 import android.content.Context
 
@@ -56,7 +56,7 @@ object SettingsSerializer : Serializer<Settings> {
     }
 }
 
-val Context.appSettings: DataStore<Settings> by dataStore(
-    fileName = "settings.proto",
+val Context.appSettingsDataStore: DataStore<Settings> by dataStore(
+    fileName = "settings",
     serializer = SettingsSerializer
 )

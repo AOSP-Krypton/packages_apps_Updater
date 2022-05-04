@@ -25,6 +25,7 @@ import android.os.SystemClock
 import com.krypton.updater.data.room.AppDatabase
 import com.krypton.updater.data.room.BuildInfoEntity
 import com.krypton.updater.data.room.ChangelogEntity
+import com.krypton.updater.data.settings.appSettingsDataStore
 import com.krypton.updater.services.PeriodicUpdateCheckerService
 
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -57,7 +58,7 @@ class MainRepository @Inject constructor(
     }
 
     private val savedStateDatastore = context.savedStateDataStore
-    private val appSettings = context.appSettings
+    private val appSettingsDataStore = context.appSettingsDataStore
     private val updateInfoDao = appDatabase.updateInfoDao()
 
     val systemBuildDate = Date(DeviceInfo.getBuildDate())
@@ -116,7 +117,7 @@ class MainRepository @Inject constructor(
                 .clear()
                 .build()
         }
-        val optOutIncremental = appSettings.data.map { it.optOutIncremental }.first()
+        val optOutIncremental = appSettingsDataStore.data.map { it.optOutIncremental }.first()
         val result = withContext(Dispatchers.IO) {
             updateChecker.checkForUpdate(!optOutIncremental)
         }
@@ -137,7 +138,7 @@ class MainRepository @Inject constructor(
     }
 
     private suspend fun getUpdateCheckInterval(): Int {
-        return context.appSettings.data.map {
+        return context.appSettingsDataStore.data.map {
             it.updateCheckInterval
         }.first()
     }

@@ -20,7 +20,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 
 import com.krypton.updater.data.MainRepository
-import com.krypton.updater.data.SettingsRepository
+import com.krypton.updater.data.settings.SettingsRepository
 
 import dagger.hilt.android.lifecycle.HiltViewModel
 
