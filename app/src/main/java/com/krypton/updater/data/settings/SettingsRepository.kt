@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.krypton.updater.data
+package com.krypton.updater.data.settings
 
 import android.content.Context
 
@@ -30,7 +30,7 @@ import kotlinx.coroutines.flow.map
 class SettingsRepository @Inject constructor(
     @ApplicationContext context: Context
 ) {
-    private val appSettings = context.appSettings
+    private val appSettings = context.appSettingsDataStore
 
     val updateCheckInterval: Flow<Int>
         get() = appSettings.data.map { it.updateCheckInterval }
