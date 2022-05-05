@@ -27,17 +27,17 @@ import com.krypton.updater.data.room.AppDatabase
 import com.krypton.updater.data.savedStateDataStore
 
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.*
 
 import javax.inject.Inject
 import javax.inject.Singleton
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
 
 @Singleton
 class DownloadRepository @Inject constructor(
@@ -61,10 +61,11 @@ class DownloadRepository @Inject constructor(
     val restoringDownloadState: StateFlow<Boolean>
         get() = _restoringDownloadState
 
-    val fileCopyStatus = Channel<FileCopyStatus>(2, BufferOverflow.DROP_OLDEST)
+    val fileCopyStatus = Channel<FileCopyStatus>(Channel.CONFLATED)
 
     init {
         applicationScope.launch {
+            delay(1000)
             restoreDownloadState()
             downloadState.collect {
                 saveDownloadState(it)
