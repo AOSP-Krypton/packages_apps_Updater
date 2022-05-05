@@ -20,7 +20,6 @@ import android.content.res.Resources
 import android.net.Uri
 
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -48,7 +47,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class MainScreenState(
-    coroutineScope: CoroutineScope,
+    private val coroutineScope: CoroutineScope,
     private val mainViewModel: MainViewModel,
     private val downloadViewModel: DownloadViewModel,
     private val updateViewModel: UpdateViewModel,
@@ -80,14 +79,6 @@ class MainScreenState(
             }
         }
 
-    private val _showExportingDialog = MutableStateFlow(false)
-    val showExportingDialog: StateFlow<Boolean>
-        get() = _showExportingDialog
-
-    private val _showCopyingDialog = MutableStateFlow(false)
-    val showCopyingDialog: StateFlow<Boolean>
-        get() = _showCopyingDialog
-
     val shouldAllowLocalUpgrade: Flow<Boolean>
         get() = combine(
             downloadViewModel.downloadState,
@@ -116,69 +107,18 @@ class MainScreenState(
             }
         }
 
+    val otaFileCopyStatus: Flow<FileCopyStatus>
+        get() = updateViewModel.fileCopyStatus.receiveAsFlow()
+
+    val downloadFileExportStatus: Flow<FileCopyStatus>
+        get() = downloadViewModel.fileCopyStatus.receiveAsFlow()
+
     init {
         coroutineScope.launch {
             for (event in mainViewModel.updateFailedEvent) {
-                snackbarHostState.showSnackbar(
-                    event ?: resources.getString(R.string.update_check_failed)
-                )
-            }
-        }
-        coroutineScope.launch {
-            receiveExportEvents()
-        }
-        coroutineScope.launch {
-            receiveCopyEvents()
-        }
-    }
-
-    private suspend fun receiveExportEvents() {
-        for (status in downloadViewModel.fileCopyStatus) {
-            when (status) {
-                is FileCopyStatus.Copying -> _showExportingDialog.value = true
-                is FileCopyStatus.Success -> {
-                    _showExportingDialog.value = false
+                coroutineScope.launch {
                     snackbarHostState.showSnackbar(
-                        resources.getString(
-                            R.string.exported_file_successfully
-                        ),
-                        duration = SnackbarDuration.Short
-                    )
-                }
-                is FileCopyStatus.Failure -> {
-                    _showExportingDialog.value = false
-                    snackbarHostState.showSnackbar(
-                        resources.getString(
-                            R.string.exporting_failed,
-                            status.reason
-                        ),
-                        duration = SnackbarDuration.Short
-                    )
-                }
-            }
-        }
-    }
-
-    private suspend fun receiveCopyEvents() {
-        for (status in updateViewModel.fileCopyStatus) {
-            when (status) {
-                is FileCopyStatus.Copying -> {
-                    _showCopyingDialog.value = true
-                }
-                is FileCopyStatus.Success -> {
-                    _showCopyingDialog.value = false
-                    snackbarHostState.showSnackbar(
-                        resources.getString(R.string.successfully_copied),
-                        duration = SnackbarDuration.Short
-                    )
-                }
-                is FileCopyStatus.Failure -> {
-                    _showCopyingDialog.value = false
-                    snackbarHostState.showSnackbar(
-                        resources.getString(
-                            R.string.copying_failed,
-                            status.reason
-                        )
+                        event ?: resources.getString(R.string.update_check_failed)
                     )
                 }
             }
@@ -195,6 +135,12 @@ class MainScreenState(
 
     fun openSettings() {
         navHostController.navigate(Routes.SETTINGS)
+    }
+
+    fun showSnackBar(message: String) {
+        coroutineScope.launch {
+            snackbarHostState.showSnackbar(message)
+        }
     }
 
     companion object {

@@ -20,7 +20,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
-import android.content.res.Resources
 import android.os.IBinder
 
 import androidx.compose.material3.SnackbarDuration
@@ -44,12 +43,11 @@ class UpdateCardState(
     private val viewModel: UpdateViewModel,
     private val service: UpdateInstallerService?,
     private val snackbarHostState: SnackbarHostState,
-    private val context: Context,
-    private val resources: Resources
+    private val context: Context
 ) {
 
     val titleText: String
-        get() = resources.getString(R.string.install_update)
+        get() = context.getString(R.string.install_update)
 
     val shouldShowProgress: Flow<Boolean>
         get() = viewModel.updateState.map { it !is UpdateState.Idle && it !is UpdateState.Finished }
@@ -69,18 +67,18 @@ class UpdateCardState(
     val progressDescriptionText: Flow<String>
         get() = viewModel.updateState.map {
             when (it) {
-                is UpdateState.Idle, is UpdateState.Initializing -> resources.getString(R.string.initializing)
-                is UpdateState.Verifying -> resources.getString(
+                is UpdateState.Idle, is UpdateState.Initializing -> context.getString(R.string.initializing)
+                is UpdateState.Verifying -> context.getString(
                     R.string.verifying_update,
                     String.format("%.2f", it.progress)
                 )
-                is UpdateState.Updating -> resources.getString(
+                is UpdateState.Updating -> context.getString(
                     R.string.installing_update_format,
                     String.format("%.2f", it.progress)
                 )
-                is UpdateState.Paused -> resources.getString(R.string.installation_paused)
-                is UpdateState.Failed -> resources.getString(R.string.installation_failed)
-                is UpdateState.Finished -> resources.getString(R.string.installation_finished)
+                is UpdateState.Paused -> context.getString(R.string.installation_paused)
+                is UpdateState.Failed -> context.getString(R.string.installation_failed)
+                is UpdateState.Finished -> context.getString(R.string.installation_finished)
             }
         }
 
@@ -95,8 +93,8 @@ class UpdateCardState(
     val leadingActionButtonText: Flow<String?>
         get() = viewModel.updateState.map {
             when (it) {
-                is UpdateState.Verifying, is UpdateState.Updating -> resources.getString(R.string.pause)
-                is UpdateState.Paused -> resources.getString(R.string.resume)
+                is UpdateState.Verifying, is UpdateState.Updating -> context.getString(R.string.pause)
+                is UpdateState.Paused -> context.getString(R.string.resume)
                 else -> null
             }
         }
@@ -107,13 +105,13 @@ class UpdateCardState(
                 is UpdateState.Verifying,
                 is UpdateState.Updating,
                 is UpdateState.Paused -> {
-                    resources.getString(android.R.string.cancel)
+                    context.getString(android.R.string.cancel)
                 }
-                is UpdateState.Finished -> resources.getString(R.string.reboot)
+                is UpdateState.Finished -> context.getString(R.string.reboot)
                 is UpdateState.Idle,
                 is UpdateState.Initializing,
                 is UpdateState.Failed -> {
-                    resources.getString(R.string.update)
+                    context.getString(R.string.update)
                 }
             }
         }
@@ -122,7 +120,7 @@ class UpdateCardState(
         coroutineScope.launch {
             for (reason in viewModel.updateFailedReason) {
                 snackbarHostState.showSnackbar(
-                    reason ?: resources.getString(R.string.installation_failed),
+                    reason ?: context.getString(R.string.installation_failed),
                     duration = SnackbarDuration.Short
                 )
             }
@@ -161,8 +159,7 @@ fun rememberUpdateCardState(
     updateViewModel: UpdateViewModel = hiltViewModel(),
     snackbarHostState: SnackbarHostState = SnackbarHostState(),
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
-    context: Context = LocalContext.current,
-    resources: Resources = context.resources
+    context: Context = LocalContext.current
 ): UpdateCardState {
     var updateInstallerService by remember { mutableStateOf<UpdateInstallerService?>(null) }
     val serviceConnection = remember {
@@ -189,7 +186,6 @@ fun rememberUpdateCardState(
         snackbarHostState,
         coroutineScope,
         context,
-        resources,
         updateInstallerService
     ) {
         UpdateCardState(
@@ -197,8 +193,7 @@ fun rememberUpdateCardState(
             updateViewModel,
             updateInstallerService,
             snackbarHostState,
-            context,
-            resources
+            context
         )
     }
 }

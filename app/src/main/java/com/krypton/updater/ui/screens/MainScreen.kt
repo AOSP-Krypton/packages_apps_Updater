@@ -21,7 +21,6 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -40,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 
 import com.krypton.updater.R
+import com.krypton.updater.data.FileCopyStatus
 import com.krypton.updater.ui.states.*
 import com.krypton.updater.ui.widgets.AppBarMenu
 import com.krypton.updater.ui.widgets.CustomButton
@@ -65,21 +65,28 @@ fun MainScreen(state: MainScreenState) {
             SnackbarHost(state.snackbarHostState)
         }
     ) {
-        val showExportDialog by state.showExportingDialog.collectAsState(false)
-        ProgressDialog(
-            title = stringResource(id = R.string.exporting_file),
-            showExportDialog
-        )
-        val showCopyingDialog by state.showCopyingDialog.collectAsState(false)
-        ProgressDialog(
-            title = stringResource(id = R.string.copying_file),
-            showCopyingDialog
-        )
         val showStateRestoringDialog by state.showStateRestoreDialog.collectAsState(false)
-        ProgressDialog(
-            title = stringResource(id = R.string.restoring_state),
-            visible = showStateRestoringDialog
-        )
+        if (showStateRestoringDialog) {
+            ProgressDialog(stringResource(id = R.string.restoring_state))
+        }
+        val otaFileCopyStatus by state.otaFileCopyStatus.collectAsState(null)
+        FileCopyDialogAndSnackBar(
+            otaFileCopyStatus,
+            title = stringResource(id = R.string.copying_file),
+            successMessage = stringResource(id = R.string.successfully_copied),
+            failureMessage = R.string.copying_failed
+        ) {
+            state.showSnackBar(it)
+        }
+        val downloadFileExportStatus by state.downloadFileExportStatus.collectAsState(null)
+        FileCopyDialogAndSnackBar(
+            downloadFileExportStatus,
+            title = stringResource(id = R.string.exporting_file),
+            successMessage = stringResource(id = R.string.exported_file_successfully),
+            failureMessage = R.string.exporting_failed
+        ) {
+            state.showSnackBar(it)
+        }
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
@@ -190,27 +197,48 @@ fun AppBar(
 
 @OptIn(ExperimentalUnitApi::class)
 @Composable
-fun ProgressDialog(title: String, visible: Boolean) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(animationSpec = tween(700)),
-        exit = fadeOut(animationSpec = tween(700))
-    ) {
-        AlertDialog(
-            onDismissRequest = {},
-            properties = DialogProperties(
-                dismissOnBackPress = false,
-                dismissOnClickOutside = false
-            ),
-            confirmButton = {},
-            title = {
-                Text(text = title, style = MaterialTheme.typography.titleMedium)
-            },
-            shape = RoundedCornerShape(32.dp),
-            text = {
-                LinearProgressIndicator()
-            },
-        )
+fun ProgressDialog(title: String) {
+    AlertDialog(
+        onDismissRequest = {},
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        ),
+        confirmButton = {},
+        title = {
+            Text(text = title, style = MaterialTheme.typography.titleMedium)
+        },
+        shape = RoundedCornerShape(32.dp),
+        text = {
+            LinearProgressIndicator()
+        },
+    )
+}
+
+@Composable
+fun FileCopyDialogAndSnackBar(
+    status: FileCopyStatus?,
+    title: String,
+    successMessage: String,
+    failureMessage: Int,
+    onShowSnackBarRequest: (String) -> Unit
+) {
+    when (status) {
+        is FileCopyStatus.Copying -> {
+            ProgressDialog(title)
+        }
+        is FileCopyStatus.Success -> {
+            onShowSnackBarRequest(successMessage)
+        }
+        is FileCopyStatus.Failure -> {
+            onShowSnackBarRequest(
+                stringResource(
+                    failureMessage,
+                    status.reason ?: ""
+                )
+            )
+        }
+        else -> {}
     }
 }
 

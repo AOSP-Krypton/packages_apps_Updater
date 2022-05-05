@@ -31,7 +31,6 @@ import javax.inject.Singleton
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,8 +39,8 @@ import kotlinx.coroutines.withContext
 
 @Singleton
 class UpdateRepository @Inject constructor(
+    applicationScope: CoroutineScope,
     @ApplicationContext private val context: Context,
-    private val applicationScope: CoroutineScope,
     private val updateManager: UpdateManager,
     private val otaFileManager: OTAFileManager,
     private val downloadManager: DownloadManager,
@@ -62,7 +61,7 @@ class UpdateRepository @Inject constructor(
     val readyForUpdate: StateFlow<Boolean>
         get() = _readyForUpdate
 
-    val fileCopyStatus = Channel<FileCopyStatus>(2, BufferOverflow.DROP_OLDEST)
+    val fileCopyStatus = Channel<FileCopyStatus>(Channel.CONFLATED)
 
     val supportsUpdateSuspension: Boolean
         get() = updateManager.supportsUpdateSuspension
@@ -144,23 +143,19 @@ class UpdateRepository @Inject constructor(
         updateManager.reset()
     }
 
-    private fun saveUpdateFinishedState() {
-        applicationScope.launch {
-            savedStateDataStore.updateData {
-                it.toBuilder()
-                    .setUpdateFinished(true)
-                    .build()
-            }
+    private suspend fun saveUpdateFinishedState() {
+        savedStateDataStore.updateData {
+            it.toBuilder()
+                .setUpdateFinished(true)
+                .build()
         }
     }
 
-    private fun clearSavedUpdateState() {
-        applicationScope.launch {
-            savedStateDataStore.updateData {
-                it.toBuilder()
-                    .clearUpdateFinished()
-                    .build()
-            }
+    private suspend fun clearSavedUpdateState() {
+        savedStateDataStore.updateData {
+            it.toBuilder()
+                .clearUpdateFinished()
+                .build()
         }
     }
 }
