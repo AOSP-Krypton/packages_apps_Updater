@@ -21,17 +21,17 @@ import android.os.Bundle
 import android.util.Log
 
 import com.krypton.updater.data.BuildInfo
-import com.krypton.updater.data.FileCopier
+import com.krypton.updater.data.FileExportManager
 import com.krypton.updater.data.FileCopyStatus
 import com.krypton.updater.data.room.AppDatabase
 import com.krypton.updater.data.savedStateDataStore
 
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.*
 
 import javax.inject.Inject
 import javax.inject.Singleton
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,10 +41,10 @@ import kotlinx.coroutines.flow.map
 
 @Singleton
 class DownloadRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val applicationScope: CoroutineScope,
     private val downloadManager: DownloadManager,
-    @ApplicationContext context: Context,
-    applicationScope: CoroutineScope,
-    private val fileCopier: FileCopier,
+    private val fileExportManager: FileExportManager,
     appDatabase: AppDatabase,
 ) {
 
@@ -80,7 +80,7 @@ class DownloadRepository @Inject constructor(
         downloadManager.downloadFile?.let { file ->
             fileCopyStatus.send(FileCopyStatus.Copying)
             val result = withContext(Dispatchers.IO) {
-                fileCopier.copyToExportDir(file)
+                fileExportManager.copyToExportDir(file)
             }
             if (result.isSuccess) {
                 fileCopyStatus.send(FileCopyStatus.Success)
@@ -168,6 +168,14 @@ class DownloadRepository @Inject constructor(
 
     suspend fun resetState() {
         downloadManager.reset()
+    }
+
+    fun clearCache() {
+        applicationScope.launch {
+            context.cacheDir.listFiles()?.forEach {
+                it.delete()
+            }
+        }
     }
 
     companion object {

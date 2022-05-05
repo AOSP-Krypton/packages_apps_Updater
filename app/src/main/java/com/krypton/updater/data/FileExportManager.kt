@@ -17,6 +17,7 @@
 package com.krypton.updater.data
 
 import android.content.Context
+import android.net.Uri
 import android.os.FileUtils
 
 import androidx.documentfile.provider.DocumentFile
@@ -32,7 +33,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class FileCopier @Inject constructor(
+class FileExportManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     /**
@@ -43,14 +44,10 @@ class FileCopier @Inject constructor(
      * @return a [Result] indicating whether copying was successful or not.
      */
     fun copyToExportDir(inputFile: File, name: String = inputFile.name): Result<Unit> {
-        val treeUriPerm =
-            context.contentResolver.persistedUriPermissions.firstOrNull() ?: return Result.failure(
-                IllegalStateException("Access to a directory in internal storage has not been given.")
-            )
-        if (!treeUriPerm.isReadPermission || !treeUriPerm.isWritePermission)
-            return Result.failure(IllegalStateException("Does not have r/w permission"))
-        val treeFile = DocumentFile.fromTreeUri(context, treeUriPerm.uri)
-            ?: return Result.failure(Exception("Unable to open document tree"))
+        val treeFileResult = getExportDir().onFailure {
+            return Result.failure(it)
+        }
+        val treeFile = treeFileResult.getOrThrow()
         treeFile.findFile(name)?.takeIf { it.isFile }?.let {
             try {
                 context.contentResolver.openInputStream(it.uri)?.use { firstFileInputStream ->
@@ -81,4 +78,23 @@ class FileCopier @Inject constructor(
             }
         } ?: Result.failure(Exception("Failed to open output stream"))
     }
+
+    private fun getExportDir(): Result<DocumentFile> {
+        val treeUriPerm =
+            context.contentResolver.persistedUriPermissions.firstOrNull() ?: return Result.failure(
+                IllegalStateException("Access to a directory in internal storage has not been given.")
+            )
+        if (!treeUriPerm.isReadPermission || !treeUriPerm.isWritePermission)
+            return Result.failure(IllegalStateException("Does not have r/w permission"))
+        val treeFile = DocumentFile.fromTreeUri(context, treeUriPerm.uri)
+            ?: return Result.failure(Exception("Unable to open document tree"))
+        return Result.success(treeFile)
+    }
+
+    /**
+     * Acquire a [Uri] for the export directory
+     *
+     * @return the uri
+     */
+    fun getExportDirUri(): Result<Uri> = getExportDir().map { it.uri }
 }

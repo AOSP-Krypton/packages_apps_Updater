@@ -16,6 +16,8 @@
 
 package com.krypton.updater.viewmodel
 
+import android.net.Uri
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 
@@ -84,5 +86,12 @@ class MainViewModel @Inject constructor(
                 updateFailedEvent.send(result.exceptionOrNull()?.localizedMessage)
             }
         }
+    }
+
+    suspend fun getDownloadsExportDirectoryUri(): Result<Uri> =
+        mainRepository.getExportDirectoryUri()
+
+    fun clearCache() {
+        downloadRepository.clearCache()
     }
 }

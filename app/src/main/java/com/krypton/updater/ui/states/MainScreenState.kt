@@ -16,7 +16,8 @@
 
 package com.krypton.updater.ui.states
 
-import android.content.res.Resources
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
 
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -51,13 +52,13 @@ class MainScreenState(
     private val mainViewModel: MainViewModel,
     private val downloadViewModel: DownloadViewModel,
     private val updateViewModel: UpdateViewModel,
-    private val resources: Resources,
+    private val context: Context,
     val snackbarHostState: SnackbarHostState,
     val navHostController: NavHostController,
 ) {
 
     private val locale: Locale
-        get() = resources.configuration.locales[0]
+        get() = context.resources.configuration.locales[0]
 
     val systemBuildDate: String
         get() = getFormattedDate(locale, time = mainViewModel.systemBuildDate)
@@ -118,7 +119,7 @@ class MainScreenState(
             for (event in mainViewModel.updateFailedEvent) {
                 coroutineScope.launch {
                     snackbarHostState.showSnackbar(
-                        event ?: resources.getString(R.string.update_check_failed)
+                        event ?: context.getString(R.string.update_check_failed)
                     )
                 }
             }
@@ -143,6 +144,31 @@ class MainScreenState(
         }
     }
 
+    fun openDownloads() {
+        coroutineScope.launch {
+            val uriResult = mainViewModel.getDownloadsExportDirectoryUri()
+            if (uriResult.isSuccess) {
+                val intent = Intent(Intent.ACTION_VIEW, uriResult.getOrThrow())
+                val resolvedActivities =
+                    context.packageManager.queryIntentActivities(intent, 0 /* flags */)
+                if (resolvedActivities.isNotEmpty()) {
+                    context.startActivity(intent)
+                } else {
+                    snackbarHostState.showSnackbar(context.getString(R.string.activity_not_found))
+                }
+            } else {
+                snackbarHostState.showSnackbar(
+                    uriResult.exceptionOrNull()?.localizedMessage
+                        ?: context.getString(R.string.failed_to_acquire_uri)
+                )
+            }
+        }
+    }
+
+    fun clearCache() {
+        mainViewModel.clearCache()
+    }
+
     companion object {
         private fun getFormattedDate(
             locale: Locale,
@@ -164,7 +190,7 @@ fun rememberMainScreenState(
     updateViewModel: UpdateViewModel = hiltViewModel(),
     snackbarHostState: SnackbarHostState = SnackbarHostState(),
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
-    resources: Resources = LocalContext.current.resources,
+    context: Context = LocalContext.current,
     navHostController: NavHostController = rememberAnimatedNavController()
 ) = remember(
     mainViewModel,
@@ -172,7 +198,7 @@ fun rememberMainScreenState(
     updateViewModel,
     snackbarHostState,
     coroutineScope,
-    resources,
+    context,
     navHostController
 ) {
     MainScreenState(
@@ -180,7 +206,7 @@ fun rememberMainScreenState(
         mainViewModel,
         downloadViewModel,
         updateViewModel,
-        resources,
+        context,
         snackbarHostState,
         navHostController
     )
