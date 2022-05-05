@@ -17,18 +17,25 @@
 package com.krypton.updater.data.update
 
 import android.content.Context
-import android.os.Bundle
 import android.os.PersistableBundle
 import android.os.SystemUpdateManager
+import android.os.UpdateLock
 import android.util.Log
+
+import com.krypton.updater.R
+import com.krypton.updater.data.BatteryMonitor
 
 import dagger.hilt.android.qualifiers.ApplicationContext
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
-abstract class UpdateManager protected constructor(
+sealed class UpdateManager(
     @ApplicationContext context: Context,
+    applicationScope: CoroutineScope,
+    batteryMonitor: BatteryMonitor
 ) {
     protected val updateStateInternal = MutableStateFlow<UpdateState>(UpdateState.Idle)
     val updateState: StateFlow<UpdateState>
@@ -50,7 +57,32 @@ abstract class UpdateManager protected constructor(
 
     private val systemUpdateService = context.getSystemService(SystemUpdateManager::class.java)
 
-    protected fun updateSystemUpdateInfo(statusCode: Int) {
+    private val updateLock = UpdateLock(UPDATE_LOCK_TAG)
+
+    init {
+        applicationScope.launch {
+            batteryMonitor.batteryState.collect {
+                if (!it && isUpdating) {
+                    cancel()
+                    logAndUpdateState(context.getString(R.string.low_battery_plug_in))
+                }
+            }
+        }
+    }
+
+    protected fun acquireLock() {
+        if (!updateLock.isHeld) {
+            updateLock.acquire()
+        }
+    }
+
+    protected fun releaseLock() {
+        if (updateLock.isHeld) {
+            updateLock.release()
+        }
+    }
+
+    protected fun updateSystemUpdateStatus(statusCode: Int) {
         systemUpdateService.updateSystemUpdateInfo(PersistableBundle().apply {
             putInt(
                 SystemUpdateManager.KEY_STATUS,
@@ -59,13 +91,14 @@ abstract class UpdateManager protected constructor(
         })
     }
 
-    protected fun getSystemUpdateInfo(): Bundle {
+    protected fun getSystemUpdateStatus(): Int {
         return systemUpdateService.retrieveSystemUpdateInfo()
+            .getInt(SystemUpdateManager.KEY_STATUS)
     }
 
     protected fun reportFailure(msg: String) {
         updateStateInternal.value = UpdateState.Failed(progress, Throwable(msg))
-        updateSystemUpdateInfo(SystemUpdateManager.STATUS_IDLE)
+        updateSystemUpdateStatus(SystemUpdateManager.STATUS_IDLE)
     }
 
     protected fun logAndUpdateState(msg: String) {
@@ -93,5 +126,7 @@ abstract class UpdateManager protected constructor(
         internal fun logD(msg: String) {
             if (DEBUG) Log.d(TAG, msg)
         }
+
+        private val UPDATE_LOCK_TAG = "${UpdateManager::class.simpleName!!}:UpdateLock"
     }
 }

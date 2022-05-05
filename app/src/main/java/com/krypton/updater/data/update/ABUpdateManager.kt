@@ -31,8 +31,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 
 @Singleton
 class ABUpdateManager @Inject constructor(
@@ -41,7 +39,7 @@ class ABUpdateManager @Inject constructor(
     private val otaFileManager: OTAFileManager,
     private val updateEngine: UpdateEngine,
     private val batteryMonitor: BatteryMonitor,
-) : UpdateManager(context) {
+) : UpdateManager(context, applicationScope, batteryMonitor) {
 
     private val updateEngineCallback = object : UpdateEngineCallback() {
         override fun onStatusUpdate(status: Int, percent: Float) {
@@ -49,34 +47,34 @@ class ABUpdateManager @Inject constructor(
             when (status) {
                 UpdateStatusConstants.IDLE,
                 UpdateStatusConstants.CLEANUP_PREVIOUS_UPDATE -> {
-                    updateSystemUpdateInfo(SystemUpdateManager.STATUS_IDLE)
+                    updateSystemUpdateStatus(SystemUpdateManager.STATUS_IDLE)
                 }
                 UpdateStatusConstants.UPDATE_AVAILABLE -> {
                     progress = 0f
                     updateStateInternal.value = UpdateState.Initializing
-                    updateSystemUpdateInfo(SystemUpdateManager.STATUS_WAITING_INSTALL)
+                    updateSystemUpdateStatus(SystemUpdateManager.STATUS_WAITING_INSTALL)
                 }
                 // Step 1
                 UpdateStatusConstants.DOWNLOADING -> {
                     progress = (percent / 3) * 100
                     updateStateInternal.value = UpdateState.Verifying(progress)
-                    updateSystemUpdateInfo(SystemUpdateManager.STATUS_IN_PROGRESS)
+                    updateSystemUpdateStatus(SystemUpdateManager.STATUS_IN_PROGRESS)
                 }
                 // Step 2
                 UpdateStatusConstants.VERIFYING -> {
                     progress = ((percent + 1) * 100) / 3
                     updateStateInternal.value = UpdateState.Verifying(progress)
-                    updateSystemUpdateInfo(SystemUpdateManager.STATUS_IN_PROGRESS)
+                    updateSystemUpdateStatus(SystemUpdateManager.STATUS_IN_PROGRESS)
                 }
                 // Step 3
                 UpdateStatusConstants.FINALIZING -> {
                     progress = ((percent + 2) * 100) / 3
                     updateStateInternal.value = UpdateState.Updating(progress)
-                    updateSystemUpdateInfo(SystemUpdateManager.STATUS_IN_PROGRESS)
+                    updateSystemUpdateStatus(SystemUpdateManager.STATUS_IN_PROGRESS)
                 }
                 UpdateStatusConstants.UPDATED_NEED_REBOOT -> {
                     updateStateInternal.value = UpdateState.Finished
-                    updateSystemUpdateInfo(SystemUpdateManager.STATUS_WAITING_REBOOT)
+                    updateSystemUpdateStatus(SystemUpdateManager.STATUS_WAITING_REBOOT)
                 }
                 else -> Log.e(TAG, "onStatusUpdate: unknown status code $status")
             }
@@ -88,7 +86,7 @@ class ABUpdateManager @Inject constructor(
             when (errorCode) {
                 ErrorCodeConstants.SUCCESS -> {
                     updateStateInternal.value = UpdateState.Finished
-                    updateSystemUpdateInfo(SystemUpdateManager.STATUS_WAITING_REBOOT)
+                    updateSystemUpdateStatus(SystemUpdateManager.STATUS_WAITING_REBOOT)
                 }
                 ErrorCodeConstants.DOWNLOAD_INVALID_METADATA_MAGIC_STRING,
                 ErrorCodeConstants.DOWNLOAD_METADATA_SIGNATURE_MISMATCH ->
@@ -103,7 +101,7 @@ class ABUpdateManager @Inject constructor(
                     reportFailure(context.getString(R.string.update_transfer_error))
                 ErrorCodeConstants.USER_CANCELLED -> {
                     updateStateInternal.value = UpdateState.Idle
-                    updateSystemUpdateInfo(SystemUpdateManager.STATUS_IDLE)
+                    updateSystemUpdateStatus(SystemUpdateManager.STATUS_IDLE)
                 }
                 else -> reportFailure(
                     context.getString(
@@ -112,6 +110,7 @@ class ABUpdateManager @Inject constructor(
                     )
                 )
             }
+            releaseLock()
         }
     }
 
@@ -120,22 +119,19 @@ class ABUpdateManager @Inject constructor(
     private var updateScheduled = false
 
     init {
-        val updateInfo = getSystemUpdateInfo()
-        when (updateInfo.getInt(SystemUpdateManager.KEY_STATUS)) {
+        when (getSystemUpdateStatus()) {
             SystemUpdateManager.STATUS_WAITING_REBOOT -> {
                 updateStateInternal.value = UpdateState.Finished
             }
             SystemUpdateManager.STATUS_IN_PROGRESS -> {
-                updateScheduled = true
-                updateStateInternal.value = UpdateState.Updating(0f)
-                updateEngine.bind(updateEngineCallback)
-            }
-        }
-        applicationScope.launch {
-            batteryMonitor.batteryState.collect {
-                if (!it && isUpdating) {
-                    cancel()
+                if (!batteryMonitor.isBatteryOkay()) {
                     logAndUpdateState(context.getString(R.string.low_battery_plug_in))
+                    cancel()
+                } else {
+                    updateScheduled = true
+                    updateStateInternal.value = UpdateState.Updating(0f)
+                    updateEngine.bind(updateEngineCallback)
+                    acquireLock()
                 }
             }
         }
@@ -173,6 +169,7 @@ class ABUpdateManager @Inject constructor(
                 payloadInfo.headerKeyValuePairs
             )
             updateScheduled = true
+            acquireLock()
         } catch (e: ServiceSpecificException) {
             logAndUpdateState(context.getString(R.string.applying_payload_failed, e.message))
         }
@@ -185,6 +182,7 @@ class ABUpdateManager @Inject constructor(
             logD("Suspending update engine")
             updateEngine.suspend()
             updateStateInternal.value = UpdateState.Paused(progress)
+            releaseLock()
         } catch (e: ServiceSpecificException) {
             Log.e(TAG, "Failed to suspend update", e)
         }
@@ -193,10 +191,15 @@ class ABUpdateManager @Inject constructor(
     override fun resume() {
         logD("Resume: updateScheduled = $updateScheduled, isUpdatePaused = $isUpdatePaused")
         if (!updateScheduled || !isUpdatePaused) return
+        if (!batteryMonitor.isBatteryOkay()) {
+            logAndUpdateState(context.getString(R.string.low_battery_plug_in))
+            return
+        }
         try {
             logD("Resuming update engine")
             updateEngine.resume()
             updateStateInternal.value = UpdateState.Updating(0f)
+            acquireLock()
         } catch (e: ServiceSpecificException) {
             Log.e(TAG, "Failed to resume update", e)
         }
@@ -216,13 +219,15 @@ class ABUpdateManager @Inject constructor(
                 resetStatus()
             }
         }
+        releaseLock()
         reset()
     }
 
     override fun reset() {
         updateScheduled = false
         updateStateInternal.value = UpdateState.Idle
-        updateSystemUpdateInfo(SystemUpdateManager.STATUS_IDLE)
+        updateSystemUpdateStatus(SystemUpdateManager.STATUS_IDLE)
+        releaseLock()
     }
 
     override fun reboot() {
