@@ -176,7 +176,7 @@ fun rememberUpdateCardState(
             }
         }
     }
-    DisposableEffect(context, updateInstallerService) {
+    DisposableEffect(context) {
         context.bindService(
             Intent(context, UpdateInstallerService::class.java),
             serviceConnection,
@@ -189,7 +189,8 @@ fun rememberUpdateCardState(
         snackbarHostState,
         coroutineScope,
         context,
-        resources
+        resources,
+        updateInstallerService
     ) {
         UpdateCardState(
             coroutineScope,

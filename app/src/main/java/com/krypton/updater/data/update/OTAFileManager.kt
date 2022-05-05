@@ -27,8 +27,6 @@ import com.krypton.updater.data.FilePermissionHelper
 import dagger.hilt.android.qualifiers.ApplicationContext
 
 import java.io.File
-import java.io.InputStream
-import java.io.IOException
 
 import javax.inject.Inject
 import javax.inject.Singleton

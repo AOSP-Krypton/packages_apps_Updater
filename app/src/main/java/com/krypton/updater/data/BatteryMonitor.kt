@@ -87,7 +87,8 @@ class BatteryMonitor @Inject constructor(
 
     companion object {
         private const val TAG: String = "BatteryMonitor"
-        private const val DEBUG: Boolean = false
+        private val DEBUG: Boolean
+            get() = Log.isLoggable(TAG, Log.DEBUG)
 
         fun logD(msg: String) {
             if (DEBUG) Log.d(TAG, msg)

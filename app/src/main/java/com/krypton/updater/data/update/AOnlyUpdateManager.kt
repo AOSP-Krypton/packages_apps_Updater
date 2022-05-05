@@ -25,12 +25,12 @@ import com.krypton.updater.data.BatteryMonitor
 
 import dagger.hilt.android.qualifiers.ApplicationContext
 
+import java.io.File
+
 import javax.inject.Inject
 import javax.inject.Singleton
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 
 @Singleton
 class AOnlyUpdateManager @Inject constructor(
@@ -38,28 +38,17 @@ class AOnlyUpdateManager @Inject constructor(
     applicationScope: CoroutineScope,
     private val otaFileManager: OTAFileManager,
     private val batteryMonitor: BatteryMonitor
-) : UpdateManager(context) {
+) : UpdateManager(context, applicationScope, batteryMonitor) {
 
     override val supportsUpdateSuspension = false
 
     private var updateScheduled = false
 
-    private var updateThread: Thread? = null
+    private var updateThread: UpdateThread? = null
 
     init {
-        val updateInfo = getSystemUpdateInfo()
-        if (updateInfo.getInt(SystemUpdateManager.KEY_STATUS) ==
-            SystemUpdateManager.STATUS_WAITING_REBOOT
-        ) {
+        if (getSystemUpdateStatus() == SystemUpdateManager.STATUS_WAITING_REBOOT) {
             updateStateInternal.value = UpdateState.Finished
-        }
-        applicationScope.launch {
-            batteryMonitor.batteryState.collect {
-                if (!it && isUpdating) {
-                    cancel()
-                    logAndUpdateState(context.getString(R.string.low_battery_plug_in))
-                }
-            }
         }
     }
 
@@ -72,23 +61,28 @@ class AOnlyUpdateManager @Inject constructor(
         }
         updateStateInternal.value = UpdateState.Initializing
         updateThread?.interrupt()
-        updateThread = Thread()
+        updateThread = UpdateThread(
+            otaFileManager.otaFile
+        ) {
+            progress = it.toFloat()
+            updateStateInternal.value = UpdateState.Verifying(progress)
+        }
+        acquireLock()
         val verifyResult = runCatching {
-            updateThread?.run {
-                RecoverySystem.verifyPackage(
-                    otaFileManager.otaFile,
-                    {
-                        progress = it.toFloat()
-                        updateStateInternal.value = UpdateState.Verifying(progress)
-                    },
-                    null
-                )
+            updateThread?.let {
+                it.run()
+                it.join(UPDATE_THREAD_TIMEOUT)
             }
         }
+        releaseLock()
         if (verifyResult.isSuccess) {
-            updateSystemUpdateInfo(SystemUpdateManager.STATUS_WAITING_REBOOT)
+            updateSystemUpdateStatus(SystemUpdateManager.STATUS_WAITING_REBOOT)
             updateStateInternal.value = UpdateState.Finished
         } else {
+            if (verifyResult.exceptionOrNull() is InterruptedException) {
+                logD("Cancelled")
+                return
+            }
             logAndUpdateState(
                 verifyResult.exceptionOrNull()?.localizedMessage ?: context.getString(
                     R.string.failed_to_verify_update_file
@@ -108,15 +102,39 @@ class AOnlyUpdateManager @Inject constructor(
     override fun cancel() {
         updateThread?.interrupt()
         updateThread = null
+        reset()
+        releaseLock()
     }
 
     override fun reset() {
         updateScheduled = false
         updateStateInternal.value = UpdateState.Idle
-        updateSystemUpdateInfo(SystemUpdateManager.STATUS_IDLE)
+        updateSystemUpdateStatus(SystemUpdateManager.STATUS_IDLE)
+        releaseLock()
     }
 
     override fun reboot() {
+        if (!batteryMonitor.isBatteryOkay()) {
+            logAndUpdateState(context.getString(R.string.low_battery_plug_in))
+            return
+        }
         RecoverySystem.installPackage(context, otaFileManager.otaFile)
+    }
+
+    private class UpdateThread(
+        private val file: File,
+        private val progressListener: RecoverySystem.ProgressListener
+    ) : Thread("UpdateThread") {
+        override fun run() {
+            RecoverySystem.verifyPackage(
+                file,
+                progressListener,
+                null
+            )
+        }
+    }
+
+    companion object {
+        private const val UPDATE_THREAD_TIMEOUT = 15 * 60 * 1000L // 15 minutes
     }
 }

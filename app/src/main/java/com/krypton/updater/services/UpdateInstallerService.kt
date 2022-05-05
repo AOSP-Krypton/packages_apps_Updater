@@ -26,8 +26,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Binder
 import android.os.IBinder
-import android.os.PowerManager
-import android.os.UpdateLock
 import android.util.Log
 
 import androidx.core.app.NotificationCompat
@@ -40,11 +38,8 @@ import com.krypton.updater.ui.MainActivity
 
 import dagger.hilt.android.AndroidEntryPoint
 
-import java.util.concurrent.TimeUnit
-
 import javax.inject.Inject
 
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -52,19 +47,9 @@ import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class UpdateInstallerService : Service() {
-    private lateinit var notificationManager: NotificationManagerCompat
-    private lateinit var wakeLock: PowerManager.WakeLock
-    private lateinit var updateLock: UpdateLock
-    private lateinit var serviceScope: CoroutineScope
 
     @Inject
     lateinit var updateRepository: UpdateRepository
-
-    private var binder: IBinder? = null
-
-    private lateinit var activityIntent: PendingIntent
-    private lateinit var cancelIntent: PendingIntent
-    private lateinit var rebootIntent: PendingIntent
 
     private val broadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -78,22 +63,28 @@ class UpdateInstallerService : Service() {
         }
     }
 
+    private lateinit var serviceScope: CoroutineScope
+    private lateinit var notificationManager: NotificationManagerCompat
+    private lateinit var activityIntent: PendingIntent
+    private lateinit var cancelIntent: PendingIntent
+    private lateinit var rebootIntent: PendingIntent
+
+    private var binder: IBinder? = null
+
     override fun onCreate() {
         logD("onCreate")
         super.onCreate()
         serviceScope = CoroutineScope(Dispatchers.Main)
         setupNotificationChannel()
         setupIntents()
-        wakeLock = getSystemService(PowerManager::class.java).newWakeLock(
-            PowerManager.PARTIAL_WAKE_LOCK,
-            WAKELOCK_TAG
-        )
-        updateLock = UpdateLock(UPDATE_LOCK_TAG)
         binder = ServiceBinder()
         registerReceiver(broadcastReceiver, IntentFilter().apply {
             addAction(ACTION_CANCEL_UPDATE)
             addAction(ACTION_REBOOT)
         })
+        serviceScope.launch {
+            listenForEvents()
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -143,21 +134,10 @@ class UpdateInstallerService : Service() {
                     is UpdateState.Initializing -> updateProgressNotification(0f, true)
                     is UpdateState.Verifying -> updateProgressNotification(it.progress)
                     is UpdateState.Updating -> updateProgressNotification(it.progress)
-                    is UpdateState.Paused -> {
-                        releaseAndStopFg()
-                        showUpdatePausedNotification()
-                    }
-                    is UpdateState.Failed -> {
-                        releaseAndStopFg()
-                        showUpdateFailedNotification(it.exception.localizedMessage)
-                    }
-                    is UpdateState.Finished -> {
-                        releaseAndStopFg()
-                        showUpdateFinishedNotification()
-                    }
-                    is UpdateState.Idle -> {
-                        // No-op
-                    }
+                    is UpdateState.Paused -> showUpdatePausedNotification()
+                    is UpdateState.Failed -> showUpdateFailedNotification(it.exception.localizedMessage)
+                    is UpdateState.Finished -> showUpdateFinishedNotification()
+                    is UpdateState.Idle -> {}
                 }
             }
         }
@@ -247,13 +227,10 @@ class UpdateInstallerService : Service() {
         logD("onDestroy")
         unregisterReceiver(broadcastReceiver)
         serviceScope.cancel()
-        releaseLocks()
     }
 
     private fun startUpdate() {
         logD("starting update")
-        listenForEvents()
-        acquireAndStartFg()
         serviceScope.launch {
             updateRepository.start()
         }
@@ -266,7 +243,6 @@ class UpdateInstallerService : Service() {
         }
         logD("pauseOrResumeUpdate, paused = ${updateRepository.isUpdatePaused}")
         if (updateRepository.isUpdatePaused) {
-            acquireAndStartFg()
             serviceScope.launch {
                 updateRepository.resume()
             }
@@ -274,7 +250,6 @@ class UpdateInstallerService : Service() {
             serviceScope.launch {
                 updateRepository.pause()
             }
-            releaseAndStopFg()
         }
     }
 
@@ -295,61 +270,8 @@ class UpdateInstallerService : Service() {
         }
     }
 
-    private fun releaseLocks() {
-        logD("releaseLocks")
-        if (wakeLock.isHeld) {
-            logD("Releasing wake lock")
-            wakeLock.release()
-        }
-        if (updateLock.isHeld) {
-            logD("Releasing update lock")
-            updateLock.release()
-        }
-    }
-
-    private fun acquireLocks() {
-        logD("acquireLocks")
-        if (!wakeLock.isHeld) {
-            logD("Acquiring wake lock")
-            wakeLock.acquire(WAKELOCK_TIMEOUT)
-        }
-        if (!updateLock.isHeld) {
-            logD("Acquiring update lock")
-            updateLock.acquire()
-        }
-    }
-
-    private fun releaseAndStopFg() {
-        releaseLocks()
-        stopForeground(true)
-    }
-
-    private fun acquireAndStartFg() {
-        acquireLocks()
-        startForeground()
-    }
-
-    private fun startForeground() {
-        logD("startForeground")
-        val notification = NotificationCompat.Builder(this, UPDATE_INSTALLATION_CHANNEL_ID)
-            .setContentIntent(activityIntent)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setSmallIcon(R.drawable.ic_baseline_system_update_24)
-            .setContentTitle(getString(R.string.installing_update))
-            .setOngoing(true)
-            .setSilent(true)
-            .addAction(
-                android.R.drawable.ic_menu_close_clear_cancel,
-                getString(android.R.string.cancel),
-                cancelIntent
-            )
-            .build()
-        startForeground(UPDATE_INSTALLATION_NOTIFICATION_ID, notification)
-    }
-
     private fun stop() {
         logD("stop")
-        releaseAndStopFg()
         stopSelf()
         notificationManager.cancel(UPDATE_INSTALLATION_NOTIFICATION_ID)
     }
@@ -363,10 +285,6 @@ class UpdateInstallerService : Service() {
         private const val TAG = "UpdateInstallerService"
         private val DEBUG: Boolean
             get() = Log.isLoggable(TAG, Log.DEBUG)
-
-        private const val WAKELOCK_TAG = "$TAG:WakeLock"
-        private const val UPDATE_LOCK_TAG = "$TAG:UpdateLock"
-        private val WAKELOCK_TIMEOUT = TimeUnit.MINUTES.toMillis(30)
 
         private const val UPDATE_INSTALLATION_NOTIFICATION_ID = 2002
         private val UPDATE_INSTALLATION_CHANNEL_ID = UpdateDownloadService::class.qualifiedName!!
