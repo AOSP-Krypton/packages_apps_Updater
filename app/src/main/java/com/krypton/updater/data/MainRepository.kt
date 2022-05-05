@@ -51,6 +51,7 @@ class MainRepository @Inject constructor(
     appDatabase: AppDatabase,
     private val updateChecker: UpdateChecker,
     private val applicationScope: CoroutineScope,
+    private val fileExportManager: FileExportManager
 ) {
 
     private val alarmManager: AlarmManager by lazy {
@@ -202,6 +203,11 @@ class MainRepository @Inject constructor(
             alarmIntent
         )
     }
+
+    suspend fun getExportDirectoryUri() =
+        withContext(Dispatchers.IO) {
+            fileExportManager.getExportDirUri()
+        }
 
     companion object {
         private const val REQUEST_CODE_CHECK_UPDATE = 2001

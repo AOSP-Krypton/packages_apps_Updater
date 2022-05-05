@@ -34,6 +34,12 @@
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+        </intent>
+    </queries>
+
     <application
         android:name=".UpdaterApp"
         android:defaultToDeviceProtectedStorage="true"

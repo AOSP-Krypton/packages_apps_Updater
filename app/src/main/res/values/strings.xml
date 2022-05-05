@@ -62,6 +62,12 @@
     <string name="settings_menu_item_desc">Settings menu item</string>
     <string name="local_upgrade_menu_item_desc">Local upgrade menu item</string>
     <string name="exported_file_successfully">Exported OTA file successfully</string>
+    <string name="downloads">Downloads</string>
+    <string name="downloads_menu_item_desc">Download menu item</string>
+    <string name="clear_cache">Clear cache</string>
+    <string name="clear_cache_menu_item_desc">Clear cache menu item</string>
+    <string name="activity_not_found">No activities found to open export directory</string>
+    <string name="failed_to_acquire_uri">Failed to acquire uri for the export directory</string>
 
     <!-- Changelog -->
     <string name="changelog">Changelog</string>

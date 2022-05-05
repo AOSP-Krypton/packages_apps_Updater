@@ -24,6 +24,7 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -52,12 +53,18 @@ fun MainScreen(state: MainScreenState) {
         topBar = {
             val shouldAllowLocalUpgrade by state.shouldAllowLocalUpgrade.collectAsState(false)
             AppBar(
+                shouldAllowLocalUpgrade,
                 onRequestLocalUpgrade = {
                     state.startLocalUpgrade(it)
                 },
-                shouldAllowLocalUpgrade,
                 onSettingsLaunchRequest = {
                     state.openSettings()
+                },
+                onShowDownloadsRequest = {
+                    state.openDownloads()
+                },
+                onClearCacheRequest = {
+                    state.clearCache()
                 }
             )
         },
@@ -153,9 +160,11 @@ fun MainScreen(state: MainScreenState) {
 
 @Composable
 fun AppBar(
-    onRequestLocalUpgrade: (Uri) -> Unit,
     shouldAllowLocalUpgrade: Boolean,
+    onRequestLocalUpgrade: (Uri) -> Unit,
     onSettingsLaunchRequest: () -> Unit,
+    onShowDownloadsRequest: () -> Unit,
+    onClearCacheRequest: () -> Unit
 ) {
     val localUpgradeLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
@@ -182,6 +191,19 @@ fun AppBar(
                         onClick = {
                             localUpgradeLauncher.launch(arrayOf("application/zip"))
                         }
+                    ),
+                    MenuItem(
+                        title = stringResource(id = R.string.downloads),
+                        icon = painterResource(id = R.drawable.ic_baseline_cloud_download_24),
+                        contentDescription = stringResource(id = R.string.downloads_menu_item_desc),
+                        onClick = onShowDownloadsRequest
+                    ),
+                    MenuItem(
+                        title = stringResource(id = R.string.clear_cache),
+                        iconImageVector = Icons.Filled.Clear,
+                        contentDescription = stringResource(id = R.string.clear_cache_menu_item_desc),
+                        enabled = shouldAllowLocalUpgrade,
+                        onClick = onClearCacheRequest
                     ),
                     MenuItem(
                         title = stringResource(id = R.string.settings),
