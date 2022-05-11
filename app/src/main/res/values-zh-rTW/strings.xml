@@ -36,12 +36,13 @@
     </string>
     <string name="check_for_updates">檢查更新</string>
     <string name="checking_for_update">正在檢查更新…</string>
+    <string name="update_check_failed">檢查更新失敗</string>
     <string name="last_checked_time_format">
-        最後檢查時間: <xliff:g example="11:02 AM" id="time">%1$s</xliff:g>
+        上次檢查時間: <xliff:g example="11:02 AM" id="time">%1$s</xliff:g>
     </string>
     <string name="up_to_date">你的裝置已是最新</string>
-    <string name="come_back_later">稍後再來吧</string>
-    <string name="new_update_available">檢測到新版本</string>
+    <string name="come_back_later">前面的區域，以後再來探索吧！</string>
+    <string name="new_update_available">新版本可用</string>
     <string name="new_update_description_format">
         v<xliff:g example="2.3" id="version">%1$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="12-11-2021" id="date">%2$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="1.3GB" id="size">%3$s</xliff:g>
     </string>
@@ -52,31 +53,53 @@
         下載中 - <xliff:g example="100" id="percent">%1$s%%</xliff:g>
     </string>
     <string name="waiting">等待中</string>
+    <string name="retrying">重試中</string>
     <string name="restoring_state">恢復狀態</string>
     <string name="exporting_file">匯出檔案到內部儲存</string>
     <string name="exporting_failed">匯出失敗: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="menu_button_content_desc">主按鈕</string>
+    <string name="updater_logo_content_desc">更新器 LOGO</string>
+    <string name="settings_menu_item_desc">設定項</string>
+    <string name="local_upgrade_menu_item_desc">本地更新項</string>
+    <string name="exported_file_successfully">匯出更新包成功</string>
+    <string name="downloads">下載內容</string>
+    <string name="downloads_menu_item_desc">下載項</string>
+    <string name="clear_cache">清除快取</string>
+    <string name="clear_cache_menu_item_desc">清除快取項</string>
+    <string name="activity_not_found">未找到 DocumentsUI</string>
+    <string name="failed_to_acquire_uri">獲取目錄 URI 失敗</string>
 
     <!-- Changelog -->
     <string name="changelog">更新日誌</string>
+        <string name="changelog_back_button_desc">更新日誌項</string>
     <string name="changelog_unavailable">更新日誌不可用</string>
 
     <!-- Update -->
+    <string name="successfully_copied">複製成功</string>
     <string name="low_battery_plug_in">電量低，插入電源以繼續</string>
-    <string name="payload_generation_failed">Payload 資訊生成失敗： <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
-    <string name="metadata_verification_failed">元資料驗證失敗</string>
+    <string name="payload_generation_failed">Payload info generation failed: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="failed_to_retrieve_offset_and_size">Failed to retrieve offset and size from metadata file</string>
+    <string name="failed_to_retrieve_header_key_value_pair">Failed to retrieve header key value pair from payload properties file</string>
+    <string name="zip_does_not_contain_metadata_file">Zip file does not contain metadata file</string>
+    <string name="metadata_file_empty">Metadata file is empty</string>
+    <string name="failed_to_extract_offset_and_size">Failed to extract offset and size from metadata</string>
+    <string name="zip_file_does_not_contain_payload_properties">Zip file does not contain payload properties file</string>
+    <string name="payload_properties_file_does_not_have_key_value_pairs">Payload properties file does not contain required header key value pairs</string>
+    <string name="metadata_verification_failed">Metadata verification failed</string>
     <string name="not_enough_space">裝置儲存空間不足啦</string>
-    <string name="applying_payload_failed">應用 payload 失敗： <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="applying_payload_failed">Applying payload failed: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
     <string name="installing_update">安裝更新中</string>
     <string name="installation_failed">安裝失敗</string>
     <string name="reboot">重啟</string>
     <string name="initializing">初始化中…</string>
     <string name="installation_finished">安裝已完成</string>
     <string name="installation_paused">安裝已暫停</string>
-    <string name="installing_update_format">安裝更新中 - <xliff:g example="100" id="percent">%1$s%%</xliff:g></string>
+    <string name="installing_update_format">安裝中 - <xliff:g example="100" id="percent">%1$s%%</xliff:g></string>
+    <string name="verifying_update">驗證中 - <xliff:g example="100.00" id="percent">%1$s%%</xliff:g></string>
     <string name="pause">暫停</string>
     <string name="downgrading_not_allowed">請不要降級喲</string>
-    <string name="rootfs_verification_failed">rootfs 驗證失敗，需要重試呢</string>
-    <string name="update_transfer_error">更新傳輸失敗呢</string>
+    <string name="rootfs_verification_failed">Rootfs verification failed, try again</string>
+    <string name="update_transfer_error">Update transfer failed</string>
     <string name="resume">繼續</string>
     <string name="local_upgrade">本地更新</string>
     <string name="popup_menu">彈出選單</string>
@@ -84,6 +107,7 @@
     <string name="copying_failed">複製失敗: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
     <string name="install_update">安裝更新</string>
     <string name="update_installation_failed_with_code">更新失敗，錯誤碼: <xliff:g example="20" id="error_code">%1$d</xliff:g></string>
+    <string name="failed_to_verify_update_file">驗證更新包失敗</string>
 
     <!-- Settings -->
     <string name="settings">更新設定</string>
@@ -91,4 +115,5 @@
     <string name="update_check_interval_summary">設定檢查系統更新頻率（天）</string>
     <string name="opt_out_incremental_title">全量更新</string>
     <string name="opt_out_incremental_summary">只下載安裝全量包\n若您已 ROOT 或以任何形式修改過系統，則您必須開啟此選項。</string>
+    <string name="settings_back_button_content_desc">設定返回項</string>
 </resources>
