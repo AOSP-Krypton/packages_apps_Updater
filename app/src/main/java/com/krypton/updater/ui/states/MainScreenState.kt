@@ -80,7 +80,7 @@ class MainScreenState(
             }
         }
 
-    val shouldAllowLocalUpgrade: Flow<Boolean>
+    val shouldAllowUpdateCheckOrLocalUpgrade: Flow<Boolean>
         get() = combine(
             downloadViewModel.downloadState,
             updateViewModel.updateState
@@ -88,7 +88,13 @@ class MainScreenState(
             downloadState !is DownloadState.Waiting &&
                     downloadState !is DownloadState.Downloading &&
                     updateState !is UpdateState.Initializing &&
+                    updateState !is UpdateState.Verifying &&
                     updateState !is UpdateState.Updating
+        }
+
+    val shouldAllowClearingCache: Flow<Boolean>
+        get() = downloadViewModel.downloadState.map {
+            it !is DownloadState.Waiting && it !is DownloadState.Downloading
         }
 
     val showStateRestoreDialog: StateFlow<Boolean>
