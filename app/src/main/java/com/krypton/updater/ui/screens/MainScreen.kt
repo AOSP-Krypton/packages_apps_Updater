@@ -35,7 +35,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 
@@ -51,9 +50,13 @@ import com.krypton.updater.ui.widgets.MenuItem
 fun MainScreen(state: MainScreenState) {
     Scaffold(
         topBar = {
-            val shouldAllowLocalUpgrade by state.shouldAllowLocalUpgrade.collectAsState(false)
+            val shouldAllowLocalUpgrade by state.shouldAllowUpdateCheckOrLocalUpgrade.collectAsState(
+                false
+            )
+            val shouldAllowClearingCache by state.shouldAllowClearingCache.collectAsState(false)
             AppBar(
                 shouldAllowLocalUpgrade,
+                shouldAllowClearingCache,
                 onRequestLocalUpgrade = {
                     state.startLocalUpgrade(it)
                 },
@@ -102,10 +105,14 @@ fun MainScreen(state: MainScreenState) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Bottom
             ) {
+                val shouldAllowUpdateCheck by state.shouldAllowUpdateCheckOrLocalUpgrade.collectAsState(
+                    false
+                )
                 MainScreenTopContent(
                     state.systemBuildDate,
                     state.systemBuildVersion,
                     state.checkUpdatesContentState.collectAsState(CheckUpdatesContentState.Gone),
+                    shouldAllowUpdateCheck,
                     onUpdateCheckRequest = {
                         state.checkForUpdates()
                     }
@@ -161,6 +168,7 @@ fun MainScreen(state: MainScreenState) {
 @Composable
 fun AppBar(
     shouldAllowLocalUpgrade: Boolean,
+    shouldAllowClearingCache: Boolean,
     onRequestLocalUpgrade: (Uri) -> Unit,
     onSettingsLaunchRequest: () -> Unit,
     onShowDownloadsRequest: () -> Unit,
@@ -202,7 +210,7 @@ fun AppBar(
                         title = stringResource(id = R.string.clear_cache),
                         iconImageVector = Icons.Filled.Clear,
                         contentDescription = stringResource(id = R.string.clear_cache_menu_item_desc),
-                        enabled = shouldAllowLocalUpgrade,
+                        enabled = shouldAllowClearingCache,
                         onClick = onClearCacheRequest
                     ),
                     MenuItem(
@@ -217,7 +225,6 @@ fun AppBar(
     )
 }
 
-@OptIn(ExperimentalUnitApi::class)
 @Composable
 fun ProgressDialog(title: String) {
     AlertDialog(
@@ -307,6 +314,7 @@ fun MainScreenTopContent(
     buildDate: String,
     buildVersion: String,
     checkUpdatesContentState: State<CheckUpdatesContentState>,
+    shouldAllowUpdateCheckOrLocalUpgrade: Boolean,
     onUpdateCheckRequest: () -> Unit,
 ) {
     UpdaterLogo()
@@ -322,7 +330,7 @@ fun MainScreenTopContent(
     AnimatedContent(targetState = checkUpdatesContentState.value) {
         CustomButton(
             modifier = Modifier.padding(top = 32.dp),
-            enabled = it !is CheckUpdatesContentState.Checking,
+            enabled = shouldAllowUpdateCheckOrLocalUpgrade && it !is CheckUpdatesContentState.Checking,
             text = stringResource(id = R.string.check_for_updates),
             onClick = onUpdateCheckRequest
         )
