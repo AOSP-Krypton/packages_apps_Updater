@@ -17,7 +17,6 @@
 package com.krypton.updater.ui.screens
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -29,7 +28,6 @@ import com.krypton.updater.ui.preferences.DiscreteSeekBarPreference
 import com.krypton.updater.ui.preferences.SwitchPreference
 import com.krypton.updater.viewmodel.SettingsViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     settingsViewModel: SettingsViewModel = hiltViewModel(),
@@ -49,25 +47,33 @@ fun SettingsScreen(
         }
     ) {
         item {
-            val updateCheckInterval = settingsViewModel.updateCheckInterval.collectAsState(0)
+            val updateCheckIntervalState by settingsViewModel.updateCheckInterval.collectAsState(0)
+            var updateCheckInterval by remember(updateCheckIntervalState) {
+                mutableStateOf(
+                    updateCheckIntervalState
+                )
+            }
             DiscreteSeekBarPreference(
                 title = stringResource(R.string.update_check_interval_title),
                 summary = stringResource(R.string.update_check_interval_summary),
                 min = 1,
                 max = 30,
-                value = updateCheckInterval.value,
+                value = updateCheckInterval,
                 showProgressText = true,
                 onProgressChanged = {
-                    settingsViewModel.setUpdateCheckInterval(it)
+                    updateCheckInterval = it
                 },
+                onProgressChangeFinished = {
+                    settingsViewModel.setUpdateCheckInterval(updateCheckInterval)
+                }
             )
         }
         item {
-            val optOutIncremental = settingsViewModel.optOutIncremental.collectAsState(false)
+            val optOutIncremental by settingsViewModel.optOutIncremental.collectAsState(false)
             SwitchPreference(
                 title = stringResource(R.string.opt_out_incremental_title),
                 summary = stringResource(R.string.opt_out_incremental_summary),
-                checked = optOutIncremental.value,
+                checked = optOutIncremental,
                 onCheckedChange = {
                     settingsViewModel.setOptOutIncremental(it)
                 }
