@@ -56,18 +56,18 @@
     <string name="retrying">Nouvelle tentative</string>
     <string name="restoring_state">État de restauration</string>
     <string name="exporting_file">Exportation du fichier vers le stockage interne</string>
-    <string name="exporting_failed">Échec de l'exportation du fichier : <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="exporting_failed">Échec de l\'exportation du fichier : <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
     <string name="menu_button_content_desc">Bouton de menu</string>
     <string name="updater_logo_content_desc">Logo de la mise à jour</string>
     <string name="settings_menu_item_desc">Élément de menu Paramètres</string>
     <string name="local_upgrade_menu_item_desc">Élément de menu de mise à niveau locale</string>
     <string name="exported_file_successfully">Fichier OTA exporté avec succès</string>
     <string name="downloads">Téléchargements</string>
-    <string name="downloads_menu_item_desc">Télécharger l'élément de menu</string>
+    <string name="downloads_menu_item_desc">Télécharger l\'élément de menu</string>
     <string name="clear_cache">Vider le cache</string>
-    <string name="clear_cache_menu_item_desc">Effacer le cache de l'élément de menu</string>
-    <string name="activity_not_found">Aucune activité trouvée pour ouvrir le répertoire d'exportation</string>
-    <string name="failed_to_acquire_uri">Échec de l'acquisition de l'URL pour le répertoire d'exportation</string>
+    <string name="clear_cache_menu_item_desc">Effacer le cache de l\'élément de menu</string>
+    <string name="activity_not_found">Aucune activité trouvée pour ouvrir le répertoire d\'exportation</string>
+    <string name="failed_to_acquire_uri">Échec de l\'acquisition de l\'URL pour le répertoire d\'exportation</string>
 
     <!-- Changelog -->
     <string name="changelog">Journal des modifications</string>
@@ -82,14 +82,14 @@
     <string name="failed_to_retrieve_header_key_value_pair">Échec de récupération de la paire de valeurs de clé d’en-tête à partir du fichier de propriétés de charge utile</string>
     <string name="zip_does_not_contain_metadata_file">Le fichier zip ne contient pas de fichier de métadonnées</string>
     <string name="metadata_file_empty">Le fichier de métadonnées est vide</string>
-    <string name="failed_to_extract_offset_and_size">Impossible d'extraire le décalage et la taille des métadonnées</string>
+    <string name="failed_to_extract_offset_and_size">Impossible d\'extraire le décalage et la taille des métadonnées</string>
     <string name="zip_file_does_not_contain_payload_properties">Le fichier zip ne contient pas de fichier de propriétés de charge utile</string>
-    <string name="payload_properties_file_does_not_have_key_value_pairs">Le fichier de propriétés de charge utile ne contient pas les paires de valeurs de clé d'en-tête requises</string>
+    <string name="payload_properties_file_does_not_have_key_value_pairs">Le fichier de propriétés de charge utile ne contient pas les paires de valeurs de clé d\'en-tête requises</string>
     <string name="metadata_verification_failed">La vérification des métadonnées a échoué</string>
-    <string name="not_enough_space">Votre appareil n'a pas assez d'espace de stockage</string>
-    <string name="applying_payload_failed">Échec de l'application de la charge utile : <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="not_enough_space">Votre appareil n\'a pas assez d\'espace de stockage</string>
+    <string name="applying_payload_failed">Échec de l\'application de la charge utile : <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
     <string name="installing_update">Installation de mise à jour</string>
-    <string name="installation_failed">L'installation a échoué</string>
+    <string name="installation_failed">L\'installation a échoué</string>
     <string name="reboot">Redémarrer</string>
     <string name="initializing">Initialisation …</string>
     <string name="installation_finished">Installation terminée</string>
@@ -97,7 +97,7 @@
     <string name="installing_update_format">Installation de la mise à jour - <xliff:g example="100.00" id="percent">%1$s%%</xliff:g></string>
     <string name="verifying_update">Vérification - <xliff:g example="100.00" id="percent">%1$s%%</xliff:g></string>
     <string name="pause">Pause</string>
-    <string name="downgrading_not_allowed">Le déclassement n'est pas autorisé</string>
+    <string name="downgrading_not_allowed">Le déclassement n\'est pas autorisé</string>
     <string name="rootfs_verification_failed">La vérification rootfs a échoué, réessayez</string>
     <string name="update_transfer_error">Échec du transfert de la mise à jour</string>
     <string name="resume">Reprendre</string>
@@ -106,7 +106,7 @@
     <string name="copying_file">Copie de fichier</string>
     <string name="copying_failed">Échec de la copie : <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
     <string name="install_update">Installer la mise à jour</string>
-    <string name="update_installation_failed_with_code">La mise à jour a échoué avec le code d'erreur <xliff:g example="20" id="error_code">%1$d</xliff:g></string>
+    <string name="update_installation_failed_with_code">La mise à jour a échoué avec le code d\'erreur <xliff:g example="20" id="error_code">%1$d</xliff:g></string>
     <string name="failed_to_verify_update_file">Impossible de vérifier le fichier de mise à jour</string>
 
     <!-- Settings -->
