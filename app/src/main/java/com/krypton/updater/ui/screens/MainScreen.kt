@@ -108,10 +108,11 @@ fun MainScreen(state: MainScreenState) {
                 val shouldAllowUpdateCheck by state.shouldAllowUpdateCheckOrLocalUpgrade.collectAsState(
                     false
                 )
+                val checkUpdatesContentState by state.checkUpdatesContentState.collectAsState(CheckUpdatesContentState.Gone)
                 MainScreenTopContent(
                     state.systemBuildDate,
                     state.systemBuildVersion,
-                    state.checkUpdatesContentState.collectAsState(CheckUpdatesContentState.Gone),
+                    checkUpdatesContentState,
                     shouldAllowUpdateCheck,
                     onUpdateCheckRequest = {
                         state.checkForUpdates()
@@ -313,7 +314,7 @@ fun PreviewUpdaterLogo() {
 fun MainScreenTopContent(
     buildDate: String,
     buildVersion: String,
-    checkUpdatesContentState: State<CheckUpdatesContentState>,
+    checkUpdatesContentState: CheckUpdatesContentState,
     shouldAllowUpdateCheckOrLocalUpgrade: Boolean,
     onUpdateCheckRequest: () -> Unit,
 ) {
@@ -327,7 +328,7 @@ fun MainScreenTopContent(
         ),
         fontWeight = FontWeight.Bold
     )
-    AnimatedContent(targetState = checkUpdatesContentState.value) {
+    AnimatedContent(targetState = checkUpdatesContentState) {
         CustomButton(
             modifier = Modifier.padding(top = 32.dp),
             enabled = shouldAllowUpdateCheckOrLocalUpgrade && it !is CheckUpdatesContentState.Checking,
@@ -335,7 +336,7 @@ fun MainScreenTopContent(
             onClick = onUpdateCheckRequest
         )
     }
-    UpdateStatusContent(checkUpdatesContentState.value)
+    UpdateStatusContent(checkUpdatesContentState)
 }
 
 @OptIn(ExperimentalAnimationApi::class)

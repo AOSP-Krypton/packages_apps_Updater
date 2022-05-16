@@ -34,10 +34,10 @@ import com.krypton.updater.ui.widgets.CustomButton
 
 @Composable
 fun DownloadCard(state: DownloadCardState) {
-    val shouldShowDownloadSourceDialog = state.shouldShowDownloadSourceDialog.collectAsState(false)
-    if (shouldShowDownloadSourceDialog.value) {
-        val sources = state.downloadSources.collectAsState(initial = emptySet())
-        if (sources.value.isNotEmpty()) {
+    val shouldShowDownloadSourceDialog by state.shouldShowDownloadSourceDialog.collectAsState(false)
+    if (shouldShowDownloadSourceDialog) {
+        val sources by state.downloadSources.collectAsState(initial = emptySet())
+        if (sources.isNotEmpty()) {
             DownloadSourceDialog(
                 dismissRequest = {
                     state.dismissDownloadSourceDialog()
@@ -45,34 +45,34 @@ fun DownloadCard(state: DownloadCardState) {
                 confirmRequest = {
                     state.startDownloadWithSource(it)
                 },
-                sources = sources.value
+                sources = sources
             )
         }
     }
-    val subtitleText = state.subtitleText.collectAsState(null)
+    val subtitleText by state.subtitleText.collectAsState(null)
     CardContent(
         title = state.titleText,
-        subtitle = subtitleText.value,
+        subtitle = subtitleText,
         body = {
-            val showProgress = state.shouldShowProgress.collectAsState(initial = false)
-            if (showProgress.value) {
-                val progressDescription = state.progressDescriptionText.collectAsState(
+            val showProgress by state.shouldShowProgress.collectAsState(initial = false)
+            if (showProgress) {
+                val progressDescription by state.progressDescriptionText.collectAsState(
                     initial = stringResource(
                         id = R.string.downloading
                     )
                 )
-                val progress = state.progress.collectAsState(initial = 0f)
+                val progress by state.progress.collectAsState(initial = 0f)
                 Column(
                     modifier = Modifier
                         .align(Alignment.Center)
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
                 ) {
-                    Text(text = progressDescription.value)
+                    Text(text = progressDescription)
                     Spacer(modifier = Modifier.height(4.dp))
                     LinearProgressIndicator(
                         modifier = Modifier.fillMaxWidth(),
-                        progress = progress.value / 100f
+                        progress = progress / 100f
                     )
                 }
             }
@@ -89,12 +89,12 @@ fun DownloadCard(state: DownloadCardState) {
             )
         },
         trailingAction = {
-            val text = state.trailingActionButtonText.collectAsState(null)
+            val text by state.trailingActionButtonText.collectAsState(null)
             CustomButton(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 8.dp, end = 16.dp),
-                text = text.value ?: stringResource(id = R.string.download),
+                text = text ?: stringResource(id = R.string.download),
                 onClick = {
                     state.triggerTrailingAction()
                 }
