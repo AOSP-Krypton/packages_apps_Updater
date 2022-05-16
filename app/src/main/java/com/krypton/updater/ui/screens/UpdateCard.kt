@@ -21,6 +21,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -35,31 +36,34 @@ fun UpdateCard(state: UpdateCardState) {
     CardContent(
         title = state.titleText,
         body = {
-            val showProgress = state.shouldShowProgress.collectAsState(initial = false)
-            if (showProgress.value) {
+            val showProgress by state.shouldShowProgress.collectAsState(initial = false)
+            if (showProgress) {
                 Column(
                     modifier = Modifier
                         .align(Alignment.Center)
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
                 ) {
-                    val progressText =
-                        state.progressDescriptionText.collectAsState(stringResource(id = R.string.installing_update))
-                    val progress = state.progress.collectAsState(initial = 0f)
-                    Text(text = progressText.value)
+                    val progressText by state.progressDescriptionText.collectAsState(
+                        stringResource(
+                            id = R.string.installing_update
+                        )
+                    )
+                    val progress by state.progress.collectAsState(initial = 0f)
+                    Text(text = progressText)
                     Spacer(modifier = Modifier.height(4.dp))
                     LinearProgressIndicator(
                         modifier = Modifier.fillMaxWidth(),
-                        progress = progress.value / 100f
+                        progress = progress / 100f
                     )
                 }
             }
         },
         leadingAction = {
-            val showLeading = state.shouldShowLeadingActionButton.collectAsState(false)
-            if (showLeading.value) {
-                val text = state.leadingActionButtonText.collectAsState(null)
-                text.value?.let {
+            val showLeading by state.shouldShowLeadingActionButton.collectAsState(false)
+            if (showLeading) {
+                val text by state.leadingActionButtonText.collectAsState(null)
+                text?.let {
                     CustomButton(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -73,13 +77,12 @@ fun UpdateCard(state: UpdateCardState) {
             }
         },
         trailingAction = {
-            val text =
-                state.trailingActionButtonText.collectAsState(stringResource(R.string.install_update))
+            val text by state.trailingActionButtonText.collectAsState(stringResource(R.string.install_update))
             CustomButton(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                text = text.value,
+                text = text,
                 onClick = {
                     state.trailingAction()
                 }
