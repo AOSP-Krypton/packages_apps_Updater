@@ -45,10 +45,11 @@ import com.krypton.updater.ui.widgets.AppBarMenu
 import com.krypton.updater.ui.widgets.CustomButton
 import com.krypton.updater.ui.widgets.MenuItem
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
-fun MainScreen(state: MainScreenState) {
+fun MainScreen(state: MainScreenState, modifier: Modifier = Modifier) {
     Scaffold(
+        modifier = modifier,
         topBar = {
             val shouldAllowLocalUpgrade by state.shouldAllowUpdateCheckOrLocalUpgrade.collectAsState(
                 false
@@ -97,31 +98,55 @@ fun MainScreen(state: MainScreenState) {
         ) {
             state.showSnackBar(it)
         }
-        Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Column(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
                     .fillMaxHeight(0.6f),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Bottom
             ) {
-                val shouldAllowUpdateCheck by state.shouldAllowUpdateCheckOrLocalUpgrade.collectAsState(
-                    false
+                UpdaterLogo(modifier = Modifier.fillMaxHeight(0.4f))
+                Text(
+                    modifier = Modifier.padding(top = 32.dp),
+                    text = stringResource(
+                        id = R.string.system_build_info_format,
+                        state.systemBuildDate,
+                        state.systemBuildVersion
+                    ),
+                    fontWeight = FontWeight.Bold
                 )
-                val checkUpdatesContentState by state.checkUpdatesContentState.collectAsState(CheckUpdatesContentState.Gone)
-                MainScreenTopContent(
-                    state.systemBuildDate,
-                    state.systemBuildVersion,
-                    checkUpdatesContentState,
-                    shouldAllowUpdateCheck,
-                    onUpdateCheckRequest = {
-                        state.checkForUpdates()
-                    }
+                val checkUpdatesContentState by state.checkUpdatesContentState.collectAsState(
+                    CheckUpdatesContentState.Gone
+                )
+                AnimatedContent(
+                    targetState = checkUpdatesContentState,
+                    modifier = Modifier.padding(top = 32.dp)
+                ) {
+                    val shouldAllowUpdateCheck by state.shouldAllowUpdateCheckOrLocalUpgrade.collectAsState(
+                        false
+                    )
+                    CustomButton(
+                        enabled = shouldAllowUpdateCheck && it !is CheckUpdatesContentState.Checking,
+                        text = stringResource(id = R.string.check_for_updates),
+                        onClick = {
+                            state.checkForUpdates()
+                        }
+                    )
+                }
+                UpdateStatusContent(
+                    modifier = Modifier.padding(top = 32.dp),
+                    state = checkUpdatesContentState
                 )
             }
             val cardState by state.cardState.collectAsState(CardState.Gone)
             AnimatedVisibility(
-                modifier = Modifier.align(Alignment.BottomCenter),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(start = 12.dp, top = 32.dp, end = 12.dp, bottom = 12.dp),
                 visible = cardState !is CardState.Gone,
                 enter = slideInVertically { fullHeight ->
                     fullHeight
@@ -131,10 +156,6 @@ fun MainScreen(state: MainScreenState) {
                 } + fadeOut()
             ) {
                 ElevatedCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(0.4f)
-                        .padding(start = 12.dp, top = 32.dp, end = 12.dp, bottom = 12.dp),
                     shape = RoundedCornerShape(32.dp),
                     content = {
                         when (cardState) {
@@ -173,7 +194,8 @@ fun AppBar(
     onRequestLocalUpgrade: (Uri) -> Unit,
     onSettingsLaunchRequest: () -> Unit,
     onShowDownloadsRequest: () -> Unit,
-    onClearCacheRequest: () -> Unit
+    onClearCacheRequest: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val localUpgradeLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
@@ -182,6 +204,7 @@ fun AppBar(
         }
     )
     SmallTopAppBar(
+        modifier = modifier,
         title = {},
         actions = {
             AppBarMenu(
@@ -227,8 +250,9 @@ fun AppBar(
 }
 
 @Composable
-fun ProgressDialog(title: String) {
+fun ProgressDialog(title: String, modifier: Modifier = Modifier) {
     AlertDialog(
+        modifier = modifier,
         onDismissRequest = {},
         properties = DialogProperties(
             dismissOnBackPress = false,
@@ -273,8 +297,8 @@ fun FileCopyDialogAndSnackBar(
 }
 
 @Composable
-fun UpdaterLogo() {
-    Box(modifier = Modifier.size(200.dp)) {
+fun UpdaterLogo(modifier: Modifier = Modifier) {
+    Box(modifier = modifier.aspectRatio(1f)) {
         Icon(
             modifier = Modifier
                 .fillMaxSize()
@@ -311,49 +335,15 @@ fun PreviewUpdaterLogo() {
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun MainScreenTopContent(
-    buildDate: String,
-    buildVersion: String,
-    checkUpdatesContentState: CheckUpdatesContentState,
-    shouldAllowUpdateCheckOrLocalUpgrade: Boolean,
-    onUpdateCheckRequest: () -> Unit,
-) {
-    UpdaterLogo()
-    Text(
-        modifier = Modifier.padding(top = 32.dp),
-        text = stringResource(
-            id = R.string.system_build_info_format,
-            buildDate,
-            buildVersion
-        ),
-        fontWeight = FontWeight.Bold
-    )
-    AnimatedContent(targetState = checkUpdatesContentState) {
-        CustomButton(
-            modifier = Modifier.padding(top = 32.dp),
-            enabled = shouldAllowUpdateCheckOrLocalUpgrade && it !is CheckUpdatesContentState.Checking,
-            text = stringResource(id = R.string.check_for_updates),
-            onClick = onUpdateCheckRequest
-        )
-    }
-    UpdateStatusContent(checkUpdatesContentState)
-}
-
-@OptIn(ExperimentalAnimationApi::class)
-@Composable
-fun UpdateStatusContent(state: CheckUpdatesContentState) {
-    AnimatedContent(targetState = state) {
+fun UpdateStatusContent(state: CheckUpdatesContentState, modifier: Modifier = Modifier) {
+    AnimatedContent(modifier = modifier, targetState = state) {
         when (it) {
             is CheckUpdatesContentState.Gone -> {}
             is CheckUpdatesContentState.Checking -> {
-                Text(
-                    modifier = Modifier.padding(top = 32.dp),
-                    text = stringResource(id = R.string.checking_for_update)
-                )
+                Text(text = stringResource(id = R.string.checking_for_update))
             }
             is CheckUpdatesContentState.LastCheckedTimeAvailable -> {
                 Text(
-                    modifier = Modifier.padding(top = 32.dp),
                     text = stringResource(
                         id = R.string.last_checked_time_format,
                         it.lastCheckedTime
