@@ -16,9 +16,7 @@
 
 package com.krypton.updater.ui
 
-import android.annotation.SuppressLint
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.os.Bundle
 
 import androidx.activity.ComponentActivity
@@ -62,10 +60,8 @@ class MainActivity : ComponentActivity() {
         }
 
     @OptIn(ExperimentalAnimationApi::class)
-    @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         setContent {
             AppTheme {
                 val systemUiController = rememberSystemUiController()
