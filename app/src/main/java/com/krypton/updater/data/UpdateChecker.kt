@@ -73,13 +73,17 @@ class UpdateChecker @Inject constructor(
         )
         updateBuildDate = buildInfo.date
         val newUpdate = isNewUpdate(buildInfo, incremental)
-        return Result.success(
-            UpdateInfo(
-                buildInfo = buildInfo,
-                changelog = if (newUpdate) getChangelog() else null,
-                type = if (newUpdate) UpdateInfo.Type.NEW_UPDATE else UpdateInfo.Type.NO_UPDATE
+        return if (!newUpdate && incremental) {
+            checkForUpdate(false)
+        } else {
+            Result.success(
+                UpdateInfo(
+                    buildInfo = buildInfo,
+                    changelog = if (newUpdate) getChangelog() else null,
+                    type = if (newUpdate) UpdateInfo.Type.NEW_UPDATE else UpdateInfo.Type.NO_UPDATE
+                )
             )
-        )
+        }
     }
 
     private fun getChangelog(): Map<Long, String?>? {
