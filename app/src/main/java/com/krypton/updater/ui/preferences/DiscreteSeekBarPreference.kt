@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.ceil
 import kotlin.math.floor
 
-@OptIn(ExperimentalUnitApi::class)
 @Composable
 fun DiscreteSeekBarPreference(
     title: String,

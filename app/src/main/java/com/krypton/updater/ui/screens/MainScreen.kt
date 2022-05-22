@@ -75,7 +75,7 @@ fun MainScreen(state: MainScreenState, modifier: Modifier = Modifier) {
         snackbarHost = {
             SnackbarHost(state.snackbarHostState)
         }
-    ) {
+    ) { paddingValues ->
         val showStateRestoringDialog by state.showStateRestoreDialog.collectAsState(false)
         if (showStateRestoringDialog) {
             ProgressDialog(stringResource(id = R.string.restoring_state))
@@ -99,7 +99,7 @@ fun MainScreen(state: MainScreenState, modifier: Modifier = Modifier) {
             state.showSnackBar(it)
         }
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().padding(paddingValues),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Column(

@@ -43,7 +43,6 @@ import com.krypton.updater.viewmodel.ChangelogViewModel
 
 import java.text.DateFormat
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChangelogScreen(
     changelogViewModel: ChangelogViewModel = hiltViewModel(),

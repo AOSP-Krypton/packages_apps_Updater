@@ -44,7 +44,6 @@ import com.krypton.updater.ui.preferences.Preference
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CollapsingToolbarScreen(
     title: String,
