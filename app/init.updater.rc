@@ -1,0 +1,3 @@
+# Create flamingo_ota directory for our updater app
+on post-fs-data
+    mkdir /data/flamingo_ota 0770 system system

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     Copyright (C) 2021-2022 AOSP-Krypton Project
+     Copyright (C) 2022 FlamingoOS Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@
     <!-- Main activity -->
     <string name="updater_logo_description">Updater logo</string>
     <string name="system_build_info_format" translatable="false">
-        <xliff:g example="12-11-2021" id="date">%1$s</xliff:g>\u0020\u0020|\u0020\u0020KOSP v<xliff:g example="2.3" id="version">%2$s</xliff:g>
+        <xliff:g example="12-11-2021" id="date">%1$s</xliff:g>\u0020\u0020|\u0020\u0020FlamingoOS v<xliff:g example="2.3" id="version">%2$s</xliff:g>
     </string>
     <string name="check_for_updates">Check for updates</string>
     <string name="checking_for_update">Checking for updates…</string>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     Copyright (C) 2021-2022 AOSP-Krypton Project
+     Copyright (C) 2022 FlamingoOS Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.krypton.updater"
+    package="com.flamingo.updater"
     android:sharedUserId="android.uid.system">
 
-    <protected-broadcast android:name="com.krypton.updater.ACTION_CANCEL_DOWNLOAD" />
-    <protected-broadcast android:name="com.krypton.updater.ACTION_START_UPDATE" />
-    <protected-broadcast android:name="com.krypton.updater.ACTION_CANCEL_UPDATE" />
-    <protected-broadcast android:name="com.krypton.updater.ACTION_REBOOT" />
+    <protected-broadcast android:name="com.flamingo.updater.ACTION_CANCEL_DOWNLOAD" />
+    <protected-broadcast android:name="com.flamingo.updater.ACTION_START_UPDATE" />
+    <protected-broadcast android:name="com.flamingo.updater.ACTION_CANCEL_UPDATE" />
+    <protected-broadcast android:name="com.flamingo.updater.ACTION_REBOOT" />
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.INTERNET" />

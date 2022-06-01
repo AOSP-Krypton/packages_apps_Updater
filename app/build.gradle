@@ -10,7 +10,7 @@ android {
     compileSdk 31
 
     defaultConfig {
-        applicationId "com.krypton.updater"
+        applicationId "com.flamingo.updater"
         minSdk 31
         targetSdk 31
         versionCode 2

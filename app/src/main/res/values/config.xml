@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     Copyright (C) 2021-2022 AOSP-Krypton Project
+     Copyright (C) 2022 FlamingoOS Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 -->
 <resources>
     <!-- Fully qualified class name of update download service -->
-    <string name="download_service" translatable="false">com.krypton.updater.services.UpdateDownloadService</string>
+    <string name="download_service" translatable="false">com.flamingo.updater.services.UpdateDownloadService</string>
 
     <!-- Minimum time interval (in ms) to wait before restarting job -->
     <integer name="minimum_download_retry_interval">10000</integer>

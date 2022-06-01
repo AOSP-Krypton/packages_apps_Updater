@@ -1,5 +1,5 @@
 
-// Copyright (C) 2021-2022 AOSP-Krypton Project
+// Copyright (C) 2022 FlamingoOS Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,13 +14,16 @@
 // limitations under the License.
 
 android_app_import {
-    name: "KOSP-Updater",
+    name: "Updater",
     certificate: "platform",
     system_ext_specific: true,
     privileged: true,
     apk: "build/outputs/apk/release/app-release*.apk",
     required: [
         "privapp_permissions_updater",
+    ],
+    init_rc: [
+        "init.updater.rc",
     ],
 }
 
