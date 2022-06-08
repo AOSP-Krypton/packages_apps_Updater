@@ -7,14 +7,14 @@ plugins {
 }
 
 android {
-    compileSdk 31
+    compileSdk 32
 
     defaultConfig {
         applicationId "com.flamingo.updater"
         minSdk 31
-        targetSdk 31
-        versionCode 2
-        versionName "2.0"
+        targetSdk 32
+        versionCode 1
+        versionName "1.0"
     }
 
     buildTypes {
@@ -63,11 +63,11 @@ dependencies {
     implementation 'androidx.activity:activity-compose:1.4.0'
     implementation "androidx.compose.animation:animation:$compose_version"
     implementation "androidx.compose.material:material:$compose_version"
-    implementation 'androidx.compose.material3:material3:1.0.0-alpha12'
+    implementation 'androidx.compose.material3:material3:1.0.0-alpha13'
     implementation "androidx.compose.ui:ui:$compose_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
-    implementation 'androidx.core:core-ktx:1.7.0'
+    implementation 'androidx.core:core-ktx:1.8.0'
     implementation 'androidx.datastore:datastore:1.0.0'
     implementation 'androidx.documentfile:documentfile:1.1.0-alpha01'
     implementation 'androidx.hilt:hilt-navigation-compose:1.0.0'
@@ -75,7 +75,7 @@ dependencies {
     implementation "androidx.room:room-runtime:$room_version"
     implementation "com.google.accompanist:accompanist-navigation-animation:$accompanist_version"
     implementation "com.google.accompanist:accompanist-systemuicontroller:$accompanist_version"
-    implementation 'com.google.android.material:material:1.6.0'
+    implementation 'com.google.android.material:material:1.6.1'
     implementation "com.google.dagger:hilt-android:$hilt_version"
     implementation 'com.google.protobuf:protobuf-javalite:3.18.0'
     implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.13.2'
