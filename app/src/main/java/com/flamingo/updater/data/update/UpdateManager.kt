@@ -18,9 +18,10 @@ package com.flamingo.updater.data.update
 
 import android.content.Context
 import android.os.PersistableBundle
+import android.os.PowerManager
 import android.os.SystemUpdateManager
-import android.os.UpdateLock
 import android.util.Log
+import androidx.core.content.getSystemService
 
 import com.flamingo.updater.R
 import com.flamingo.updater.data.BatteryMonitor
@@ -55,9 +56,10 @@ sealed class UpdateManager(
 
     protected var progress = 0f
 
-    private val systemUpdateService = context.getSystemService(SystemUpdateManager::class.java)
+    private val systemUpdateService = context.getSystemService<SystemUpdateManager>()!!
+    private val powerManager = context.getSystemService<PowerManager>()!!
 
-    private val updateLock = UpdateLock(UPDATE_LOCK_TAG)
+    private val wakeLock: PowerManager.WakeLock?
 
     init {
         applicationScope.launch {
@@ -68,17 +70,22 @@ sealed class UpdateManager(
                 }
             }
         }
+        wakeLock = if (powerManager.isWakeLockLevelSupported(PowerManager.PARTIAL_WAKE_LOCK)) {
+            powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, UPDATE_WAKELOCK_TAG)
+        } else {
+            null
+        }
     }
 
     protected fun acquireLock() {
-        if (!updateLock.isHeld) {
-            updateLock.acquire()
+        if (wakeLock != null && !wakeLock.isHeld) {
+            wakeLock.acquire(WAKELOCK_TIMEOUT)
         }
     }
 
     protected fun releaseLock() {
-        if (updateLock.isHeld) {
-            updateLock.release()
+        if (wakeLock != null && !wakeLock.isHeld) {
+            wakeLock.release()
         }
     }
 
@@ -127,6 +134,7 @@ sealed class UpdateManager(
             if (DEBUG) Log.d(TAG, msg)
         }
 
-        private val UPDATE_LOCK_TAG = "${UpdateManager::class.simpleName!!}:UpdateLock"
+        private val UPDATE_WAKELOCK_TAG = "${UpdateManager::class.simpleName!!}:WakeLock"
+        private const val WAKELOCK_TIMEOUT = 20 * 60 * 1000L
     }
 }
