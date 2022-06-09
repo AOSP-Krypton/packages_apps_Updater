@@ -84,7 +84,7 @@ sealed class UpdateManager(
     }
 
     protected fun releaseLock() {
-        if (wakeLock != null && !wakeLock.isHeld) {
+        if (wakeLock != null && wakeLock.isHeld) {
             wakeLock.release()
         }
     }
