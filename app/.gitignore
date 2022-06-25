@@ -1,7 +1,2 @@
-build/*
-!build/outputs/
-build/outputs/*
-!build/outputs/apk/
-build/outputs/apk/release/*
-!build/outputs/apk/release/app-release*.apk
+/build
 /system_libs
