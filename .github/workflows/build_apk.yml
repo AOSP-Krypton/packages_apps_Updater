@@ -9,6 +9,7 @@ on:
 jobs:
   build-debug-apk:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Check out repository
         uses: actions/checkout@v3

@@ -1,0 +1,28 @@
+name: Build prebuilt APK
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+jobs:
+  build-debug-apk:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Set up Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
+      - name: Clone our prebuilts
+        run: |
+            git clone https://github.com/Flamingo-OS/vendor_prebuilts
+            mkdir app/system_libs
+            cp -r vendor_prebuilts/libs/framework.jar app/system_libs/
+      - uses: gradle/gradle-build-action@v2
+      - name: Grant execution permission to Gradle Wrapper
+        run: chmod +x gradlew
+      - name: Build debug APK
+        run: ./gradlew clean assembleRelease
