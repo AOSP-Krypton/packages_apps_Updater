@@ -49,5 +49,5 @@ jobs:
             cd vendor_prebuilts/
             git pull
             git add .
-            git commit -m "Update Updater APK for ${{ env.GIT_HASH }}"
+            git commit -m "Update Updater APK for ${{ env.GIT_LINK }}"
             git push origin A12.1
