@@ -1,0 +1,53 @@
+name: Build prebuilt APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'A12.1'
+
+jobs:
+  build-debug-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Clone our prebuilts
+        run: |
+            git clone https://.:${{ secrets.API_TOKEN_GITHUB }}@github.com/Flamingo-OS/vendor_prebuilts
+            mkdir app/libs
+            cp -r vendor_prebuilts/libs/framework.jar app/libs/
+      - name: Set up Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
+      - uses: gradle/gradle-build-action@v2
+      - name: Grant execution permission to Gradle Wrapper
+        run: chmod +x gradlew
+      - name: Build debug APK
+        run: ./gradlew assembleRelease
+      - name: Rename artifact
+        run: |
+          oldArtifactPath="app/build/outputs/apk/release/app-release-unsigned.apk"
+          newArtifactPath="app/build/outputs/apk/release/Updater.apk"
+          echo "ARTIFACT_PATH=$newArtifactPath" >> $GITHUB_ENV
+          mv "$oldArtifactPath" "$newArtifactPath"
+      - name: Setting git config
+        run: |
+            git config --global user.email "npv12@iitbbs.ac.in"
+            git config --global user.name "Pranav"
+      - name: Export commit hash
+        run: |
+            git_hash=$(git rev-parse "$GITHUB_SHA")
+            link="https://github.com/Flamingo-OS/packages_apps_Updater/commit/$git_hash"
+            echo "GIT_LINK=$link" >> $GITHUB_ENV
+      - name: Uploading artifact
+        run: |
+            mkdir -p vendor_prebuilts/app/Updater
+            cp ${{ env.ARTIFACT_PATH }} vendor_prebuilts/app/Updater
+            cd vendor_prebuilts/
+            git pull
+            git add .
+            git commit -m "Update Updater APK for ${{ env.GIT_HASH }}"
+            git push origin A12.1
