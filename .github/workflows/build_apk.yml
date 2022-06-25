@@ -7,7 +7,7 @@ on:
       - 'A12.1'
 
 jobs:
-  build-debug-apk:
+  build-release-apk:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -26,7 +26,7 @@ jobs:
       - uses: gradle/gradle-build-action@v2
       - name: Grant execution permission to Gradle Wrapper
         run: chmod +x gradlew
-      - name: Build debug APK
+      - name: Build release APK
         run: ./gradlew assembleRelease
       - name: Rename artifact
         run: |
@@ -36,8 +36,8 @@ jobs:
           mv "$oldArtifactPath" "$newArtifactPath"
       - name: Setting git config
         run: |
-            git config --global user.email "npv12@iitbbs.ac.in"
-            git config --global user.name "Pranav"
+            git config --global user.email "${{ secrets.EMAIL }}"
+            git config --global user.name "${{ secrets.NAME }}"
       - name: Export commit hash
         run: |
             git_hash=$(git rev-parse "$GITHUB_SHA")
@@ -50,5 +50,5 @@ jobs:
             cd vendor_prebuilts/
             git pull
             git add .
-            git commit -m "Update Updater APK for ${{ env.GIT_LINK }}"
+            git diff-index --quiet HEAD || git commit -m "Update Updater APK for ${{ env.GIT_LINK }}"
             git push origin A12.1
