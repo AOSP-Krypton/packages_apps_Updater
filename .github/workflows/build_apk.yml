@@ -15,8 +15,8 @@ jobs:
       - name: Clone our prebuilts
         run: |
             git clone https://.:${{ secrets.API_TOKEN_GITHUB }}@github.com/Flamingo-OS/vendor_prebuilts
-            mkdir app/libs
-            cp -r vendor_prebuilts/libs/framework.jar app/libs/
+            mkdir app/system_libs
+            cp -r vendor_prebuilts/libs/framework.jar app/system_libs/
       - name: Set up Java 11
         uses: actions/setup-java@v3
         with:
