@@ -71,7 +71,6 @@
 
     <!-- Changelog -->
     <string name="changelog">更新日誌</string>
-        <string name="changelog_back_button_desc">更新日誌項</string>
     <string name="changelog_unavailable">更新日誌不可用</string>
 
     <!-- Update -->
@@ -115,5 +114,5 @@
     <string name="update_check_interval_summary">設定檢查系統更新頻率（天）</string>
     <string name="opt_out_incremental_title">全量更新</string>
     <string name="opt_out_incremental_summary">只下載安裝全量包\n若您已 ROOT 或以任何形式修改過系統，則您必須開啟此選項。</string>
-    <string name="settings_back_button_content_desc">設定返回項</string>
+
 </resources>

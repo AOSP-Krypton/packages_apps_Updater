@@ -71,7 +71,6 @@
 
     <!-- Changelog -->
     <string name="changelog">Journal des modifications</string>
-    <string name="changelog_back_button_desc">Bouton de retour d’activité du journal des modifications</string>
     <string name="changelog_unavailable">Journal des modifications indisponible</string>
 
     <!-- Update -->
@@ -115,5 +114,5 @@
     <string name="update_check_interval_summary">Nombre de jours après lesquels les mises à jour doivent être vérifiées périodiquement</string>
     <string name="opt_out_incremental_title">Désactiver les mises à jour incrémentielles</string>
     <string name="opt_out_incremental_summary">Installez toujours les mises à jour complètes. Requis pour les utilisateurs rootés ou ceux qui ont modifié leur système de quelque manière que ce soit</string>
-    <string name="settings_back_button_content_desc">Bouton de retour des paramètres</string>
+
 </resources>

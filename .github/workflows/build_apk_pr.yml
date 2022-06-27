@@ -19,8 +19,8 @@ jobs:
       - name: Clone our prebuilts
         run: |
             git clone https://github.com/Flamingo-OS/vendor_prebuilts
-            mkdir app/system_libs
-            cp -r vendor_prebuilts/libs/framework.jar app/system_libs/
+            mkdir app/libs
+            cp vendor_prebuilts/libs/framework.jar vendor_prebuilts/libs/support-compose.aar app/libs/
       - uses: gradle/gradle-build-action@v2
       - name: Grant execution permission to Gradle Wrapper
         run: chmod +x gradlew

@@ -16,7 +16,6 @@
 
 package com.flamingo.updater.ui.screens
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
@@ -37,9 +36,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 
-import com.google.accompanist.systemuicontroller.SystemUiController
+import com.flamingo.support.compose.ui.layout.CollapsingToolbarLayout
 import com.flamingo.updater.R
 import com.flamingo.updater.viewmodel.ChangelogViewModel
+import com.google.accompanist.systemuicontroller.SystemUiController
 
 import java.text.DateFormat
 
@@ -49,20 +49,13 @@ fun ChangelogScreen(
     systemUiController: SystemUiController,
     navHostController: NavHostController
 ) {
-    val isSystemInDarkTheme = isSystemInDarkTheme()
     val locale = LocalContext.current.resources.configuration.locales[0]
     val changelogListState = changelogViewModel.changelog.collectAsState(emptyList())
     val changelogList by remember { changelogListState }
-    CollapsingToolbarScreen(
+    CollapsingToolbarLayout(
         title = stringResource(R.string.changelog),
-        backButtonContentDescription = stringResource(R.string.changelog_back_button_desc),
         onBackButtonPressed = { navHostController.popBackStack() },
-        onStatusBarColorUpdateRequest = {
-            systemUiController.setStatusBarColor(
-                color = it,
-                darkIcons = !isSystemInDarkTheme
-            )
-        },
+        systemUiController = systemUiController,
     ) {
         val dateFormatInstance = DateFormat.getDateInstance(DateFormat.DEFAULT, locale)
         if (changelogList.isEmpty()) {

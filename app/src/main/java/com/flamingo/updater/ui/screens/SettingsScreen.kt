@@ -16,16 +16,16 @@
 
 package com.flamingo.updater.ui.screens
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 
 import com.google.accompanist.systemuicontroller.SystemUiController
+import com.flamingo.support.compose.ui.layout.CollapsingToolbarLayout
+import com.flamingo.support.compose.ui.preferences.DiscreteSeekBarPreference
+import com.flamingo.support.compose.ui.preferences.SwitchPreference
 import com.flamingo.updater.R
-import com.flamingo.updater.ui.preferences.DiscreteSeekBarPreference
-import com.flamingo.updater.ui.preferences.SwitchPreference
 import com.flamingo.updater.viewmodel.SettingsViewModel
 
 @Composable
@@ -34,17 +34,10 @@ fun SettingsScreen(
     systemUiController: SystemUiController,
     navController: NavHostController,
 ) {
-    val isSystemInDarkTheme = isSystemInDarkTheme()
-    CollapsingToolbarScreen(
+    CollapsingToolbarLayout(
         title = stringResource(R.string.settings),
-        backButtonContentDescription = stringResource(R.string.settings_back_button_content_desc),
         onBackButtonPressed = { navController.popBackStack() },
-        onStatusBarColorUpdateRequest = {
-            systemUiController.setStatusBarColor(
-                color = it,
-                darkIcons = !isSystemInDarkTheme
-            )
-        }
+        systemUiController = systemUiController
     ) {
         item {
             val updateCheckIntervalState by settingsViewModel.updateCheckInterval.collectAsState(0)
