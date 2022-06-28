@@ -69,5 +69,12 @@ jobs:
           cd vendor_prebuilts/
           git pull
           git add .
-          git diff-index --quiet HEAD || git commit -m "Update Updater APK for ${{ env.GIT_LINK }}"
-          git push origin A12.1
+          if [ ! $(git diff-index --quiet HEAD) ] ; then
+            if [ ${{ github.event.workflow_dispatch }} ] ; then
+              message="${{ github.event.inputs.message }}"
+            else
+              message="Update Updater APK for ${{ env.GIT_LINK }}"
+            fi
+            git commit -m "$message"
+            git push origin A12.1
+          fi
