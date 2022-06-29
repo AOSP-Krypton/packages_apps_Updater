@@ -32,7 +32,7 @@ import androidx.navigation.compose.rememberNavController
 import com.flamingo.updater.R
 import com.flamingo.updater.data.UpdateInfo
 import com.flamingo.updater.data.download.DownloadState
-import com.flamingo.updater.ui.Routes
+import com.flamingo.updater.ui.MAIN
 import com.flamingo.updater.viewmodel.DownloadViewModel
 import com.flamingo.updater.viewmodel.MainViewModel
 
@@ -129,7 +129,7 @@ class DownloadCardState(
     }
 
     fun triggerLeadingAction() {
-        navHostController.navigate(Routes.CHANGELOGS)
+        navHostController.navigate(MAIN.CHANGELOGS.path)
     }
 
     fun triggerTrailingAction() {

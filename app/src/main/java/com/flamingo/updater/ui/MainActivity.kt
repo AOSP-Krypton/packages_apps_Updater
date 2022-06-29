@@ -72,13 +72,14 @@ class MainActivity : ComponentActivity() {
                 val navHostController = rememberAnimatedNavController()
                 AnimatedNavHost(
                     navController = navHostController,
-                    startDestination = Routes.HOME
+                    startDestination = MAIN.HOME.path,
+                    route = MAIN.path
                 ) {
                     composable(
-                        Routes.HOME,
+                        MAIN.HOME.path,
                         exitTransition = {
                             when (targetState.destination.route) {
-                                Routes.SETTINGS, Routes.CHANGELOGS -> slideOutOfContainer(
+                                MAIN.SETTINGS.path, MAIN.CHANGELOGS.path -> slideOutOfContainer(
                                     AnimatedContentScope.SlideDirection.Start,
                                     tween(TRANSITION_ANIMATION_DURATION)
                                 )
@@ -87,7 +88,7 @@ class MainActivity : ComponentActivity() {
                         },
                         popEnterTransition = {
                             when (initialState.destination.route) {
-                                Routes.SETTINGS, Routes.CHANGELOGS -> slideIntoContainer(
+                                MAIN.SETTINGS.path, MAIN.CHANGELOGS.path -> slideIntoContainer(
                                     AnimatedContentScope.SlideDirection.End,
                                     tween(TRANSITION_ANIMATION_DURATION)
                                 )
@@ -95,23 +96,27 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                     ) {
-                        // We should update system bar colors since it might have bee
-                        // changed from other screens
-                        systemUiController.setSystemBarsColor(
-                            color = MaterialTheme.colorScheme.surface,
-                            darkIcons = !isSystemInDarkTheme()
-                        )
+                        val color = MaterialTheme.colorScheme.surface
+                        val darkIcons = !isSystemInDarkTheme()
+                        LaunchedEffect(Unit) {
+                            // We should update system bar colors since it might have bee
+                            // changed from other screens
+                            systemUiController.setSystemBarsColor(
+                                color = color,
+                                darkIcons = darkIcons
+                            )
+                        }
                         val mainScreenState =
                             rememberMainScreenState(navHostController = navHostController)
                         MainScreen(mainScreenState)
                     }
-                    animatedComposable(Routes.SETTINGS, Routes.HOME) {
+                    animatedComposable(MAIN.SETTINGS.path, MAIN.HOME.path) {
                         SettingsScreen(
                             systemUiController = systemUiController,
                             navController = navHostController
                         )
                     }
-                    animatedComposable(Routes.CHANGELOGS, Routes.HOME) {
+                    animatedComposable(MAIN.CHANGELOGS.path, MAIN.HOME.path) {
                         ChangelogScreen(
                             changelogViewModel = hiltViewModel(),
                             systemUiController = systemUiController,
@@ -169,5 +174,29 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         private const val TRANSITION_ANIMATION_DURATION = 500
+    }
+}
+
+sealed interface Route {
+    val path: String
+}
+
+object MAIN : Route {
+    override val path: String
+        get() = "main"
+
+    object HOME : Route {
+        override val path: String
+            get() = "home"
+    }
+
+    object SETTINGS : Route {
+        override val path: String
+            get() = "settings"
+    }
+
+    object CHANGELOGS : Route {
+        override val path: String
+            get() = "changelogs"
     }
 }

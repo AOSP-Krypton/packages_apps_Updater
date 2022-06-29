@@ -34,7 +34,7 @@ import com.flamingo.updater.R
 import com.flamingo.updater.data.FileCopyStatus
 import com.flamingo.updater.data.download.DownloadState
 import com.flamingo.updater.data.update.UpdateState
-import com.flamingo.updater.ui.Routes
+import com.flamingo.updater.ui.MAIN
 import com.flamingo.updater.viewmodel.DownloadViewModel
 import com.flamingo.updater.viewmodel.MainViewModel
 import com.flamingo.updater.viewmodel.UpdateViewModel
@@ -141,7 +141,7 @@ class MainScreenState(
     }
 
     fun openSettings() {
-        navHostController.navigate(Routes.SETTINGS)
+        navHostController.navigate(MAIN.SETTINGS.path)
     }
 
     fun showSnackBar(message: String) {
