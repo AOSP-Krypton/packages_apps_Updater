@@ -21,7 +21,9 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
@@ -34,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -99,7 +102,9 @@ fun MainScreen(state: MainScreenState, modifier: Modifier = Modifier) {
             state.showSnackBar(it)
         }
         Column(
-            modifier = Modifier.fillMaxSize().padding(paddingValues),
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Column(
@@ -110,15 +115,36 @@ fun MainScreen(state: MainScreenState, modifier: Modifier = Modifier) {
                 verticalArrangement = Arrangement.Bottom
             ) {
                 UpdaterLogo(modifier = Modifier.fillMaxHeight(0.4f))
-                Text(
-                    modifier = Modifier.padding(top = 32.dp),
-                    text = stringResource(
-                        id = R.string.system_build_info_format,
-                        state.systemBuildDate,
-                        state.systemBuildVersion
-                    ),
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    modifier = Modifier
+                        .padding(top = 32.dp)
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        text = state.systemBuildDate,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.End
+                    )
+                    Divider(
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .width(2.dp)
+                            .fillMaxHeight()
+                    )
+                    Text(
+                        text = stringResource(
+                            id = R.string.system_version_format,
+                            state.systemBuildVersion
+                        ),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.Start
+                    )
+                }
                 val checkUpdatesContentState by state.checkUpdatesContentState.collectAsState(
                     CheckUpdatesContentState.Gone
                 )
@@ -298,29 +324,15 @@ fun FileCopyDialogAndSnackBar(
 
 @Composable
 fun UpdaterLogo(modifier: Modifier = Modifier) {
-    Box(modifier = modifier.aspectRatio(1f)) {
+    Box(
+        modifier = modifier
+            .aspectRatio(1f)
+            .border(6.dp, color = MaterialTheme.colorScheme.onSurface, shape = CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
         Icon(
-            modifier = Modifier
-                .fillMaxSize()
-                .align(Alignment.TopCenter),
-            painter = painterResource(id = R.drawable.ic_updater_logo_part_0),
-            tint = MaterialTheme.colorScheme.surfaceVariant,
-            contentDescription = stringResource(R.string.updater_logo_content_desc)
-        )
-        Icon(
-            modifier = Modifier
-                .fillMaxSize()
-                .align(Alignment.Center)
-                .padding(top = 1.dp),
-            painter = painterResource(id = R.drawable.ic_updater_logo_part_1),
-            tint = MaterialTheme.colorScheme.onSurface,
-            contentDescription = stringResource(R.string.updater_logo_content_desc)
-        )
-        Icon(
-            modifier = Modifier
-                .fillMaxSize()
-                .align(Alignment.BottomCenter),
-            painter = painterResource(id = R.drawable.ic_updater_logo_part_2),
+            modifier = Modifier.fillMaxSize(0.8f),
+            painter = painterResource(id = R.drawable.ic_updater_logo),
             tint = MaterialTheme.colorScheme.primary,
             contentDescription = stringResource(R.string.updater_logo_content_desc)
         )
