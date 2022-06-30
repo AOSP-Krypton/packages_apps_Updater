@@ -331,7 +331,7 @@ fun UpdaterLogo(modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            modifier = Modifier.fillMaxSize(0.8f),
+            modifier = Modifier.fillMaxSize(0.7f),
             painter = painterResource(id = R.drawable.ic_updater_logo),
             tint = MaterialTheme.colorScheme.primary,
             contentDescription = stringResource(R.string.updater_logo_content_desc)
