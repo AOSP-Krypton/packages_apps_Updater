@@ -12,6 +12,11 @@ on:
       - '**.mkdn'
       - '.**'
   workflow_dispatch:
+    inputs:
+      message:
+        description: 'Commit message'
+        required: false
+        default: 'Workflow dispatch'
 
 jobs:
   build-release-apk:
