@@ -23,3 +23,15 @@
 -keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite* {
     <fields>;
 }
+
+# This is generated automatically by the Android Gradle plugin.
+-dontwarn android.compat.Compatibility$ChangeConfig
+-dontwarn com.android.i18n.timezone.WallTime
+-dontwarn com.android.i18n.timezone.ZoneInfoData
+-dontwarn com.android.org.conscrypt.TrustManagerImpl
+-dontwarn dalvik.system.BlockGuard$VmPolicy
+-dontwarn dalvik.system.CloseGuard
+-dontwarn java.beans.ConstructorProperties
+-dontwarn java.beans.Transient
+-dontwarn libcore.util.NativeAllocationRegistry
+-dontwarn sun.misc.Cleaner
