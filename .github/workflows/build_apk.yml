@@ -69,7 +69,7 @@ jobs:
           cd vendor_prebuilts/
           git pull
           git add .
-          if [ ! $(git diff-index --quiet HEAD) ] ; then
+          if [[ `git status --porcelain` ]] ; then
             if [ ${{ github.event.workflow_dispatch }} ] ; then
               message="${{ github.event.inputs.message }}"
             else
