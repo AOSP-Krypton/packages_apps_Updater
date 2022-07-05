@@ -37,6 +37,7 @@ import com.flamingo.updater.data.update.UpdateState
 import com.flamingo.updater.ui.MAIN
 import com.flamingo.updater.viewmodel.DownloadViewModel
 import com.flamingo.updater.viewmodel.MainViewModel
+import com.flamingo.updater.viewmodel.SettingsViewModel
 import com.flamingo.updater.viewmodel.UpdateViewModel
 
 import java.text.DateFormat
@@ -52,6 +53,7 @@ class MainScreenState(
     private val mainViewModel: MainViewModel,
     private val downloadViewModel: DownloadViewModel,
     private val updateViewModel: UpdateViewModel,
+    private val settingsViewModel: SettingsViewModel,
     private val context: Context,
     val snackbarHostState: SnackbarHostState,
     val navHostController: NavHostController,
@@ -119,6 +121,9 @@ class MainScreenState(
 
     val downloadFileExportStatus: Flow<FileCopyStatus>
         get() = downloadViewModel.fileCopyStatus.receiveAsFlow()
+
+    val exportDownload: Flow<Boolean>
+        get() = settingsViewModel.exportDownload
 
     init {
         coroutineScope.launch {
@@ -194,6 +199,7 @@ fun rememberMainScreenState(
     mainViewModel: MainViewModel = hiltViewModel(),
     downloadViewModel: DownloadViewModel = hiltViewModel(),
     updateViewModel: UpdateViewModel = hiltViewModel(),
+    settingsViewModel: SettingsViewModel = hiltViewModel(),
     snackbarHostState: SnackbarHostState = SnackbarHostState(),
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
     context: Context = LocalContext.current,
@@ -202,18 +208,19 @@ fun rememberMainScreenState(
     mainViewModel,
     downloadViewModel,
     updateViewModel,
-    snackbarHostState,
+    settingsViewModel,
     coroutineScope,
     context,
     navHostController
 ) {
     MainScreenState(
-        coroutineScope,
-        mainViewModel,
-        downloadViewModel,
-        updateViewModel,
-        context,
-        snackbarHostState,
-        navHostController
+        coroutineScope = coroutineScope,
+        mainViewModel = mainViewModel,
+        downloadViewModel = downloadViewModel,
+        updateViewModel = updateViewModel,
+        settingsViewModel = settingsViewModel,
+        context = context,
+        navHostController = navHostController,
+        snackbarHostState = snackbarHostState
     )
 }

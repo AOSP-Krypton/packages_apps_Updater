@@ -16,19 +16,18 @@
 
 package com.flamingo.updater.ui
 
-import android.content.Intent
 import android.os.Bundle
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 
@@ -46,17 +45,6 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-    private val documentTreeContract =
-        registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
-            if (it == null) {
-                finish()
-                return@registerForActivityResult
-            }
-            val flags =
-                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-            contentResolver.takePersistableUriPermission(it, flags)
-        }
 
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -154,20 +142,6 @@ class MainActivity : ComponentActivity() {
             },
             content = content
         )
-    }
-
-    override fun onResume() {
-        super.onResume()
-        checkExportFolderPermission()
-    }
-
-    private fun checkExportFolderPermission() {
-        val hasPerms = contentResolver.persistedUriPermissions.firstOrNull()?.takeIf {
-            it.isReadPermission && it.isWritePermission
-        } != null
-        if (!hasPerms) {
-            documentTreeContract.launch(null)
-        }
     }
 
     companion object {

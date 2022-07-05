@@ -41,6 +41,9 @@ class SettingsViewModel @Inject constructor(
     val optOutIncremental: Flow<Boolean>
         get() = settingsRepository.optOutIncremental
 
+    val exportDownload: Flow<Boolean>
+        get() = settingsRepository.exportDownload
+
     /**
      * Set interval (in days) for automatic update checking.
      *
@@ -62,6 +65,12 @@ class SettingsViewModel @Inject constructor(
     fun setOptOutIncremental(optOut: Boolean) {
         viewModelScope.launch {
             settingsRepository.setOptOutIncremental(optOut)
+        }
+    }
+
+    fun setExportDownload(export: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setExportDownload(export)
         }
     }
 }

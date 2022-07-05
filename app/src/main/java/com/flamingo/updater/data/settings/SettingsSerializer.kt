@@ -25,11 +25,16 @@ import androidx.datastore.dataStore
 import java.io.InputStream
 import java.io.OutputStream
 
+const val DEFAULT_UPDATE_CHECK_INTERVAL = 7
+const val DEFAULT_OPT_OUT_INCREMENTAL = false
+const val DEFAULT_EXPORT_DOWNLOAD = false
+
 object SettingsSerializer : Serializer<Settings> {
-    private const val UPDATE_CHECK_INTERVAL_DEFAULT = 7
 
     override val defaultValue: Settings = Settings.newBuilder()
-        .setUpdateCheckInterval(UPDATE_CHECK_INTERVAL_DEFAULT)
+        .setUpdateCheckInterval(DEFAULT_UPDATE_CHECK_INTERVAL)
+        .setOptOutIncremental(DEFAULT_OPT_OUT_INCREMENTAL)
+        .setExportDownload(DEFAULT_EXPORT_DOWNLOAD)
         .build()
 
     override suspend fun readFrom(input: InputStream): Settings {

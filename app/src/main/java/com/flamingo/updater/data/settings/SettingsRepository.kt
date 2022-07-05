@@ -38,6 +38,9 @@ class SettingsRepository @Inject constructor(
     val optOutIncremental: Flow<Boolean>
         get() = appSettings.data.map { it.optOutIncremental }
 
+    val exportDownload: Flow<Boolean>
+        get() = appSettings.data.map { it.exportDownload }
+
     /**
      * Set interval (in days) for automatic update checking.
      *
@@ -61,6 +64,14 @@ class SettingsRepository @Inject constructor(
         appSettings.updateData {
             it.toBuilder()
                 .setOptOutIncremental(optOut)
+                .build()
+        }
+    }
+
+    suspend fun setExportDownload(export: Boolean) {
+        appSettings.updateData {
+            it.toBuilder()
+                .setExportDownload(export)
                 .build()
         }
     }

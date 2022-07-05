@@ -76,6 +76,7 @@ import androidx.compose.ui.window.DialogProperties
 
 import com.flamingo.updater.R
 import com.flamingo.updater.data.FileCopyStatus
+import com.flamingo.updater.data.settings.DEFAULT_EXPORT_DOWNLOAD
 import com.flamingo.updater.ui.states.CardState
 import com.flamingo.updater.ui.states.CheckUpdatesContentState
 import com.flamingo.updater.ui.states.MainScreenState
@@ -94,9 +95,11 @@ fun MainScreen(state: MainScreenState, modifier: Modifier = Modifier) {
                 false
             )
             val shouldAllowClearingCache by state.shouldAllowClearingCache.collectAsState(false)
+            val exportDownloadEnabled by state.exportDownload.collectAsState(DEFAULT_EXPORT_DOWNLOAD)
             AppBar(
                 shouldAllowLocalUpgrade,
                 shouldAllowClearingCache,
+                exportDownloadEnabled,
                 onRequestLocalUpgrade = {
                     state.startLocalUpgrade(it)
                 },
@@ -253,6 +256,7 @@ fun MainScreen(state: MainScreenState, modifier: Modifier = Modifier) {
 fun AppBar(
     shouldAllowLocalUpgrade: Boolean,
     shouldAllowClearingCache: Boolean,
+    exportDownloadEnabled: Boolean,
     onRequestLocalUpgrade: (Uri) -> Unit,
     onSettingsLaunchRequest: () -> Unit,
     onShowDownloadsRequest: () -> Unit,
@@ -304,24 +308,26 @@ fun AppBar(
                             localUpgradeLauncher.launch(arrayOf("application/zip"))
                         },
                     )
-                    DropdownMenuItem(
-                        leadingIcon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_baseline_cloud_download_24),
-                                contentDescription = stringResource(id = R.string.downloads_menu_item_desc),
-                            )
-                        },
-                        text = {
-                            Text(
-                                text = stringResource(id = R.string.downloads),
-                                fontWeight = FontWeight.Bold
-                            )
-                        },
-                        onClick = {
-                            menuExpanded = false
-                            onShowDownloadsRequest()
-                        },
-                    )
+                    if (exportDownloadEnabled) {
+                        DropdownMenuItem(
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_baseline_cloud_download_24),
+                                    contentDescription = stringResource(id = R.string.downloads_menu_item_desc),
+                                )
+                            },
+                            text = {
+                                Text(
+                                    text = stringResource(id = R.string.downloads),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            },
+                            onClick = {
+                                menuExpanded = false
+                                onShowDownloadsRequest()
+                            },
+                        )
+                    }
                     DropdownMenuItem(
                         enabled = shouldAllowClearingCache,
                         leadingIcon = {

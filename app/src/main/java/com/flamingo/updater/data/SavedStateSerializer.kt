@@ -53,6 +53,6 @@ object SavedStateSerializer : Serializer<SavedState> {
 }
 
 val Context.savedStateDataStore: DataStore<SavedState> by dataStore(
-    fileName = "saved_state.proto",
+    fileName = "saved_state",
     serializer = SavedStateSerializer
 )

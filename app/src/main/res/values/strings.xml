@@ -114,5 +114,9 @@
     <string name="update_check_interval_summary">Number of days after which updates should be checked, periodically</string>
     <string name="opt_out_incremental_title">Opt out of incremental updates</string>
     <string name="opt_out_incremental_summary">Always install full updates. Required for rooted users or those who have modified their system in any manner</string>
+    <string name="redirecting">Redirecting</string>
+    <string name="confirm_to_open_file_picker">Click on the OK button to open file manager for selecting the folder to export downloads. Note that this requires the stock file manager to be installed.</string>
+    <string name="export_downloads">Export downloads</string>
+    <string name="export_downloads_summary">Enable to automatically export downloaded OTA files</string>
 
 </resources>

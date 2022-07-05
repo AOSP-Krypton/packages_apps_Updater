@@ -25,6 +25,7 @@ import com.flamingo.updater.data.FileExportManager
 import com.flamingo.updater.data.FileCopyStatus
 import com.flamingo.updater.data.room.AppDatabase
 import com.flamingo.updater.data.savedStateDataStore
+import com.flamingo.updater.data.settings.appSettingsDataStore
 
 import dagger.hilt.android.qualifiers.ApplicationContext
 
@@ -49,6 +50,7 @@ class DownloadRepository @Inject constructor(
 ) {
 
     private val savedStateDatastore = context.savedStateDataStore
+    private val appSettingsDatastore = context.appSettingsDataStore
     private val updateInfoDao = appDatabase.updateInfoDao()
 
     val downloadState: StateFlow<DownloadState>
@@ -67,9 +69,10 @@ class DownloadRepository @Inject constructor(
         applicationScope.launch {
             delay(1000)
             restoreDownloadState()
-            downloadState.collect {
-                saveDownloadState(it)
-                if (it is DownloadState.Finished) {
+            downloadState.collect { state ->
+                saveDownloadState(state)
+                val exportDownload = appSettingsDatastore.data.map { it.exportDownload }.first()
+                if (state is DownloadState.Finished && exportDownload) {
                     exportFile()
                 }
             }
