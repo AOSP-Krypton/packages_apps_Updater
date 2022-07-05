@@ -29,7 +29,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 
@@ -118,7 +117,6 @@ class MainActivity : ComponentActivity() {
                     }
                     animatedComposable(MAIN.CHANGELOGS.path, MAIN.HOME.path) {
                         ChangelogScreen(
-                            changelogViewModel = hiltViewModel(),
                             systemUiController = systemUiController,
                             navHostController = navHostController
                         )
