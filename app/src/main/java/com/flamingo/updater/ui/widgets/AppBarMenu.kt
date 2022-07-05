@@ -16,74 +16,34 @@
 
 package com.flamingo.updater.ui.widgets
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-
-class MenuItem(
-    val title: String,
-    val contentDescription: String,
-    val enabled: Boolean = true,
-    val icon: Painter? = null,
-    val iconImageVector: ImageVector? = null,
-    val onClick: () -> Unit = {},
-)
 
 @Composable
 fun AppBarMenu(
     menuIcon: @Composable () -> Unit,
-    menuItems: List<MenuItem>,
+    menuItems: @Composable ColumnScope.() -> Unit,
     expanded: Boolean = false,
+    onExpandRequest: () -> Unit,
+    onDismissRequest: () -> Unit
 ) {
-    var menuExpanded by remember { mutableStateOf(expanded) }
     Box(Modifier.wrapContentSize(Alignment.TopEnd)) {
         IconButton(
-            onClick = {
-                if (!menuExpanded) menuExpanded = true
-            },
+            onClick = onExpandRequest,
             content = menuIcon
         )
     }
     DropdownMenu(
-        expanded = menuExpanded,
-        onDismissRequest = {
-            menuExpanded = false
-        },
-        modifier = Modifier.fillMaxWidth(fraction = 0.35f)
-    ) {
-        menuItems.forEach {
-            DropdownMenuItem(
-                enabled = it.enabled,
-                leadingIcon = {
-                    when {
-                        it.icon != null -> Icon(
-                            painter = it.icon,
-                            contentDescription = it.contentDescription
-                        )
-                        it.iconImageVector != null -> Icon(
-                            imageVector = it.iconImageVector,
-                            contentDescription = it.contentDescription
-                        )
-                        else -> Spacer(modifier = Modifier.size(24.dp))
-                    }
-                },
-                text = {
-                    Text(
-                        text = it.title,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                onClick = {
-                    menuExpanded = false
-                    it.onClick()
-                },
-            )
-        }
-    }
+        expanded = expanded,
+        onDismissRequest = onDismissRequest,
+        modifier = Modifier.fillMaxWidth(fraction = 0.35f),
+        content = menuItems
+    )
 }
