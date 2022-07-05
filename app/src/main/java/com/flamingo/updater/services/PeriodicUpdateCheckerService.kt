@@ -60,7 +60,7 @@ class PeriodicUpdateCheckerService : Service() {
         super.onCreate()
         serviceScope = CoroutineScope(Dispatchers.Main)
         notificationManager = NotificationManagerCompat.from(this)
-        getSystemService(NotificationManager::class.java).createNotificationChannel(
+        notificationManager.createNotificationChannel(
             NotificationChannel(
                 UPDATE_NOTIFICATION_CHANNEL_ID, UPDATE_NOTIFICATION_CHANNEL_NAME,
                 NotificationManager.IMPORTANCE_HIGH

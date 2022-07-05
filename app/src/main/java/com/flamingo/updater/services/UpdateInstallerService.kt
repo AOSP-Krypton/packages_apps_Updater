@@ -39,6 +39,7 @@ import com.flamingo.updater.ui.MainActivity
 import dagger.hilt.android.AndroidEntryPoint
 
 import javax.inject.Inject
+import kotlin.math.roundToInt
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -71,6 +72,10 @@ class UpdateInstallerService : Service() {
 
     private var binder: IBinder? = null
 
+    private lateinit var updateNotificationBuilder: NotificationCompat.Builder
+
+    private var currentProgress = 0
+
     override fun onCreate() {
         logD("onCreate")
         super.onCreate()
@@ -96,7 +101,7 @@ class UpdateInstallerService : Service() {
 
     private fun setupNotificationChannel() {
         notificationManager = NotificationManagerCompat.from(this)
-        getSystemService(NotificationManager::class.java).createNotificationChannel(
+        notificationManager.createNotificationChannel(
             NotificationChannel(
                 UPDATE_INSTALLATION_CHANNEL_ID, UPDATE_INSTALLATION_CHANNEL_NAME,
                 NotificationManager.IMPORTANCE_DEFAULT
@@ -131,13 +136,18 @@ class UpdateInstallerService : Service() {
         serviceScope.launch {
             updateRepository.updateState.collect {
                 when (it) {
-                    is UpdateState.Initializing -> updateProgressNotification(0f, true)
+                    is UpdateState.Idle, UpdateState.Initializing -> currentProgress = 0
                     is UpdateState.Verifying -> updateProgressNotification(it.progress)
                     is UpdateState.Updating -> updateProgressNotification(it.progress)
                     is UpdateState.Paused -> showUpdatePausedNotification()
-                    is UpdateState.Failed -> showUpdateFailedNotification(it.exception.localizedMessage)
-                    is UpdateState.Finished -> showUpdateFinishedNotification()
-                    is UpdateState.Idle -> {}
+                    is UpdateState.Failed -> {
+                        showUpdateFailedNotification(it.exception.localizedMessage)
+                        currentProgress = 0
+                    }
+                    is UpdateState.Finished -> {
+                        showUpdateFinishedNotification()
+                        currentProgress = 0
+                    }
                 }
             }
         }
@@ -183,6 +193,7 @@ class UpdateInstallerService : Service() {
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(R.drawable.ic_baseline_system_update_24)
                 .setContentTitle(getString(R.string.installation_finished))
+                .setProgress(0, 0, false)
                 .setAutoCancel(true)
                 .addAction(
                     R.drawable.ic_baseline_restart_24,
@@ -193,29 +204,49 @@ class UpdateInstallerService : Service() {
         )
     }
 
-    private fun updateProgressNotification(progress: Float, indeterminate: Boolean = false) {
-        notificationManager.notify(
-            UPDATE_INSTALLATION_NOTIFICATION_ID,
-            NotificationCompat.Builder(this, UPDATE_INSTALLATION_CHANNEL_ID)
-                .setContentIntent(activityIntent)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setSmallIcon(R.drawable.ic_baseline_system_update_24)
-                .setContentTitle(
-                    getString(
-                        R.string.installing_update_format,
-                        String.format("%.2f", progress)
+    private fun updateProgressNotification(progress: Float) {
+        if (!::updateNotificationBuilder.isInitialized) {
+            updateNotificationBuilder =
+                NotificationCompat.Builder(this, UPDATE_INSTALLATION_CHANNEL_ID)
+                    .setContentIntent(activityIntent)
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setSmallIcon(R.drawable.ic_baseline_system_update_24)
+                    .setOngoing(true)
+                    .setSilent(true)
+                    .addAction(
+                        android.R.drawable.ic_menu_close_clear_cancel,
+                        getString(android.R.string.cancel),
+                        cancelIntent
                     )
-                )
-                .setProgress(100, progress.toInt(), indeterminate)
-                .setOngoing(true)
-                .setSilent(true)
-                .addAction(
-                    android.R.drawable.ic_menu_close_clear_cancel,
-                    getString(android.R.string.cancel),
-                    cancelIntent
-                )
-                .build()
-        )
+            notificationManager.notify(
+                UPDATE_INSTALLATION_NOTIFICATION_ID,
+                updateNotificationBuilder
+                    .setContentTitle(
+                        getString(
+                            R.string.installing_update_format,
+                            String.format("%.2f", progress)
+                        )
+                    )
+                    .setProgress(100, currentProgress, false)
+                    .build()
+            )
+        }
+        val newProgress = progress.roundToInt()
+        if (newProgress != currentProgress) {
+            currentProgress = newProgress
+            notificationManager.notify(
+                UPDATE_INSTALLATION_NOTIFICATION_ID,
+                updateNotificationBuilder
+                    .setContentTitle(
+                        getString(
+                            R.string.installing_update_format,
+                            String.format("%.2f", progress)
+                        )
+                    )
+                    .setProgress(100, currentProgress, false)
+                    .build()
+            )
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? {

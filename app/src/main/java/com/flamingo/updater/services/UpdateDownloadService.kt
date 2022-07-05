@@ -67,6 +67,10 @@ class UpdateDownloadService : JobService() {
         }
     }
 
+    private lateinit var downloadNotificationBuilder: NotificationCompat.Builder
+
+    private var currentProgress = 0
+
     override fun onCreate() {
         super.onCreate()
         logD("service created")
@@ -91,7 +95,7 @@ class UpdateDownloadService : JobService() {
     }
 
     private fun setupNotificationChannel() {
-        getSystemService(NotificationManager::class.java).createNotificationChannel(
+        notificationManager.createNotificationChannel(
             NotificationChannel(
                 DOWNLOAD_NOTIFICATION_CHANNEL_ID, DOWNLOAD_NOTIFICATION_CHANNEL_NAME,
                 NotificationManager.IMPORTANCE_DEFAULT
@@ -144,21 +148,22 @@ class UpdateDownloadService : JobService() {
         downloadRepository.downloadState.collect {
             logD("New state $it")
             when (it) {
-                is DownloadState.Idle, is DownloadState.Waiting -> {}
-                is DownloadState.Downloading -> {
-                    updateProgressNotification(it.progress)
+                is DownloadState.Idle,
+                is DownloadState.Waiting -> {
+                    currentProgress = 0
                 }
+                is DownloadState.Downloading -> updateProgressNotification(it.progress)
                 is DownloadState.Failed -> {
                     showDownloadFailedNotification(it.exception?.localizedMessage)
+                    currentProgress = 0
                     notifyJobFinished(false)
                 }
                 is DownloadState.Finished -> {
                     showDownloadFinishedNotification()
+                    currentProgress = 0
                     notifyJobFinished(false)
                 }
-                is DownloadState.Retry -> {
-                    notifyJobFinished(true)
-                }
+                is DownloadState.Retry -> notifyJobFinished(true)
             }
         }
     }
@@ -192,31 +197,41 @@ class UpdateDownloadService : JobService() {
                 .setSmallIcon(R.drawable.ic_baseline_system_update_24)
                 .setContentTitle(getString(R.string.downloading_finished))
                 .setContentText(downloadRepository.downloadFileName)
-                .setProgress(100, 100, false)
+                .setProgress(0, 0, false)
                 .setAutoCancel(true)
                 .build()
         )
     }
 
     private fun updateProgressNotification(progress: Float) {
-        notificationManager.notify(
-            DOWNLOAD_NOTIFICATION_ID,
-            NotificationCompat.Builder(this, DOWNLOAD_NOTIFICATION_CHANNEL_ID)
-                .setContentIntent(activityIntent)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setSmallIcon(R.drawable.ic_baseline_system_update_24)
-                .setContentTitle(getString(R.string.downloading_update))
-                .setContentText(downloadRepository.downloadFileName)
-                .setProgress(100, progress.roundToInt(), false)
-                .setOngoing(true)
-                .setSilent(true)
-                .addAction(
-                    android.R.drawable.ic_menu_close_clear_cancel,
-                    getString(android.R.string.cancel),
-                    cancelIntent
-                )
-                .build()
-        )
+        if (!::downloadNotificationBuilder.isInitialized) {
+            downloadNotificationBuilder =
+                NotificationCompat.Builder(this, DOWNLOAD_NOTIFICATION_CHANNEL_ID)
+                    .setContentIntent(activityIntent)
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setSmallIcon(R.drawable.ic_baseline_system_update_24)
+                    .setContentTitle(getString(R.string.downloading_update))
+                    .setContentText(downloadRepository.downloadFileName)
+                    .setOngoing(true)
+                    .setSilent(true)
+                    .addAction(
+                        android.R.drawable.ic_menu_close_clear_cancel,
+                        getString(android.R.string.cancel),
+                        cancelIntent
+                    )
+            notificationManager.notify(
+                DOWNLOAD_NOTIFICATION_ID,
+                downloadNotificationBuilder.setProgress(100, currentProgress, false).build()
+            )
+        }
+        val newProgress = progress.roundToInt()
+        if (newProgress != currentProgress) {
+            currentProgress = newProgress
+            notificationManager.notify(
+                DOWNLOAD_NOTIFICATION_ID,
+                downloadNotificationBuilder.setProgress(100, currentProgress, false).build()
+            )
+        }
     }
 
     override fun onStopJob(jobParameters: JobParameters): Boolean {
