@@ -39,23 +39,22 @@ import androidx.navigation.NavHostController
 import com.flamingo.support.compose.ui.layout.CollapsingToolbarLayout
 import com.flamingo.updater.R
 import com.flamingo.updater.viewmodel.ChangelogViewModel
-import com.google.accompanist.systemuicontroller.SystemUiController
 
 import java.text.DateFormat
 
 @Composable
 fun ChangelogScreen(
-    changelogViewModel: ChangelogViewModel = hiltViewModel(),
-    systemUiController: SystemUiController,
-    navHostController: NavHostController
+    navHostController: NavHostController,
+    modifier: Modifier = Modifier,
+    changelogViewModel: ChangelogViewModel = hiltViewModel()
 ) {
     val locale = LocalContext.current.resources.configuration.locales[0]
     val changelogListState = changelogViewModel.changelog.collectAsState(emptyList())
     val changelogList by remember { changelogListState }
     CollapsingToolbarLayout(
+        modifier = modifier,
         title = stringResource(R.string.changelog),
-        onBackButtonPressed = { navHostController.popBackStack() },
-        systemUiController = systemUiController,
+        onBackButtonPressed = { navHostController.popBackStack() }
     ) {
         val dateFormatInstance = DateFormat.getDateInstance(DateFormat.DEFAULT, locale)
         if (changelogList.isEmpty()) {

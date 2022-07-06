@@ -29,13 +29,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 
-import com.google.accompanist.systemuicontroller.SystemUiController
 import com.flamingo.support.compose.ui.layout.CollapsingToolbarLayout
 import com.flamingo.support.compose.ui.preferences.DiscreteSeekBarPreference
 import com.flamingo.support.compose.ui.preferences.SwitchPreference
@@ -47,14 +47,14 @@ import com.flamingo.updater.viewmodel.SettingsViewModel
 
 @Composable
 fun SettingsScreen(
-    settingsViewModel: SettingsViewModel = hiltViewModel(),
-    systemUiController: SystemUiController,
     navController: NavHostController,
+    modifier: Modifier = Modifier,
+    settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     CollapsingToolbarLayout(
+        modifier = modifier,
         title = stringResource(R.string.settings),
-        onBackButtonPressed = { navController.popBackStack() },
-        systemUiController = systemUiController
+        onBackButtonPressed = { navController.popBackStack() }
     ) {
         item {
             val updateCheckIntervalState by settingsViewModel.updateCheckInterval.collectAsState(

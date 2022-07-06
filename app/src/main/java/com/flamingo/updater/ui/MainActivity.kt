@@ -16,6 +16,7 @@
 
 package com.flamingo.updater.ui
 
+import android.content.res.Configuration
 import android.os.Bundle
 
 import androidx.activity.ComponentActivity
@@ -24,10 +25,17 @@ import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.core.view.WindowCompat
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 
@@ -49,65 +57,82 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             AppTheme {
                 val systemUiController = rememberSystemUiController()
-                systemUiController.setSystemBarsColor(
-                    color = MaterialTheme.colorScheme.surface,
-                    darkIcons = !isSystemInDarkTheme()
-                )
-                val navHostController = rememberAnimatedNavController()
-                AnimatedNavHost(
-                    navController = navHostController,
-                    startDestination = MAIN.HOME.path,
-                    route = MAIN.path
-                ) {
-                    composable(
-                        MAIN.HOME.path,
-                        exitTransition = {
-                            when (targetState.destination.route) {
-                                MAIN.SETTINGS.path, MAIN.CHANGELOGS.path -> slideOutOfContainer(
-                                    AnimatedContentScope.SlideDirection.Start,
-                                    tween(TRANSITION_ANIMATION_DURATION)
-                                )
-                                else -> null
-                            }
-                        },
-                        popEnterTransition = {
-                            when (initialState.destination.route) {
-                                MAIN.SETTINGS.path, MAIN.CHANGELOGS.path -> slideIntoContainer(
-                                    AnimatedContentScope.SlideDirection.End,
-                                    tween(TRANSITION_ANIMATION_DURATION)
-                                )
-                                else -> null
-                            }
-                        },
+                LaunchedEffect(Unit) {
+                    systemUiController.setSystemBarsColor(
+                        color = Color.Transparent,
+                        isNavigationBarContrastEnforced = false
+                    )
+                }
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    val navHostController = rememberAnimatedNavController()
+                    val orientation = LocalConfiguration.current.orientation
+                    val isPortrait =
+                        remember(orientation) { orientation == Configuration.ORIENTATION_PORTRAIT }
+                    AnimatedNavHost(
+                        navController = navHostController,
+                        startDestination = MAIN.HOME.path,
+                        route = MAIN.path
                     ) {
-                        val color = MaterialTheme.colorScheme.surface
-                        val darkIcons = !isSystemInDarkTheme()
-                        LaunchedEffect(Unit) {
-                            // We should update system bar colors since it might have bee
-                            // changed from other screens
-                            systemUiController.setSystemBarsColor(
-                                color = color,
-                                darkIcons = darkIcons
+                        composable(
+                            MAIN.HOME.path,
+                            exitTransition = {
+                                when (targetState.destination.route) {
+                                    MAIN.SETTINGS.path, MAIN.CHANGELOGS.path -> slideOutOfContainer(
+                                        AnimatedContentScope.SlideDirection.Start,
+                                        tween(TRANSITION_ANIMATION_DURATION)
+                                    )
+                                    else -> null
+                                }
+                            },
+                            popEnterTransition = {
+                                when (initialState.destination.route) {
+                                    MAIN.SETTINGS.path, MAIN.CHANGELOGS.path -> slideIntoContainer(
+                                        AnimatedContentScope.SlideDirection.End,
+                                        tween(TRANSITION_ANIMATION_DURATION)
+                                    )
+                                    else -> null
+                                }
+                            },
+                        ) {
+                            val mainScreenState =
+                                rememberMainScreenState(navHostController = navHostController)
+                            MainScreen(
+                                mainScreenState,
+                                modifier = Modifier
+                                    .systemBarsPadding()
+                                    .fillMaxSize()
                             )
                         }
-                        val mainScreenState =
-                            rememberMainScreenState(navHostController = navHostController)
-                        MainScreen(mainScreenState)
-                    }
-                    animatedComposable(MAIN.SETTINGS.path, MAIN.HOME.path) {
-                        SettingsScreen(
-                            systemUiController = systemUiController,
-                            navController = navHostController
-                        )
-                    }
-                    animatedComposable(MAIN.CHANGELOGS.path, MAIN.HOME.path) {
-                        ChangelogScreen(
-                            systemUiController = systemUiController,
-                            navHostController = navHostController
-                        )
+                        animatedComposable(MAIN.SETTINGS.path, MAIN.HOME.path) {
+                            SettingsScreen(
+                                navController = navHostController,
+                                modifier = Modifier
+                                    .then(
+                                        if (isPortrait) {
+                                            Modifier
+                                        } else {
+                                            Modifier.navigationBarsPadding()
+                                        }
+                                    )
+                            )
+                        }
+                        animatedComposable(MAIN.CHANGELOGS.path, MAIN.HOME.path) {
+                            ChangelogScreen(
+                                navHostController = navHostController,
+                                modifier = Modifier
+                                    .then(
+                                        if (isPortrait) {
+                                            Modifier
+                                        } else {
+                                            Modifier.navigationBarsPadding()
+                                        }
+                                    )
+                            )
+                        }
                     }
                 }
             }
