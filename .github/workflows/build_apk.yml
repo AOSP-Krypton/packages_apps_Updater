@@ -79,7 +79,7 @@ jobs:
           git pull
           git add .
           if [[ `git status --porcelain` ]] ; then
-            if [ ${{ github.event_name == 'workflow_dispatch' }} ] ; then
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]] ; then
               message="${{ github.event.inputs.message }}"
             else
               message="Update Updater APK for ${{ env.GIT_LINK }}"
