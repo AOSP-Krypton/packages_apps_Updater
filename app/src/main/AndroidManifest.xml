@@ -16,7 +16,6 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.flamingo.updater"
     android:sharedUserId="android.uid.system">
 
     <protected-broadcast android:name="com.flamingo.updater.ACTION_CANCEL_DOWNLOAD" />
