@@ -268,6 +268,12 @@ fun AppBar(
         title = {},
         actions = {
             var menuExpanded by remember { mutableStateOf(false) }
+            val localUpgradeLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.OpenDocument(),
+                onResult = {
+                    if (it != null) onRequestLocalUpgrade(it)
+                }
+            )
             AppBarMenu(
                 menuIcon = {
                     Icon(
@@ -283,12 +289,6 @@ fun AppBar(
                     menuExpanded = false
                 },
                 menuItems = {
-                    val localUpgradeLauncher = rememberLauncherForActivityResult(
-                        contract = ActivityResultContracts.OpenDocument(),
-                        onResult = {
-                            if (it != null) onRequestLocalUpgrade(it)
-                        }
-                    )
                     DropdownMenuItem(
                         enabled = shouldAllowLocalUpgrade,
                         leadingIcon = {
