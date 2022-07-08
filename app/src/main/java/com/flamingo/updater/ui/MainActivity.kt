@@ -25,6 +25,7 @@ import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -61,10 +62,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             AppTheme {
                 val systemUiController = rememberSystemUiController()
-                LaunchedEffect(Unit) {
+                val isDarkTheme = isSystemInDarkTheme()
+                LaunchedEffect(isDarkTheme) {
                     systemUiController.setSystemBarsColor(
                         color = Color.Transparent,
-                        isNavigationBarContrastEnforced = false
+                        isNavigationBarContrastEnforced = false,
+                        darkIcons = !isDarkTheme
                     )
                 }
                 Surface(modifier = Modifier.fillMaxSize()) {
