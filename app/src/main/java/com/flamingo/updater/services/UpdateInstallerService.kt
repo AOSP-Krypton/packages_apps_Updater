@@ -176,7 +176,7 @@ class UpdateInstallerService : Service() {
             UPDATE_INSTALLATION_NOTIFICATION_ID,
             NotificationCompat.Builder(this, UPDATE_INSTALLATION_CHANNEL_ID)
                 .setContentIntent(activityIntent)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setSmallIcon(R.drawable.ic_baseline_system_update_24)
                 .setContentTitle(getString(R.string.installation_failed))
                 .setContentText(reason)
@@ -190,7 +190,7 @@ class UpdateInstallerService : Service() {
             UPDATE_INSTALLATION_NOTIFICATION_ID,
             NotificationCompat.Builder(this, UPDATE_INSTALLATION_CHANNEL_ID)
                 .setContentIntent(activityIntent)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setSmallIcon(R.drawable.ic_baseline_system_update_24)
                 .setContentTitle(getString(R.string.installation_finished))
                 .setProgress(0, 0, false)
