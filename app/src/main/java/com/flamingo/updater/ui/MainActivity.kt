@@ -16,7 +16,6 @@
 
 package com.flamingo.updater.ui
 
-import android.content.res.Configuration
 import android.os.Bundle
 
 import androidx.activity.ComponentActivity
@@ -25,17 +24,11 @@ import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
@@ -43,7 +36,6 @@ import androidx.navigation.NavGraphBuilder
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.flamingo.updater.ui.screens.ChangelogScreen
 import com.flamingo.updater.ui.screens.MainScreen
 import com.flamingo.updater.ui.screens.SettingsScreen
@@ -61,20 +53,8 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             AppTheme {
-                val systemUiController = rememberSystemUiController()
-                val isDarkTheme = isSystemInDarkTheme()
-                LaunchedEffect(isDarkTheme) {
-                    systemUiController.setSystemBarsColor(
-                        color = Color.Transparent,
-                        isNavigationBarContrastEnforced = false,
-                        darkIcons = !isDarkTheme
-                    )
-                }
                 Surface(modifier = Modifier.fillMaxSize()) {
                     val navHostController = rememberAnimatedNavController()
-                    val orientation = LocalConfiguration.current.orientation
-                    val isPortrait =
-                        remember(orientation) { orientation == Configuration.ORIENTATION_PORTRAIT }
                     AnimatedNavHost(
                         navController = navHostController,
                         startDestination = MAIN.HOME.path,
@@ -113,27 +93,13 @@ class MainActivity : ComponentActivity() {
                         animatedComposable(MAIN.SETTINGS.path, MAIN.HOME.path) {
                             SettingsScreen(
                                 navController = navHostController,
-                                modifier = Modifier
-                                    .then(
-                                        if (isPortrait) {
-                                            Modifier
-                                        } else {
-                                            Modifier.navigationBarsPadding()
-                                        }
-                                    )
+                                modifier = Modifier.fillMaxSize()
                             )
                         }
                         animatedComposable(MAIN.CHANGELOGS.path, MAIN.HOME.path) {
                             ChangelogScreen(
                                 navHostController = navHostController,
-                                modifier = Modifier
-                                    .then(
-                                        if (isPortrait) {
-                                            Modifier
-                                        } else {
-                                            Modifier.navigationBarsPadding()
-                                        }
-                                    )
+                                modifier = Modifier.fillMaxSize()
                             )
                         }
                     }
