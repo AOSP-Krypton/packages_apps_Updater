@@ -1,6 +1,6 @@
 plugins {
     id 'com.android.application'
-    id "com.google.protobuf" version "0.8.17"
+    id "com.google.protobuf" version "0.8.19"
     id 'kotlin-android'
     id 'kotlin-kapt'
     id 'dagger.hilt.android.plugin'
@@ -46,7 +46,7 @@ android {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:3.14.0"
+        artifact = "com.google.protobuf:protoc:21.0-rc-1"
     }
 
     generateProtoTasks {
@@ -74,16 +74,15 @@ dependencies {
     implementation "androidx.room:room-ktx:$room_version"
     implementation "androidx.room:room-runtime:$room_version"
     implementation "com.google.accompanist:accompanist-navigation-animation:$accompanist_version"
-    implementation 'com.google.android.material:material:1.6.1'
+    implementation 'com.google.android.material:material:1.7.0-alpha02'
     implementation "com.google.dagger:hilt-android:$hilt_version"
-    implementation 'com.google.protobuf:protobuf-javalite:3.18.0'
+    implementation 'com.google.protobuf:protobuf-javalite:4.0.0-rc-2'
     implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3'
     implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.9'
     implementation 'com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.9'
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-jackson:2.9.0'
     implementation 'com.squareup.retrofit2:converter-scalars:2.9.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.3'
     compileOnly files('libs/framework.jar')
     implementation files('libs/support-compose.aar')
     kapt "androidx.room:room-compiler:$room_version"
