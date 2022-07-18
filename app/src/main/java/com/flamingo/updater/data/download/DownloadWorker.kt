@@ -111,8 +111,10 @@ class DownloadWorker(
                     DownloadState.Finished
                 else
                     DownloadState.Failed(Throwable("SHA-512 hash doesn't match. Possible download corruption!"))
-            } else {
+            } else if (currentCoroutineContext().isActive) {
                 DownloadState.Retry
+            } else {
+                DownloadState.Idle
             }
         )
     }

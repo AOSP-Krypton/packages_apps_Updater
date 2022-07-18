@@ -141,8 +141,8 @@ class DownloadManager @Inject constructor(
     /**
      * Resets the manager to initial state.
      */
-    suspend fun reset() {
-        _downloadState.emit(DownloadState.Idle)
+    fun reset() {
+        _downloadState.value = DownloadState.Idle
         downloadFile = null
         downloadInfo = null
     }

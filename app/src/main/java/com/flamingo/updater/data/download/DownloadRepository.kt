@@ -166,7 +166,7 @@ class DownloadRepository @Inject constructor(
         _restoringDownloadState.value = false
     }
 
-    suspend fun resetState() {
+    fun resetState() {
         downloadManager.reset()
     }
 

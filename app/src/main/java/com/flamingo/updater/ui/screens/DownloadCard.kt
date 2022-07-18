@@ -56,20 +56,18 @@ fun DownloadCard(state: DownloadCardState) {
         body = {
             val showProgress by state.shouldShowProgress.collectAsState(initial = false)
             if (showProgress) {
-                val progressDescription by state.progressDescriptionText.collectAsState(
-                    initial = stringResource(
-                        id = R.string.downloading
-                    )
-                )
+                val progressDescription by state.progressDescriptionText.collectAsState(initial = null)
                 val progress by state.progress.collectAsState(initial = 0f)
                 Column(
                     modifier = Modifier
                         .align(Alignment.Center)
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Text(text = progressDescription)
-                    Spacer(modifier = Modifier.height(4.dp))
+                    progressDescription?.let {
+                        Text(text = it)
+                    }
                     LinearProgressIndicator(
                         modifier = Modifier.fillMaxWidth(),
                         progress = progress / 100f

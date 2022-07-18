@@ -42,16 +42,14 @@ fun UpdateCard(state: UpdateCardState) {
                     modifier = Modifier
                         .align(Alignment.Center)
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    val progressText by state.progressDescriptionText.collectAsState(
-                        stringResource(
-                            id = R.string.installing_update
-                        )
-                    )
+                    val progressText by state.progressDescriptionText.collectAsState(null)
+                    progressText?.let {
+                        Text(text = it)
+                    }
                     val progress by state.progress.collectAsState(initial = 0f)
-                    Text(text = progressText)
-                    Spacer(modifier = Modifier.height(4.dp))
                     LinearProgressIndicator(
                         modifier = Modifier.fillMaxWidth(),
                         progress = progress / 100f

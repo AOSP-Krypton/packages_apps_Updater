@@ -70,10 +70,11 @@ class DownloadCardState(
     val shouldShowProgress: Flow<Boolean>
         get() = downloadViewModel.downloadState.map { it !is DownloadState.Idle }
 
-    val progressDescriptionText: Flow<String>
+    val progressDescriptionText: Flow<String?>
         get() = downloadViewModel.downloadState.map {
             when (it) {
-                is DownloadState.Idle, is DownloadState.Waiting -> resources.getString(R.string.waiting)
+                is DownloadState.Idle -> null
+                is DownloadState.Waiting -> resources.getString(R.string.waiting)
                 is DownloadState.Downloading -> resources.getString(
                     R.string.download_text_format,
                     String.format("%.2f", it.progress)

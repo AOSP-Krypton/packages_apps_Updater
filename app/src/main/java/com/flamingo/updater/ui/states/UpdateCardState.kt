@@ -64,10 +64,11 @@ class UpdateCardState(
             }
         }
 
-    val progressDescriptionText: Flow<String>
+    val progressDescriptionText: Flow<String?>
         get() = viewModel.updateState.map {
             when (it) {
-                is UpdateState.Idle, is UpdateState.Initializing -> context.getString(R.string.initializing)
+                is UpdateState.Idle -> null
+                is UpdateState.Initializing -> context.getString(R.string.initializing)
                 is UpdateState.Verifying -> context.getString(
                     R.string.verifying_update,
                     String.format("%.2f", it.progress)
