@@ -129,7 +129,8 @@ class DownloadManager @Inject constructor(
     fun cancelDownload() {
         logD("cancelDownload, downloadState = ${downloadState.value}")
         if (downloadState.value is DownloadState.Waiting ||
-            downloadState.value is DownloadState.Downloading
+            downloadState.value is DownloadState.Downloading ||
+            downloadState.value is DownloadState.Retry
         ) {
             jobScheduler.cancel(JOB_ID)
             downloadInfo = null
