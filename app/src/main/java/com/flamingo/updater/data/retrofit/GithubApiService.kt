@@ -26,9 +26,9 @@ interface GithubApiService {
     @GET
     fun getOTAJsonContent(@Url url: String): Call<OTAJsonContent>
 
-    @GET("contents/{device}")
+    @GET("contents/{path}")
     fun getContents(
-        @Path("device") device: String,
+        @Path("path") path: String,
         @Query("ref") branch: String,
     ): Call<List<Content>>
 

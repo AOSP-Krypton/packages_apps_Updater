@@ -63,7 +63,13 @@ class UpdateChecker @Inject constructor(
                 )
             }
         }
-        val otaJsonContent = result.getOrNull() ?: return Result.success(null)
+        val otaJsonContent = result.getOrNull() ?: run {
+            return if (incremental) {
+                checkForUpdate(false)
+            } else {
+                Result.success(UpdateInfo(null, null, UpdateInfo.Type.NO_UPDATE))
+            }
+        }
         logD("incremental = $incremental, otaJsonContent = $otaJsonContent")
         val buildInfo = BuildInfo(
             version = otaJsonContent.version,
@@ -90,7 +96,7 @@ class UpdateChecker @Inject constructor(
     }
 
     private fun getChangelog(): Map<Long, String?>? {
-        val result = githubApiHelper.getChangelogs(DeviceInfo.getDevice())
+        val result = githubApiHelper.getChangelogs(DeviceInfo.getDevice(), DeviceInfo.getFlavor())
         logD("getChangelog: result = $result")
         if (result.isFailure) {
             Log.e(TAG, "Failed to get changelog", result.exceptionOrNull())

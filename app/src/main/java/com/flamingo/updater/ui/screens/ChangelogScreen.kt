@@ -59,15 +59,19 @@ fun ChangelogScreen(
         val dateFormatInstance = DateFormat.getDateInstance(DateFormat.DEFAULT, locale)
         if (changelogList.isEmpty()) {
             item {
-                Text(text = stringResource(id = R.string.changelog_unavailable))
+                Text(
+                    text = stringResource(id = R.string.changelog_unavailable), modifier = Modifier
+                        .padding(start = 24.dp)
+                        .fillMaxWidth()
+                )
             }
         } else {
             items(changelogList) {
                 SelectionContainer {
                     Text(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 24.dp),
+                            .padding(start = 24.dp)
+                            .fillMaxWidth(),
                         text = buildAnnotatedString {
                             it.second?.let { changelog ->
                                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {

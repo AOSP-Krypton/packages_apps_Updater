@@ -79,14 +79,15 @@ class GithubApiHelper @Inject constructor() {
      *   is not available). [Result] will represent a failure if an exception
      *   was thrown.
      */
-    fun getChangelogs(device: String): Result<Map<String, String?>?> =
+    fun getChangelogs(device: String, flavor: Flavor): Result<Map<String, String?>?> =
         try {
+            val path = device + if (flavor == Flavor.VANILLA) "/${flavor.value}" else ""
             val contentList: List<Content>? = githubApiService
-                .getContents(device, GIT_BRANCH)
+                .getContents(path, GIT_BRANCH)
                 .execute()
                 .body()
-                ?.filterNot {
-                    it.name == OTA_JSON || it.name == INCREMENTAL_OTA_JSON
+                ?.filter {
+                    it.name.startsWith("changelog", ignoreCase = true)
                 }
             when {
                 contentList == null -> {
@@ -119,28 +120,14 @@ class GithubApiHelper @Inject constructor() {
         private const val GIT_BRANCH = "A12.1"
 
         private const val OTA_JSON = "ota.json"
-        private const val VANILLA_OTA_JSON = "vanilla_ota.json"
         private const val INCREMENTAL_OTA_JSON = "incremental_ota.json"
-        private const val VANILLA_INCREMENTAL_OTA_JSON = "vanilla_incremental_ota.json"
 
         private const val GITHUB_API_URL = "https://api.github.com/repos/FlamingoOS-Devices/ota/"
         private const val OTA_URL = "https://raw.githubusercontent.com/FlamingoOS-Devices/ota/"
 
         private fun getUrlForDevice(device: String, flavor: Flavor, incremental: Boolean): String {
-            val jsonFileName = if (incremental) {
-                if (flavor == Flavor.VANILLA) {
-                    VANILLA_INCREMENTAL_OTA_JSON
-                } else {
-                    INCREMENTAL_OTA_JSON
-                }
-            } else {
-                if (flavor == Flavor.VANILLA) {
-                    VANILLA_OTA_JSON
-                } else {
-                    OTA_JSON
-                }
-            }
-            return "$OTA_URL$GIT_BRANCH/$device/$jsonFileName"
+            val jsonFileName = if (incremental) INCREMENTAL_OTA_JSON else OTA_JSON
+            return "$OTA_URL$GIT_BRANCH/$device/${flavor.value}/$jsonFileName"
         }
     }
 }
