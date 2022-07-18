@@ -81,7 +81,7 @@ class GithubApiHelper @Inject constructor() {
      */
     fun getChangelogs(device: String, flavor: Flavor): Result<Map<String, String?>?> =
         try {
-            val path = device + if (flavor == Flavor.VANILLA) "/${flavor.value}" else ""
+            val path = device + "/" + flavor.value
             val contentList: List<Content>? = githubApiService
                 .getContents(path, GIT_BRANCH)
                 .execute()
