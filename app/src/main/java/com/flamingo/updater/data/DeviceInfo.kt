@@ -24,16 +24,26 @@ object DeviceInfo {
     private const val PROP_VERSION = "ro.flamingo.build.version"
     private const val PROP_BUILD_VERSION_INCREMENTAL = "ro.build.version.incremental"
     private const val PROP_AB_UPDATE = "ro.build.ab_update"
+    private const val PROP_FLAVOR = "ro.flamingo.build.flavor"
 
     /**
      * Get device code name.
      */
     fun getDevice(): String = SystemProperties.get(PROP_DEVICE, "Unknown")
 
+    fun getFlavor(): Flavor {
+        return when (SystemProperties.get(PROP_FLAVOR)) {
+            Flavor.VANILLA.value -> Flavor.VANILLA
+            Flavor.GAPPS.value -> Flavor.GAPPS
+            else -> Flavor.GAPPS
+        }
+    }
+
     /**
      * Get build date as unix timestamp (milliseconds since epoch).
      */
-    fun getBuildDate(): Long = SystemProperties.get(PROP_DATE, "0").toLong() * 1000 /* convert to millis */
+    fun getBuildDate(): Long =
+        SystemProperties.get(PROP_DATE, "0").toLong() * 1000 /* convert to millis */
 
     /**
      * Get build version.
@@ -43,7 +53,13 @@ object DeviceInfo {
     /**
      * Get current incremental build version.
      */
-    fun getBuildVersionIncremental(): Long = SystemProperties.get(PROP_BUILD_VERSION_INCREMENTAL, "0").toLong()
+    fun getBuildVersionIncremental(): Long =
+        SystemProperties.get(PROP_BUILD_VERSION_INCREMENTAL, "0").toLong()
 
     fun isAB() = SystemProperties.getBoolean(PROP_AB_UPDATE, false)
+}
+
+enum class Flavor(val value: String) {
+    VANILLA("Vanilla"),
+    GAPPS("GApps")
 }

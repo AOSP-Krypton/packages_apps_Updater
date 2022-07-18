@@ -61,10 +61,10 @@ class GithubApiHelper @Inject constructor() {
      *   (Maybe null if OTA info is not available).
      *   [Result] will represent a failure if an exception was thrown.
      */
-    fun getBuildInfo(device: String, incremental: Boolean): Result<OTAJsonContent?> =
+    fun getBuildInfo(device: String, flavor: Flavor, incremental: Boolean): Result<OTAJsonContent?> =
         runCatching {
             githubApiService
-                .getOTAJsonContent(getUrlForDevice(device, incremental))
+                .getOTAJsonContent(getUrlForDevice(device, flavor, incremental))
                 .execute()
                 .body()
         }
@@ -119,12 +119,28 @@ class GithubApiHelper @Inject constructor() {
         private const val GIT_BRANCH = "A12.1"
 
         private const val OTA_JSON = "ota.json"
+        private const val VANILLA_OTA_JSON = "vanilla_ota.json"
         private const val INCREMENTAL_OTA_JSON = "incremental_ota.json"
+        private const val VANILLA_INCREMENTAL_OTA_JSON = "vanilla_incremental_ota.json"
 
         private const val GITHUB_API_URL = "https://api.github.com/repos/FlamingoOS-Devices/ota/"
         private const val OTA_URL = "https://raw.githubusercontent.com/FlamingoOS-Devices/ota/"
 
-        private fun getUrlForDevice(device: String, incremental: Boolean) =
-            "$OTA_URL$GIT_BRANCH/$device/${if (incremental) INCREMENTAL_OTA_JSON else OTA_JSON}"
+        private fun getUrlForDevice(device: String, flavor: Flavor, incremental: Boolean): String {
+            val jsonFileName = if (incremental) {
+                if (flavor == Flavor.VANILLA) {
+                    VANILLA_INCREMENTAL_OTA_JSON
+                } else {
+                    INCREMENTAL_OTA_JSON
+                }
+            } else {
+                if (flavor == Flavor.VANILLA) {
+                    VANILLA_OTA_JSON
+                } else {
+                    OTA_JSON
+                }
+            }
+            return "$OTA_URL$GIT_BRANCH/$device/$jsonFileName"
+        }
     }
 }

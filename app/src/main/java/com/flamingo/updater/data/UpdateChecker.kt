@@ -46,7 +46,11 @@ class UpdateChecker @Inject constructor(
      *   [UpdateInfo.Type] will indicate whether there is a new update or not.
      */
     fun checkForUpdate(incremental: Boolean): Result<UpdateInfo?> {
-        val result = githubApiHelper.getBuildInfo(DeviceInfo.getDevice(), incremental)
+        val result = githubApiHelper.getBuildInfo(
+            DeviceInfo.getDevice(),
+            DeviceInfo.getFlavor(),
+            incremental
+        )
         if (result.isFailure) {
             return if (incremental) {
                 // Fallback to full OTA hoping that it may work
