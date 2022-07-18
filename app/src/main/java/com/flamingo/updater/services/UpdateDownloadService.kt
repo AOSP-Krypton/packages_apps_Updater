@@ -113,7 +113,7 @@ class UpdateDownloadService : JobService() {
 
     private fun showNotification() {
         notificationManager.notify(
-            DOWNLOAD_NOTIFICATION_ID,
+            DOWNLOAD_PROGRESS_NOTIFICATION_ID,
             NotificationCompat.Builder(this, DOWNLOAD_NOTIFICATION_CHANNEL_ID)
                 .setContentIntent(activityIntent)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -220,7 +220,7 @@ class UpdateDownloadService : JobService() {
                         cancelIntent
                     )
             notificationManager.notify(
-                DOWNLOAD_NOTIFICATION_ID,
+                DOWNLOAD_PROGRESS_NOTIFICATION_ID,
                 downloadNotificationBuilder.setProgress(100, currentProgress, false).build()
             )
         }
@@ -228,7 +228,7 @@ class UpdateDownloadService : JobService() {
         if (newProgress != currentProgress) {
             currentProgress = newProgress
             notificationManager.notify(
-                DOWNLOAD_NOTIFICATION_ID,
+                DOWNLOAD_PROGRESS_NOTIFICATION_ID,
                 downloadNotificationBuilder.setProgress(100, currentProgress, false).build()
             )
         }
@@ -243,7 +243,7 @@ class UpdateDownloadService : JobService() {
         logD("service destroyed")
         unregisterReceiver(cancelBroadcastReceiver)
         serviceScope.cancel()
-        notificationManager.cancel(DOWNLOAD_NOTIFICATION_ID)
+        notificationManager.cancel(DOWNLOAD_PROGRESS_NOTIFICATION_ID)
         super.onDestroy()
     }
 
@@ -257,6 +257,7 @@ class UpdateDownloadService : JobService() {
         }
 
         private const val DOWNLOAD_NOTIFICATION_ID = 1002
+        private const val DOWNLOAD_PROGRESS_NOTIFICATION_ID = 1003
         private const val DOWNLOAD_NOTIFICATION_CHANNEL_NAME = "Download notification"
         private val DOWNLOAD_NOTIFICATION_CHANNEL_ID = UpdateDownloadService::class.qualifiedName!!
 
