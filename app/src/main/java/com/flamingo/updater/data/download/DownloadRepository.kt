@@ -103,7 +103,7 @@ class DownloadRepository @Inject constructor(
     fun triggerDownload(buildInfo: BuildInfo, downloadSource: String) {
         downloadManager.download(
             DownloadInfo(
-                downloadSource,
+                buildInfo.downloadSources[downloadSource]!!,
                 buildInfo.fileName,
                 buildInfo.fileSize,
                 buildInfo.sha512
