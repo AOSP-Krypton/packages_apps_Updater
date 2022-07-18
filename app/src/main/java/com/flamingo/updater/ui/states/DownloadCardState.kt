@@ -136,7 +136,12 @@ class DownloadCardState(
         downloadViewModel.downloadState.value.let {
             when (it) {
                 is DownloadState.Idle, is DownloadState.Failed, is DownloadState.Finished -> coroutineScope.launch {
-                    _shouldShowDownloadSourceDialog.value = true
+                    val sources = downloadSources.first()
+                    if (sources.size > 1) {
+                        _shouldShowDownloadSourceDialog.value = true
+                    } else {
+                        startDownload(sources.first())
+                    }
                 }
                 is DownloadState.Waiting, is DownloadState.Downloading, is DownloadState.Retry -> downloadViewModel.cancelDownload()
             }
