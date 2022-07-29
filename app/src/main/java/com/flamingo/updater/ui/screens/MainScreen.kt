@@ -252,6 +252,7 @@ fun MainScreen(state: MainScreenState, modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppBar(
     shouldAllowLocalUpgrade: Boolean,
