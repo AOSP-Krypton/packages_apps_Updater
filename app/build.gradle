@@ -8,12 +8,12 @@ plugins {
 
 android {
     namespace 'com.flamingo.updater'
-    compileSdk 32
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.flamingo.updater"
         minSdk 31
-        targetSdk 32
+        targetSdk 33
         versionCode 1
         versionName "1.0"
     }
@@ -63,7 +63,7 @@ protobuf {
 dependencies {
     implementation 'androidx.activity:activity-compose:1.6.0-alpha05'
     implementation "androidx.compose.animation:animation:$compose_version"
-    implementation 'androidx.compose.material3:material3:1.0.0-alpha14'
+    implementation 'androidx.compose.material3:material3:1.0.0-alpha15'
     implementation "androidx.compose.ui:ui:$compose_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
@@ -74,7 +74,7 @@ dependencies {
     implementation "androidx.room:room-ktx:$room_version"
     implementation "androidx.room:room-runtime:$room_version"
     implementation "com.google.accompanist:accompanist-navigation-animation:$accompanist_version"
-    implementation 'com.google.android.material:material:1.7.0-alpha02'
+    implementation 'com.google.android.material:material:1.7.0-alpha03'
     implementation "com.google.dagger:hilt-android:$hilt_version"
     implementation 'com.google.protobuf:protobuf-javalite:4.0.0-rc-2'
     implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3'
