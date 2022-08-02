@@ -73,6 +73,9 @@
             <meta-data
                 android:name="com.android.settings.icon"
                 android:resource="@drawable/ic_baseline_system_update_24" />
+            <meta-data
+                android:name="com.android.settings.profile"
+                android:value="primary_profile_only" />
         </activity>
 
         <receiver
