@@ -72,39 +72,36 @@ class MainRepository(
 
     val updateFinished: Flow<Boolean> = savedStateDatastore.data.map { it.updateFinished }
 
-    fun getUpdateInfo(): Flow<UpdateInfo> {
-        return updateInfoDao.getBuildInfo().combine(
-            updateInfoDao.getChangelogs()
-        ) { buildInfoEntity, changelogs ->
-            val buildInfo = buildInfoEntity?.let {
-                BuildInfo(
-                    it.version,
-                    it.date,
-                    it.preBuildIncremental,
-                    it.downloadSources,
-                    it.fileName,
-                    it.fileSize,
-                    it.sha512,
-                )
-            }
-            UpdateInfo(
-                buildInfo,
-                changelogs,
-                type = if (buildInfo == null) {
-                    UpdateInfo.Type.UNKNOWN
-                } else {
-                    if (UpdateChecker.isNewUpdate(
-                            buildInfo,
-                            /* this should not be null iff it is incremental ota */
-                            buildInfo.preBuildIncremental != null
-                        )
-                    ) {
-                        UpdateInfo.Type.NEW_UPDATE
-                    } else {
-                        UpdateInfo.Type.NO_UPDATE
-                    }
-                }
+    val updateInfo: Flow<UpdateInfo> = updateInfoDao.getBuildInfo().combine(
+        updateInfoDao.getChangelogs()
+    ) { buildInfoEntity, changelogs ->
+        val buildInfo = buildInfoEntity?.let {
+            BuildInfo(
+                it.version,
+                it.date,
+                it.preBuildIncremental,
+                it.downloadSources,
+                it.fileName,
+                it.fileSize,
+                it.sha512,
             )
+        }
+        if (buildInfo == null) {
+            UpdateInfo.Unavailable
+        } else {
+            if (UpdateChecker.isNewUpdate(
+                    buildInfo,
+                    /* this should not be null iff it is incremental ota */
+                    buildInfo.preBuildIncremental != null
+                )
+            ) {
+                UpdateInfo.NewUpdate(
+                    buildInfo = buildInfo,
+                    changelog = changelogs
+                )
+            } else {
+                UpdateInfo.NoUpdate
+            }
         }
     }
 
@@ -117,7 +114,7 @@ class MainRepository(
         deleteSavedUpdateInfo()
         clearTemporarySavedState()
         val optOutIncremental = appSettingsDataStore.data.map { it.optOutIncremental }.first()
-        val result = withContext(Dispatchers.IO) {
+        val updateInfo = withContext(Dispatchers.IO) {
             updateChecker.checkForUpdate(!optOutIncremental)
         }
         savedStateDatastore.updateData {
@@ -125,15 +122,17 @@ class MainRepository(
                 .setLastCheckedTime(System.currentTimeMillis())
                 .build()
         }
-        return if (result.isSuccess) {
-            result.getOrThrow()?.let { saveUpdateInfo(it) }
-            applicationScope.launch {
-                alarmManager.cancel(alarmIntent)
-                setRecheckAlarm(getUpdateCheckInterval())
+        return when (updateInfo) {
+            is UpdateInfo.NewUpdate -> {
+                saveUpdateInfo(updateInfo)
+                applicationScope.launch {
+                    alarmManager.cancel(alarmIntent)
+                    setRecheckAlarm(getUpdateCheckInterval())
+                }
+                Result.success(Unit)
             }
-            Result.success(Unit)
-        } else {
-            Result.failure(result.exceptionOrNull()!!)
+            is UpdateInfo.Error -> Result.failure(updateInfo.exception)
+            else -> Result.success(Unit)
         }
     }
 
@@ -162,9 +161,9 @@ class MainRepository(
         }
     }
 
-    private suspend fun saveUpdateInfo(updateInfo: UpdateInfo) {
+    private suspend fun saveUpdateInfo(newUpdateInfo: UpdateInfo.NewUpdate) {
         withContext(Dispatchers.IO) {
-            updateInfo.buildInfo?.let {
+            newUpdateInfo.buildInfo.let {
                 updateInfoDao.insertBuildInfo(
                     BuildInfoEntity(
                         version = it.version,
@@ -177,7 +176,7 @@ class MainRepository(
                     )
                 )
             }
-            updateInfo.changelog?.map {
+            newUpdateInfo.changelog?.map {
                 ChangelogEntity(
                     date = it.key,
                     changelog = it.value

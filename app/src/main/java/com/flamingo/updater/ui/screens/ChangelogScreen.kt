@@ -20,11 +20,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -49,15 +49,14 @@ fun ChangelogScreen(
     state: ChangelogScreenState = rememberChangelogScreenState()
 ) {
     val locale = LocalContext.current.resources.configuration.locales[0]
-    val changelogListState = state.changelog.collectAsState(emptyList())
-    val changelogList by remember { changelogListState }
+    val changelogs by state.changelog.collectAsState(emptyList())
     CollapsingToolbarLayout(
         modifier = modifier,
         title = stringResource(R.string.changelog),
         onBackButtonPressed = { navHostController.popBackStack() }
     ) {
         val dateFormatInstance = DateFormat.getDateInstance(DateFormat.DEFAULT, locale)
-        if (changelogList.isEmpty()) {
+        if (changelogs.isEmpty()) {
             item {
                 Text(
                     text = stringResource(id = R.string.changelog_unavailable), modifier = Modifier
@@ -66,7 +65,7 @@ fun ChangelogScreen(
                 )
             }
         } else {
-            items(changelogList) {
+            items(changelogs) {
                 SelectionContainer {
                     Text(
                         modifier = Modifier

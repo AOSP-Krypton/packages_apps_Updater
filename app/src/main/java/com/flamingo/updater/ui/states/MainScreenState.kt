@@ -111,24 +111,24 @@ class MainScreenState(
     val exportDownload: Flow<Boolean>
         get() = settingsRepository.exportDownload
 
-    private val updateInfo: Flow<UpdateInfo> = mainRepository.getUpdateInfo()
-
-    val cardState: Flow<CardState> = combine(
-        updateInfo,
-        showUpdateUI
-    ) { updateInfo, showUpdateUI ->
-        when {
-            showUpdateUI -> CardState.Update
-            updateInfo.type == UpdateInfo.Type.NEW_UPDATE -> CardState.Download
-            updateInfo.type == UpdateInfo.Type.NEW_UPDATE ||
-                    updateInfo.type == UpdateInfo.Type.NO_UPDATE -> CardState.NoUpdate
-            else -> CardState.Gone
-        }
-    }
-
     private var updateCheckJob: Job? = null
 
     private val _isCheckingForUpdate = MutableStateFlow(false)
+
+    val cardState: Flow<CardState> = combine(
+        mainRepository.updateInfo,
+        showUpdateUI,
+        _isCheckingForUpdate
+    ) { updateInfo, showUpdateUI, checkingForUpdate ->
+        when {
+            checkingForUpdate -> CardState.Gone
+            showUpdateUI -> CardState.Update
+            updateInfo is UpdateInfo.NewUpdate -> CardState.Download
+            updateInfo is UpdateInfo.NoUpdate ||
+                    updateInfo is UpdateInfo.Unavailable -> CardState.NoUpdate
+            else -> CardState.Gone
+        }
+    }
 
     val checkUpdatesContentState: Flow<CheckUpdatesContentState>
         get() = combine(

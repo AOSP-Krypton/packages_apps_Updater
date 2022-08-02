@@ -80,8 +80,8 @@ class PeriodicUpdateCheckerService : Service() {
                     R.string.auto_update_check_failed,
                     R.string.auto_update_check_failed_desc
                 )
-            val updateInfo = mainRepository.getUpdateInfo().first()
-            if (updateInfo.type == UpdateInfo.Type.NEW_UPDATE) {
+            val updateInfo = mainRepository.updateInfo.first()
+            if (updateInfo is UpdateInfo.NewUpdate) {
                 notifyUser(R.string.new_system_update, R.string.new_system_update_description)
             }
             stopSelf()
@@ -115,7 +115,8 @@ class PeriodicUpdateCheckerService : Service() {
     companion object {
         private const val UPDATE_NOTIFICATION_ID = 1001
         private const val UPDATE_NOTIFICATION_CHANNEL_NAME = "Update notification"
-        private val UPDATE_NOTIFICATION_CHANNEL_ID = PeriodicUpdateCheckerService::class.qualifiedName!!
+        private val UPDATE_NOTIFICATION_CHANNEL_ID =
+            PeriodicUpdateCheckerService::class.qualifiedName!!
 
         private const val ACTIVITY_REQUEST_CODE = 10001
     }

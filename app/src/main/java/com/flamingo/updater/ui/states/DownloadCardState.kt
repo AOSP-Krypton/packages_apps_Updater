@@ -45,7 +45,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -56,7 +55,7 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.compose.get
 
 class DownloadCardState(
-    private val mainRepository: MainRepository,
+    mainRepository: MainRepository,
     private val downloadRepository: DownloadRepository,
     private val snackbarHostState: SnackbarHostState,
     private val coroutineScope: CoroutineScope,
@@ -66,15 +65,20 @@ class DownloadCardState(
 
     val titleText: String = resources.getString(R.string.new_update_available)
 
-    val subtitleText: Flow<String> =
-        mainRepository.getUpdateInfo().map { it.buildInfo }.filterNotNull().map {
-            resources.getString(
-                R.string.new_update_description_format,
-                it.version,
-                getFormattedDate(resources.configuration.locales[0], time = Date(it.date)),
-                formatBytes(it.fileSize)
-            )
-        }
+    private val newUpdateInfo: Flow<UpdateInfo.NewUpdate> =
+        mainRepository.updateInfo.filterIsInstance()
+
+    val subtitleText: Flow<String> = newUpdateInfo.map {
+        resources.getString(
+            R.string.new_update_description_format,
+            it.buildInfo.version,
+            getFormattedDate(
+                resources.configuration.locales[0],
+                time = Date(it.buildInfo.date)
+            ),
+            formatBytes(it.buildInfo.fileSize)
+        )
+    }
 
     val shouldShowProgress: Flow<Boolean> =
         downloadRepository.downloadState.map { it !is DownloadState.Idle }
@@ -117,9 +121,8 @@ class DownloadCardState(
     val shouldShowDownloadSourceDialog: StateFlow<Boolean> =
         _shouldShowDownloadSourceDialog.asStateFlow()
 
-    val downloadSources: Flow<Set<String>> = mainRepository.getUpdateInfo()
-        .filter { it.type == UpdateInfo.Type.NEW_UPDATE }
-        .map { it.buildInfo?.downloadSources?.keys }
+    val downloadSources: Flow<Set<String>> = newUpdateInfo
+        .map { it.buildInfo.downloadSources.keys }
         .filterNotNull()
 
     init {
@@ -171,7 +174,7 @@ class DownloadCardState(
     }
 
     private suspend fun startDownload(source: String) {
-        val buildInfo = mainRepository.getUpdateInfo().firstOrNull()?.buildInfo ?: return
+        val buildInfo = newUpdateInfo.firstOrNull()?.buildInfo ?: return
         downloadRepository.triggerDownload(buildInfo, source)
     }
 

@@ -20,10 +20,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 
 import com.flamingo.updater.data.MainRepository
+import com.flamingo.updater.data.UpdateInfo
 
 import java.util.Date
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 
 import org.koin.androidx.compose.get
@@ -31,13 +34,13 @@ import org.koin.androidx.compose.get
 class ChangelogScreenState(
     mainRepository: MainRepository
 ) {
-
-    val changelog: Flow<List<Pair<Date, String?>>> = mainRepository.getUpdateInfo().map {
-        val changelog = it.changelog ?: return@map emptyList()
-        changelog.keys.sorted().map { date ->
-            Pair(Date(date), changelog[date])
+    val changelog: Flow<List<Pair<Date, String?>>> = mainRepository.updateInfo
+        .filterIsInstance<UpdateInfo.NewUpdate>()
+        .map { it.changelog }
+        .filterNotNull()
+        .map { changelogMap ->
+            changelogMap.mapKeys { Date(it.key) }.toSortedMap().toList()
         }
-    }
 }
 
 @Composable

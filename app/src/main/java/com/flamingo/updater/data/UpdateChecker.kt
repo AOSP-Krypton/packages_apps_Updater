@@ -29,17 +29,14 @@ class UpdateChecker(
     private val githubApiHelper: GithubApiHelper,
 ) {
 
-    private var updateBuildDate = 0L
-
     /**
      * Check for updates in github. This method should not
      * be called from main thread.
      *
      * @param incremental whether to fetch incremental update.
-     * @return the fetch result as a [Result] of type [UpdateInfo].
-     *   [UpdateInfo.Type] will indicate whether there is a new update or not.
+     * @return the fetch result as [UpdateInfo].
      */
-    fun checkForUpdate(incremental: Boolean): Result<UpdateInfo?> {
+    fun checkForUpdate(incremental: Boolean): UpdateInfo {
         val result = githubApiHelper.getBuildInfo(
             DeviceInfo.getDevice(),
             DeviceInfo.getFlavor(),
@@ -51,7 +48,7 @@ class UpdateChecker(
                 checkForUpdate(false)
             } else {
                 Log.e(TAG, "Update check failed", result.exceptionOrNull())
-                Result.failure(
+                UpdateInfo.Error(
                     result.exceptionOrNull()
                         ?: Throwable(context.getString(R.string.update_check_failed))
                 )
@@ -61,7 +58,7 @@ class UpdateChecker(
             return if (incremental) {
                 checkForUpdate(false)
             } else {
-                Result.success(UpdateInfo(null, null, UpdateInfo.Type.NO_UPDATE))
+                UpdateInfo.Unavailable
             }
         }
         logD("incremental = $incremental, otaJsonContent = $otaJsonContent")
@@ -74,22 +71,21 @@ class UpdateChecker(
             fileSize = otaJsonContent.fileSize,
             sha512 = otaJsonContent.sha512,
         )
-        updateBuildDate = buildInfo.date
-        val newUpdate = isNewUpdate(buildInfo, incremental)
-        return if (!newUpdate && incremental) {
-            checkForUpdate(false)
-        } else {
-            Result.success(
-                UpdateInfo(
-                    buildInfo = buildInfo,
-                    changelog = if (newUpdate) getChangelog() else null,
-                    type = if (newUpdate) UpdateInfo.Type.NEW_UPDATE else UpdateInfo.Type.NO_UPDATE
-                )
+        return if (isNewUpdate(buildInfo, incremental)) {
+            UpdateInfo.NewUpdate(
+                buildInfo = buildInfo,
+                changelog = getChangelog(buildInfo.date)
             )
+        } else {
+            if (incremental) {
+                checkForUpdate(false)
+            } else {
+                UpdateInfo.NoUpdate
+            }
         }
     }
 
-    private fun getChangelog(): Map<Long, String?>? {
+    private fun getChangelog(updateBuildDate: Long): Map<Long, String?>? {
         val result = githubApiHelper.getChangelogs(DeviceInfo.getDevice(), DeviceInfo.getFlavor())
         logD("getChangelog: result = $result")
         if (result.isFailure) {
@@ -174,11 +170,19 @@ class UpdateChecker(
             }
 
         fun isNewUpdate(buildInfo: BuildInfo, incremental: Boolean): Boolean =
-            if (incremental) {
-                buildInfo.preBuildIncremental == DeviceInfo.getBuildVersionIncremental()
-                        && (buildInfo.date) > SYSTEM_BUILD_DATE
-            } else {
-                (buildInfo.date) > SYSTEM_BUILD_DATE
-            }
+            (buildInfo.date) > SYSTEM_BUILD_DATE &&
+                    (!incremental || buildInfo.preBuildIncremental == DeviceInfo.getBuildVersionIncremental())
     }
+}
+
+sealed interface UpdateInfo {
+    object NoUpdate : UpdateInfo
+    object Unavailable : UpdateInfo
+
+    data class Error(val exception: Throwable) : UpdateInfo
+
+    data class NewUpdate(
+        val buildInfo: BuildInfo,
+        val changelog: Map<Long, String?>?
+    ) : UpdateInfo
 }
