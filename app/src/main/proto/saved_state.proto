@@ -23,4 +23,5 @@ message SavedState {
   int64 last_checked_time = 1;
   bool download_finished = 2;
   bool update_finished = 3;
+  int64 last_alarm_schedule_time = 4;
 }

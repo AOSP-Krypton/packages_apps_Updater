@@ -22,6 +22,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.SystemClock
 
+import androidx.core.content.getSystemService
+
 import com.flamingo.updater.data.room.AppDatabase
 import com.flamingo.updater.data.room.BuildInfoEntity
 import com.flamingo.updater.data.room.ChangelogEntity
@@ -35,6 +37,7 @@ import java.util.Date
 
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -54,9 +57,13 @@ class MainRepository @Inject constructor(
     private val fileExportManager: FileExportManager
 ) {
 
-    private val alarmManager: AlarmManager by lazy {
-        context.getSystemService(AlarmManager::class.java)
-    }
+    private val alarmManager = context.getSystemService<AlarmManager>()!!
+    private val alarmIntent = PendingIntent.getService(
+        context,
+        REQUEST_CODE_CHECK_UPDATE,
+        Intent(context, PeriodicUpdateCheckerService::class.java),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+    )
 
     private val savedStateDatastore = context.savedStateDataStore
     private val appSettingsDataStore = context.appSettingsDataStore
@@ -112,11 +119,7 @@ class MainRepository @Inject constructor(
      */
     suspend fun fetchUpdateInfo(): Result<Unit> {
         deleteSavedUpdateInfo()
-        savedStateDatastore.updateData {
-            it.toBuilder()
-                .clear()
-                .build()
-        }
+        clearTemporarySavedState()
         val optOutIncremental = appSettingsDataStore.data.map { it.optOutIncremental }.first()
         val result = withContext(Dispatchers.IO) {
             updateChecker.checkForUpdate(!optOutIncremental)
@@ -129,11 +132,22 @@ class MainRepository @Inject constructor(
         return if (result.isSuccess) {
             result.getOrThrow()?.let { saveUpdateInfo(it) }
             applicationScope.launch {
+                alarmManager.cancel(alarmIntent)
                 setRecheckAlarm(getUpdateCheckInterval())
             }
             Result.success(Unit)
         } else {
             Result.failure(result.exceptionOrNull()!!)
+        }
+    }
+
+    suspend fun clearTemporarySavedState() {
+        savedStateDatastore.updateData {
+            it.toBuilder()
+                .clearUpdateFinished()
+                .clearDownloadFinished()
+                .clearLastCheckedTime()
+                .build()
         }
     }
 
@@ -185,21 +199,35 @@ class MainRepository @Inject constructor(
      *
      * @param interval the interval as number of days.
      */
-    fun setRecheckAlarm(interval: Int) {
-        val alarmIntent = PendingIntent.getService(
-            context,
-            REQUEST_CODE_CHECK_UPDATE,
-            Intent(context, PeriodicUpdateCheckerService::class.java),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-        alarmManager.cancel(alarmIntent)
-        val actualInterval = TimeUnit.DAYS.toMillis(interval.toLong())
+    suspend fun setRecheckAlarm(interval: Int) {
+        val intervalMillis = TimeUnit.DAYS.toMillis(interval.toLong())
+        val lastScheduleTime = savedStateDatastore.data.map { it.lastAlarmScheduleTime }.first()
+        val triggerMillis = if (lastScheduleTime > 0) {
+            val duration = (System.currentTimeMillis() - lastScheduleTime).milliseconds
+            if (duration.isNegative()) {
+                intervalMillis
+            } else {
+                val daysLeft = interval - (duration.inWholeDays % interval)
+                if (daysLeft == 0L) {
+                    intervalMillis
+                } else {
+                    daysLeft * 24 * 60 * 60 * 1000
+                }
+            }
+        } else {
+            intervalMillis
+        }
         alarmManager.setInexactRepeating(
-            AlarmManager.ELAPSED_REALTIME_WAKEUP,
-            SystemClock.elapsedRealtime() + actualInterval,
-            actualInterval,
+            AlarmManager.ELAPSED_REALTIME,
+            SystemClock.elapsedRealtime() + triggerMillis,
+            intervalMillis,
             alarmIntent
         )
+        savedStateDatastore.updateData {
+            it.toBuilder()
+                .setLastAlarmScheduleTime(System.currentTimeMillis())
+                .build()
+        }
     }
 
     suspend fun getExportDirectoryUri() =

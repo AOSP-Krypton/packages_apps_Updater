@@ -19,10 +19,14 @@ package com.flamingo.updater
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.PowerManager
 import android.util.Log
+import androidx.core.content.getSystemService
+import com.flamingo.updater.data.MainRepository
 
 import com.flamingo.updater.data.room.AppDatabase
 import com.flamingo.updater.data.savedStateDataStore
+import com.flamingo.updater.data.settings.SettingsRepository
 import com.flamingo.updater.data.update.OTAFileManager
 
 import dagger.hilt.android.AndroidEntryPoint
@@ -34,6 +38,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @AndroidEntryPoint
 class BootCompleteReceiver : BroadcastReceiver() {
@@ -47,30 +52,43 @@ class BootCompleteReceiver : BroadcastReceiver() {
     @Inject
     lateinit var otaFileManager: OTAFileManager
 
-    override fun onReceive(context: Context?, intent: Intent?) {
-        if (context == null || intent?.action != Intent.ACTION_LOCKED_BOOT_COMPLETED) return
+    @Inject
+    lateinit var mainRepository: MainRepository
+
+    @Inject
+    lateinit var settingsRepository: SettingsRepository
+
+    override fun onReceive(context: Context, intent: Intent?) {
+        if (intent?.action != Intent.ACTION_LOCKED_BOOT_COMPLETED) return
         Log.i(TAG, "Boot completed")
-        applicationScope.launch(Dispatchers.IO) {
+        val pm = context.getSystemService<PowerManager>()!!
+        val wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKELOCK_TAG)
+            .also { it.acquire(60 * 1000) }
+        applicationScope.launch {
+            val checkInterval = settingsRepository.updateCheckInterval.first()
+            mainRepository.setRecheckAlarm(checkInterval)
             val updateFinished = context.savedStateDataStore.data.map { it.updateFinished }.first()
             if (!updateFinished) return@launch
             Log.i(TAG, "Clearing data")
-            context.savedStateDataStore.updateData {
-                it.toBuilder()
-                    .clear()
-                    .build()
+            mainRepository.clearTemporarySavedState()
+            withContext(Dispatchers.IO) {
+                appDatabase.updateInfoDao().apply {
+                    clearChangelogs()
+                    clearBuildInfo()
+                }
+                context.cacheDir.listFiles()?.forEach {
+                    it.delete()
+                }
+                otaFileManager.wipe()
             }
-            appDatabase.updateInfoDao().apply {
-                clearChangelogs()
-                clearBuildInfo()
-            }
-            context.cacheDir.listFiles()?.forEach {
-                it.delete()
-            }
-            otaFileManager.wipe()
+        }.invokeOnCompletion {
+            wakeLock.release()
         }
     }
 
     companion object {
         private const val TAG = "BootCompleteReceiver"
+
+        private const val WAKELOCK_TAG = "$TAG:WakeLock"
     }
 }

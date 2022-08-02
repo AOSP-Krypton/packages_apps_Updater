@@ -80,7 +80,6 @@
 
         <receiver
             android:name=".BootCompleteReceiver"
-            android:directBootAware="true"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
