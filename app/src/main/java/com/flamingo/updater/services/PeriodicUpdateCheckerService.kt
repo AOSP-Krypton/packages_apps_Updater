@@ -32,10 +32,6 @@ import com.flamingo.updater.data.MainRepository
 import com.flamingo.updater.data.UpdateInfo
 import com.flamingo.updater.ui.MainActivity
 
-import dagger.hilt.android.AndroidEntryPoint
-
-import javax.inject.Inject
-
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,14 +39,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-@AndroidEntryPoint
+import org.koin.android.ext.android.inject
+
 class PeriodicUpdateCheckerService : Service() {
 
+    private val mainRepository by inject<MainRepository>()
+
     private lateinit var activityIntent: PendingIntent
-
-    @Inject
-    lateinit var mainRepository: MainRepository
-
     private lateinit var serviceScope: CoroutineScope
     private lateinit var notificationManager: NotificationManagerCompat
 

@@ -33,12 +33,12 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 
 import com.flamingo.support.compose.ui.layout.CollapsingToolbarLayout
 import com.flamingo.updater.R
-import com.flamingo.updater.viewmodel.ChangelogViewModel
+import com.flamingo.updater.ui.states.ChangelogScreenState
+import com.flamingo.updater.ui.states.rememberChangelogScreenState
 
 import java.text.DateFormat
 
@@ -46,10 +46,10 @@ import java.text.DateFormat
 fun ChangelogScreen(
     navHostController: NavHostController,
     modifier: Modifier = Modifier,
-    changelogViewModel: ChangelogViewModel = hiltViewModel()
+    state: ChangelogScreenState = rememberChangelogScreenState()
 ) {
     val locale = LocalContext.current.resources.configuration.locales[0]
-    val changelogListState = changelogViewModel.changelog.collectAsState(emptyList())
+    val changelogListState = state.changelog.collectAsState(emptyList())
     val changelogList by remember { changelogListState }
     CollapsingToolbarLayout(
         modifier = modifier,

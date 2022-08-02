@@ -26,34 +26,42 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.flamingo.updater.R
 import com.flamingo.updater.data.FileCopyStatus
+import com.flamingo.updater.data.MainRepository
+import com.flamingo.updater.data.UpdateInfo
+import com.flamingo.updater.data.download.DownloadRepository
 import com.flamingo.updater.data.download.DownloadState
+import com.flamingo.updater.data.settings.SettingsRepository
+import com.flamingo.updater.data.update.UpdateRepository
 import com.flamingo.updater.data.update.UpdateState
 import com.flamingo.updater.ui.MAIN
-import com.flamingo.updater.viewmodel.DownloadViewModel
-import com.flamingo.updater.viewmodel.MainViewModel
-import com.flamingo.updater.viewmodel.SettingsViewModel
-import com.flamingo.updater.viewmodel.UpdateViewModel
 
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+
+import org.koin.androidx.compose.get
 
 class MainScreenState(
     private val coroutineScope: CoroutineScope,
-    private val mainViewModel: MainViewModel,
-    private val downloadViewModel: DownloadViewModel,
-    private val updateViewModel: UpdateViewModel,
-    private val settingsViewModel: SettingsViewModel,
+    private val mainRepository: MainRepository,
+    private val downloadRepository: DownloadRepository,
+    private val updateRepository: UpdateRepository,
+    private val settingsRepository: SettingsRepository,
     private val context: Context,
     val snackbarHostState: SnackbarHostState,
     val navHostController: NavHostController,
@@ -63,49 +71,69 @@ class MainScreenState(
         get() = context.resources.configuration.locales[0]
 
     val systemBuildDate: String
-        get() = getFormattedDate(locale, time = mainViewModel.systemBuildDate)
+        get() = getFormattedDate(locale, time = mainRepository.systemBuildDate)
 
     val systemBuildVersion: String
-        get() = mainViewModel.systemBuildVersion
+        get() = mainRepository.systemBuildVersion
 
-    val cardState: Flow<CardState>
+    private val showUpdateUI: Flow<Boolean>
         get() = combine(
-            mainViewModel.updateResultAvailable,
-            mainViewModel.updateAvailable,
-            updateViewModel.showUpdateUI
-        ) { updateResultAvailable, updateAvailable, showUpdateUI ->
-            when {
-                showUpdateUI -> CardState.Update
-                updateAvailable -> CardState.Download
-                updateResultAvailable -> CardState.NoUpdate
-                else -> CardState.Gone
-            }
+            updateRepository.updateState,
+            updateRepository.readyForUpdate,
+        ) { state, readyForUpdate ->
+            readyForUpdate || state !is UpdateState.Idle
         }
 
-    val shouldAllowUpdateCheckOrLocalUpgrade: Flow<Boolean>
-        get() = combine(
-            downloadViewModel.downloadState,
-            updateViewModel.updateState
-        ) { downloadState, updateState ->
-            downloadState !is DownloadState.Waiting &&
-                    downloadState !is DownloadState.Downloading &&
-                    updateState !is UpdateState.Initializing &&
-                    updateState !is UpdateState.Verifying &&
-                    updateState !is UpdateState.Updating
-        }
+    val shouldAllowUpdateCheckOrLocalUpgrade: Flow<Boolean> = combine(
+        downloadRepository.downloadState,
+        updateRepository.updateState
+    ) { downloadState, updateState ->
+        downloadState !is DownloadState.Waiting &&
+                downloadState !is DownloadState.Downloading &&
+                updateState !is UpdateState.Initializing &&
+                updateState !is UpdateState.Verifying &&
+                updateState !is UpdateState.Updating
+    }
 
-    val shouldAllowClearingCache: Flow<Boolean>
-        get() = downloadViewModel.downloadState.map {
-            it !is DownloadState.Waiting && it !is DownloadState.Downloading
-        }
+    val shouldAllowClearingCache: Flow<Boolean> = downloadRepository.downloadState.map {
+        it !is DownloadState.Waiting && it !is DownloadState.Downloading
+    }
 
     val showStateRestoreDialog: StateFlow<Boolean>
-        get() = downloadViewModel.restoringDownloadState
+        get() = downloadRepository.restoringDownloadState
+
+    val otaFileCopyStatus: Flow<FileCopyStatus>
+        get() = updateRepository.fileCopyStatus.receiveAsFlow()
+
+    val downloadFileExportStatus: Flow<FileCopyStatus>
+        get() = downloadRepository.fileCopyStatus.receiveAsFlow()
+
+    val exportDownload: Flow<Boolean>
+        get() = settingsRepository.exportDownload
+
+    private val updateInfo: Flow<UpdateInfo> = mainRepository.getUpdateInfo()
+
+    val cardState: Flow<CardState> = combine(
+        updateInfo,
+        showUpdateUI
+    ) { updateInfo, showUpdateUI ->
+        when {
+            showUpdateUI -> CardState.Update
+            updateInfo.type == UpdateInfo.Type.NEW_UPDATE -> CardState.Download
+            updateInfo.type == UpdateInfo.Type.NEW_UPDATE ||
+                    updateInfo.type == UpdateInfo.Type.NO_UPDATE -> CardState.NoUpdate
+            else -> CardState.Gone
+        }
+    }
+
+    private var updateCheckJob: Job? = null
+
+    private val _isCheckingForUpdate = MutableStateFlow(false)
 
     val checkUpdatesContentState: Flow<CheckUpdatesContentState>
         get() = combine(
-            mainViewModel.isCheckingForUpdate,
-            mainViewModel.lastCheckedTime
+            _isCheckingForUpdate,
+            mainRepository.lastCheckedTime.map { it.time }
         ) { isCheckingForUpdate, lastCheckedTime ->
             when {
                 isCheckingForUpdate -> CheckUpdatesContentState.Checking
@@ -116,33 +144,29 @@ class MainScreenState(
             }
         }
 
-    val otaFileCopyStatus: Flow<FileCopyStatus>
-        get() = updateViewModel.fileCopyStatus.receiveAsFlow()
-
-    val downloadFileExportStatus: Flow<FileCopyStatus>
-        get() = downloadViewModel.fileCopyStatus.receiveAsFlow()
-
-    val exportDownload: Flow<Boolean>
-        get() = settingsViewModel.exportDownload
-
-    init {
-        coroutineScope.launch {
-            for (event in mainViewModel.updateFailedEvent) {
-                coroutineScope.launch {
-                    snackbarHostState.showSnackbar(
-                        event ?: context.getString(R.string.update_check_failed)
-                    )
-                }
+    fun checkForUpdates() {
+        updateCheckJob?.let {
+            if (it.isActive) it.cancel()
+        }
+        updateCheckJob = coroutineScope.launch {
+            _isCheckingForUpdate.value = true
+            downloadRepository.resetState()
+            updateRepository.resetState()
+            val result = mainRepository.fetchUpdateInfo()
+            _isCheckingForUpdate.value = false
+            if (result.isFailure) {
+                snackbarHostState.showSnackbar(
+                    result.exceptionOrNull()?.localizedMessage
+                        ?: context.getString(R.string.update_check_failed)
+                )
             }
         }
     }
 
-    fun checkForUpdates() {
-        mainViewModel.checkForUpdates()
-    }
-
     fun startLocalUpgrade(uri: Uri) {
-        updateViewModel.setupLocalUpgrade(uri)
+        coroutineScope.launch {
+            updateRepository.copyOTAFile(uri)
+        }
     }
 
     fun openSettings() {
@@ -157,7 +181,7 @@ class MainScreenState(
 
     fun openDownloads() {
         coroutineScope.launch {
-            val uriResult = mainViewModel.getDownloadsExportDirectoryUri()
+            val uriResult = mainRepository.getExportDirectoryUri()
             if (uriResult.isSuccess) {
                 val intent = Intent(Intent.ACTION_VIEW, uriResult.getOrThrow())
                 val resolvedActivities =
@@ -177,7 +201,9 @@ class MainScreenState(
     }
 
     fun clearCache() {
-        mainViewModel.clearCache()
+        coroutineScope.launch {
+            downloadRepository.clearCache()
+        }
     }
 
     companion object {
@@ -196,29 +222,29 @@ class MainScreenState(
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun rememberMainScreenState(
-    mainViewModel: MainViewModel = hiltViewModel(),
-    downloadViewModel: DownloadViewModel = hiltViewModel(),
-    updateViewModel: UpdateViewModel = hiltViewModel(),
-    settingsViewModel: SettingsViewModel = hiltViewModel(),
+    mainRepository: MainRepository = get(),
+    downloadRepository: DownloadRepository = get(),
+    updateRepository: UpdateRepository = get(),
+    settingsRepository: SettingsRepository = get(),
     snackbarHostState: SnackbarHostState = SnackbarHostState(),
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
     context: Context = LocalContext.current,
     navHostController: NavHostController = rememberAnimatedNavController()
 ) = remember(
-    mainViewModel,
-    downloadViewModel,
-    updateViewModel,
-    settingsViewModel,
+    mainRepository,
+    downloadRepository,
+    updateRepository,
+    settingsRepository,
     coroutineScope,
     context,
     navHostController
 ) {
     MainScreenState(
         coroutineScope = coroutineScope,
-        mainViewModel = mainViewModel,
-        downloadViewModel = downloadViewModel,
-        updateViewModel = updateViewModel,
-        settingsViewModel = settingsViewModel,
+        mainRepository = mainRepository,
+        downloadRepository = downloadRepository,
+        updateRepository = updateRepository,
+        settingsRepository = settingsRepository,
         context = context,
         navHostController = navHostController,
         snackbarHostState = snackbarHostState

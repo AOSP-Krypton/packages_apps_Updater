@@ -21,17 +21,11 @@ import android.util.Log
 
 import com.flamingo.updater.R
 
-import dagger.hilt.android.qualifiers.ApplicationContext
-
 import java.util.Calendar
 import java.util.Date
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-@Singleton
-class UpdateChecker @Inject constructor(
-    @ApplicationContext private val context: Context,
+class UpdateChecker(
+    private val context: Context,
     private val githubApiHelper: GithubApiHelper,
 ) {
 

@@ -17,28 +17,26 @@
 package com.flamingo.updater.data.update
 
 import android.content.Context
-import android.os.*
+import android.os.PowerManager
+import android.os.ServiceSpecificException
+import android.os.SystemUpdateManager
+import android.os.UpdateEngine
 import android.os.UpdateEngine.ErrorCodeConstants
 import android.os.UpdateEngine.UpdateStatusConstants
+import android.os.UpdateEngineCallback
 import android.util.Log
 
 import com.flamingo.updater.R
 import com.flamingo.updater.data.BatteryMonitor
 
-import dagger.hilt.android.qualifiers.ApplicationContext
-
-import javax.inject.Inject
-import javax.inject.Singleton
-
 import kotlinx.coroutines.CoroutineScope
 
-@Singleton
-class ABUpdateManager @Inject constructor(
-    @ApplicationContext private val context: Context,
-    applicationScope: CoroutineScope,
+class ABUpdateManager(
+    private val context: Context,
     private val otaFileManager: OTAFileManager,
     private val updateEngine: UpdateEngine,
     private val batteryMonitor: BatteryMonitor,
+    applicationScope: CoroutineScope
 ) : UpdateManager(context, applicationScope, batteryMonitor) {
 
     private val updateEngineCallback = object : UpdateEngineCallback() {

@@ -21,42 +21,28 @@ import android.content.Context
 import android.content.Intent
 import android.os.PowerManager
 import android.util.Log
+
 import androidx.core.content.getSystemService
+
 import com.flamingo.updater.data.MainRepository
-
-import com.flamingo.updater.data.room.AppDatabase
-import com.flamingo.updater.data.savedStateDataStore
+import com.flamingo.updater.data.download.DownloadRepository
 import com.flamingo.updater.data.settings.SettingsRepository
-import com.flamingo.updater.data.update.OTAFileManager
-
-import dagger.hilt.android.AndroidEntryPoint
-
-import javax.inject.Inject
+import com.flamingo.updater.data.update.UpdateRepository
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-@AndroidEntryPoint
-class BootCompleteReceiver : BroadcastReceiver() {
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-    @Inject
-    lateinit var applicationScope: CoroutineScope
+class BootCompleteReceiver : BroadcastReceiver(), KoinComponent {
 
-    @Inject
-    lateinit var appDatabase: AppDatabase
-
-    @Inject
-    lateinit var otaFileManager: OTAFileManager
-
-    @Inject
-    lateinit var mainRepository: MainRepository
-
-    @Inject
-    lateinit var settingsRepository: SettingsRepository
+    private val applicationScope by inject<CoroutineScope>()
+    private val mainRepository by inject<MainRepository>()
+    private val downloadRepository by inject<DownloadRepository>()
+    private val settingsRepository by inject<SettingsRepository>()
+    private val updateRepository by inject<UpdateRepository>()
 
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent?.action != Intent.ACTION_LOCKED_BOOT_COMPLETED) return
@@ -67,20 +53,13 @@ class BootCompleteReceiver : BroadcastReceiver() {
         applicationScope.launch {
             val checkInterval = settingsRepository.updateCheckInterval.first()
             mainRepository.setRecheckAlarm(checkInterval)
-            val updateFinished = context.savedStateDataStore.data.map { it.updateFinished }.first()
+            val updateFinished = mainRepository.updateFinished.first()
             if (!updateFinished) return@launch
             Log.i(TAG, "Clearing data")
             mainRepository.clearTemporarySavedState()
-            withContext(Dispatchers.IO) {
-                appDatabase.updateInfoDao().apply {
-                    clearChangelogs()
-                    clearBuildInfo()
-                }
-                context.cacheDir.listFiles()?.forEach {
-                    it.delete()
-                }
-                otaFileManager.wipe()
-            }
+            mainRepository.deleteSavedUpdateInfo()
+            downloadRepository.clearCache()
+            updateRepository.wipeWorkspaceDirectory()
         }.invokeOnCompletion {
             wakeLock.release()
         }

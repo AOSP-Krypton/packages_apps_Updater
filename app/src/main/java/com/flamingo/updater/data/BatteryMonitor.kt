@@ -25,21 +25,14 @@ import android.util.Log
 
 import com.android.internal.R
 
-import dagger.hilt.android.qualifiers.ApplicationContext
-
-import javax.inject.Inject
-import javax.inject.Singleton
-
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Monitors the battery status.
  */
-@Singleton
-class BatteryMonitor @Inject constructor(
-    @ApplicationContext private val context: Context
-) {
+class BatteryMonitor(private val context: Context) {
+
     private val batteryManager = context.getSystemService(BatteryManager::class.java)
     private val lowBatteryPercent =
         context.resources.getInteger(R.integer.config_lowBatteryWarningLevel)

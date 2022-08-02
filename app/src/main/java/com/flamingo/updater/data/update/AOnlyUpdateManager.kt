@@ -23,21 +23,15 @@ import android.os.SystemUpdateManager
 import com.flamingo.updater.R
 import com.flamingo.updater.data.BatteryMonitor
 
-import dagger.hilt.android.qualifiers.ApplicationContext
-
 import java.io.File
-
-import javax.inject.Inject
-import javax.inject.Singleton
 
 import kotlinx.coroutines.CoroutineScope
 
-@Singleton
-class AOnlyUpdateManager @Inject constructor(
-    @ApplicationContext private val context: Context,
-    applicationScope: CoroutineScope,
+class AOnlyUpdateManager(
+    private val context: Context,
     private val otaFileManager: OTAFileManager,
-    private val batteryMonitor: BatteryMonitor
+    private val batteryMonitor: BatteryMonitor,
+    applicationScope: CoroutineScope
 ) : UpdateManager(context, applicationScope, batteryMonitor) {
 
     override val supportsUpdateSuspension = false

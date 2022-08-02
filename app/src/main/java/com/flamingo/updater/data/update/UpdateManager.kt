@@ -21,12 +21,11 @@ import android.os.PersistableBundle
 import android.os.PowerManager
 import android.os.SystemUpdateManager
 import android.util.Log
+
 import androidx.core.content.getSystemService
 
 import com.flamingo.updater.R
 import com.flamingo.updater.data.BatteryMonitor
-
-import dagger.hilt.android.qualifiers.ApplicationContext
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +33,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 sealed class UpdateManager(
-    @ApplicationContext context: Context,
+    context: Context,
     applicationScope: CoroutineScope,
     batteryMonitor: BatteryMonitor
 ) {

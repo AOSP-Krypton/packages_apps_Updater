@@ -35,10 +35,6 @@ import com.flamingo.updater.data.download.DownloadRepository
 import com.flamingo.updater.data.download.DownloadState
 import com.flamingo.updater.ui.MainActivity
 
-import dagger.hilt.android.AndroidEntryPoint
-
-import javax.inject.Inject
-
 import kotlin.math.roundToInt
 
 import kotlinx.coroutines.cancel
@@ -46,16 +42,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-@AndroidEntryPoint
+import org.koin.android.ext.android.inject
+
 class UpdateDownloadService : JobService() {
+
+    private val downloadRepository by inject<DownloadRepository>()
 
     private lateinit var serviceScope: CoroutineScope
 
     private lateinit var notificationManager: NotificationManagerCompat
     private lateinit var activityIntent: PendingIntent
-
-    @Inject
-    lateinit var downloadRepository: DownloadRepository
 
     private var jobParameters: JobParameters? = null
 

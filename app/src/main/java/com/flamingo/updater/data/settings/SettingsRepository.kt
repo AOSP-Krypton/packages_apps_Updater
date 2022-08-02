@@ -18,28 +18,18 @@ package com.flamingo.updater.data.settings
 
 import android.content.Context
 
-import dagger.hilt.android.qualifiers.ApplicationContext
-
-import javax.inject.Inject
-import javax.inject.Singleton
-
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-@Singleton
-class SettingsRepository @Inject constructor(
-    @ApplicationContext context: Context
-) {
+class SettingsRepository(context: Context) {
+
     private val appSettings = context.appSettingsDataStore
 
-    val updateCheckInterval: Flow<Int>
-        get() = appSettings.data.map { it.updateCheckInterval }
+    val updateCheckInterval: Flow<Int> = appSettings.data.map { it.updateCheckInterval }
 
-    val optOutIncremental: Flow<Boolean>
-        get() = appSettings.data.map { it.optOutIncremental }
+    val optOutIncremental: Flow<Boolean> = appSettings.data.map { it.optOutIncremental }
 
-    val exportDownload: Flow<Boolean>
-        get() = appSettings.data.map { it.exportDownload }
+    val exportDownload: Flow<Boolean> = appSettings.data.map { it.exportDownload }
 
     /**
      * Set interval (in days) for automatic update checking.

@@ -21,21 +21,15 @@ import android.net.Uri
 import android.os.FileUtils
 
 import androidx.documentfile.provider.DocumentFile
-import com.flamingo.updater.data.download.HashVerifier
 
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.flamingo.updater.data.download.HashVerifier
 
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 
-import javax.inject.Inject
-import javax.inject.Singleton
+class FileExportManager(private val context: Context) {
 
-@Singleton
-class FileExportManager @Inject constructor(
-    @ApplicationContext private val context: Context
-) {
     /**
      * Copies a file to export directory.
      *

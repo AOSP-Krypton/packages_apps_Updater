@@ -24,17 +24,10 @@ import android.system.OsConstants
 import android.util.Log
 
 import com.flamingo.updater.data.FilePermissionHelper
-import dagger.hilt.android.qualifiers.ApplicationContext
 
 import java.io.File
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-@Singleton
-class OTAFileManager @Inject constructor(
-    @ApplicationContext private val context: Context
-) {
+class OTAFileManager(private val context: Context) {
 
     private val otaPackageDir = File(Environment.getDataDirectory(), OTA_DIR)
 

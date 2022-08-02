@@ -14,31 +14,35 @@
  * limitations under the License.
  */
 
-package com.flamingo.updater.viewmodel
+package com.flamingo.updater.ui.states
 
-import androidx.lifecycle.ViewModel
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 
 import com.flamingo.updater.data.MainRepository
 
-import dagger.hilt.android.lifecycle.HiltViewModel
-
 import java.util.Date
 
-import javax.inject.Inject
-
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
-@HiltViewModel
-class ChangelogViewModel @Inject constructor(
-    private val mainRepository: MainRepository,
-) : ViewModel() {
+import org.koin.androidx.compose.get
 
-    val changelog: Flow<List<Pair<Date, String?>>>
-        get() = mainRepository.getUpdateInfo().map {
-            val changelog = it.changelog ?: return@map emptyList()
-            changelog.keys.sorted().map { date ->
-                Pair(Date(date), changelog[date])
-            }
+class ChangelogScreenState(
+    mainRepository: MainRepository
+) {
+
+    val changelog: Flow<List<Pair<Date, String?>>> = mainRepository.getUpdateInfo().map {
+        val changelog = it.changelog ?: return@map emptyList()
+        changelog.keys.sorted().map { date ->
+            Pair(Date(date), changelog[date])
         }
+    }
+}
+
+@Composable
+fun rememberChangelogScreenState(
+    mainRepository: MainRepository = get()
+) = remember(mainRepository) {
+    ChangelogScreenState(mainRepository = mainRepository)
 }

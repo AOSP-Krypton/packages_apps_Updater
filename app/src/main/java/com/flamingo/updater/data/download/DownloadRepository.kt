@@ -27,26 +27,25 @@ import com.flamingo.updater.data.room.AppDatabase
 import com.flamingo.updater.data.savedStateDataStore
 import com.flamingo.updater.data.settings.appSettingsDataStore
 
-import dagger.hilt.android.qualifiers.ApplicationContext
-
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-@Singleton
-class DownloadRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val applicationScope: CoroutineScope,
+class DownloadRepository(
+    private val context: Context,
     private val downloadManager: DownloadManager,
     private val fileExportManager: FileExportManager,
     appDatabase: AppDatabase,
+    applicationScope: CoroutineScope
 ) {
 
     private val savedStateDatastore = context.savedStateDataStore
@@ -60,8 +59,7 @@ class DownloadRepository @Inject constructor(
         get() = downloadManager.downloadFileName
 
     private val _restoringDownloadState = MutableStateFlow(false)
-    val restoringDownloadState: StateFlow<Boolean>
-        get() = _restoringDownloadState
+    val restoringDownloadState: StateFlow<Boolean> = _restoringDownloadState.asStateFlow()
 
     val fileCopyStatus = Channel<FileCopyStatus>(Channel.CONFLATED)
 
@@ -170,8 +168,8 @@ class DownloadRepository @Inject constructor(
         downloadManager.reset()
     }
 
-    fun clearCache() {
-        applicationScope.launch {
+    suspend fun clearCache() {
+        withContext(Dispatchers.IO) {
             context.cacheDir.listFiles()?.forEach {
                 it.delete()
             }

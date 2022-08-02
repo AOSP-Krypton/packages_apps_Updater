@@ -18,12 +18,25 @@ package com.flamingo.updater
 
 import android.app.Application
 
-import dagger.hilt.android.HiltAndroidApp
+import com.flamingo.updater.di.appModule
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
-@HiltAndroidApp
-class UpdaterApp: Application() {
-    val applicationScope = CoroutineScope(Dispatchers.Main)
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
+
+class UpdaterApp : Application() {
+
+    lateinit var applicationScope: CoroutineScope
+        private set
+
+    override fun onCreate() {
+        super.onCreate()
+        applicationScope = CoroutineScope(Dispatchers.Main)
+        startKoin {
+            androidContext(this@UpdaterApp)
+            modules(appModule())
+        }
+    }
 }

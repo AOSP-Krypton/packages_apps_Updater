@@ -30,13 +30,9 @@ import com.flamingo.updater.data.room.ChangelogEntity
 import com.flamingo.updater.data.settings.appSettingsDataStore
 import com.flamingo.updater.services.PeriodicUpdateCheckerService
 
-import dagger.hilt.android.qualifiers.ApplicationContext
-
 import java.util.concurrent.TimeUnit
 import java.util.Date
 
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlin.time.Duration.Companion.milliseconds
 
 import kotlinx.coroutines.CoroutineScope
@@ -48,13 +44,12 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@Singleton
-class MainRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
-    appDatabase: AppDatabase,
+class MainRepository(
+    private val context: Context,
     private val updateChecker: UpdateChecker,
     private val applicationScope: CoroutineScope,
-    private val fileExportManager: FileExportManager
+    private val fileExportManager: FileExportManager,
+    appDatabase: AppDatabase
 ) {
 
     private val alarmManager = context.getSystemService<AlarmManager>()!!
@@ -73,8 +68,9 @@ class MainRepository @Inject constructor(
 
     val systemBuildVersion: String = DeviceInfo.getBuildVersion()
 
-    val lastCheckedTime: Flow<Date>
-        get() = savedStateDatastore.data.map { Date(it.lastCheckedTime) }
+    val lastCheckedTime: Flow<Date> = savedStateDatastore.data.map { Date(it.lastCheckedTime) }
+
+    val updateFinished: Flow<Boolean> = savedStateDatastore.data.map { it.updateFinished }
 
     fun getUpdateInfo(): Flow<UpdateInfo> {
         return updateInfoDao.getBuildInfo().combine(
@@ -157,7 +153,7 @@ class MainRepository @Inject constructor(
         }.first()
     }
 
-    private suspend fun deleteSavedUpdateInfo() {
+    suspend fun deleteSavedUpdateInfo() {
         withContext(Dispatchers.IO) {
             updateInfoDao.apply {
                 clearBuildInfo()

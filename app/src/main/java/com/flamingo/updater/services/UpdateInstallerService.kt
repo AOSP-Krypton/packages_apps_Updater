@@ -36,9 +36,6 @@ import com.flamingo.updater.data.update.UpdateRepository
 import com.flamingo.updater.data.update.UpdateState
 import com.flamingo.updater.ui.MainActivity
 
-import dagger.hilt.android.AndroidEntryPoint
-
-import javax.inject.Inject
 import kotlin.math.roundToInt
 
 import kotlinx.coroutines.CoroutineScope
@@ -46,11 +43,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-@AndroidEntryPoint
+import org.koin.android.ext.android.inject
+
 class UpdateInstallerService : Service() {
 
-    @Inject
-    lateinit var updateRepository: UpdateRepository
+    private val updateRepository by inject<UpdateRepository>()
 
     private val broadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {

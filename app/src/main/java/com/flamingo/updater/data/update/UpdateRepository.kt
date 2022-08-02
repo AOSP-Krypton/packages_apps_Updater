@@ -24,26 +24,21 @@ import com.flamingo.updater.data.download.DownloadManager
 import com.flamingo.updater.data.download.DownloadState
 import com.flamingo.updater.data.savedStateDataStore
 
-import dagger.hilt.android.qualifiers.ApplicationContext
-
-import javax.inject.Inject
-import javax.inject.Singleton
-
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@Singleton
-class UpdateRepository @Inject constructor(
-    applicationScope: CoroutineScope,
-    @ApplicationContext private val context: Context,
+class UpdateRepository(
     private val updateManager: UpdateManager,
     private val otaFileManager: OTAFileManager,
     private val downloadManager: DownloadManager,
+    applicationScope: CoroutineScope,
+    context: Context
 ) {
 
     private val savedStateDataStore = context.savedStateDataStore
@@ -58,8 +53,7 @@ class UpdateRepository @Inject constructor(
         get() = updateManager.isUpdatePaused
 
     private val _readyForUpdate = MutableStateFlow(false)
-    val readyForUpdate: StateFlow<Boolean>
-        get() = _readyForUpdate
+    val readyForUpdate: StateFlow<Boolean> = _readyForUpdate.asStateFlow()
 
     val fileCopyStatus = Channel<FileCopyStatus>(Channel.CONFLATED)
 
@@ -156,6 +150,12 @@ class UpdateRepository @Inject constructor(
             it.toBuilder()
                 .clearUpdateFinished()
                 .build()
+        }
+    }
+
+    suspend fun wipeWorkspaceDirectory() {
+        withContext(Dispatchers.IO) {
+            otaFileManager.wipe()
         }
     }
 }

@@ -33,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.DialogProperties
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 
 import com.flamingo.support.compose.ui.layout.CollapsingToolbarLayout
@@ -43,13 +42,14 @@ import com.flamingo.updater.R
 import com.flamingo.updater.data.settings.DEFAULT_EXPORT_DOWNLOAD
 import com.flamingo.updater.data.settings.DEFAULT_OPT_OUT_INCREMENTAL
 import com.flamingo.updater.data.settings.DEFAULT_UPDATE_CHECK_INTERVAL
-import com.flamingo.updater.viewmodel.SettingsViewModel
+import com.flamingo.updater.ui.states.SettingsScreenState
+import com.flamingo.updater.ui.states.rememberSettingsScreenState
 
 @Composable
 fun SettingsScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    settingsViewModel: SettingsViewModel = hiltViewModel()
+    state: SettingsScreenState = rememberSettingsScreenState()
 ) {
     CollapsingToolbarLayout(
         modifier = modifier,
@@ -57,7 +57,7 @@ fun SettingsScreen(
         onBackButtonPressed = { navController.popBackStack() }
     ) {
         item {
-            val updateCheckIntervalState by settingsViewModel.updateCheckInterval.collectAsState(
+            val updateCheckIntervalState by state.updateCheckInterval.collectAsState(
                 DEFAULT_UPDATE_CHECK_INTERVAL
             )
             var updateCheckInterval by remember(updateCheckIntervalState) {
@@ -76,12 +76,12 @@ fun SettingsScreen(
                     updateCheckInterval = it
                 },
                 onProgressChangeFinished = {
-                    settingsViewModel.setUpdateCheckInterval(updateCheckInterval)
+                    state.setUpdateCheckInterval(updateCheckInterval)
                 }
             )
         }
         item {
-            val optOutIncremental by settingsViewModel.optOutIncremental.collectAsState(
+            val optOutIncremental by state.optOutIncremental.collectAsState(
                 DEFAULT_OPT_OUT_INCREMENTAL
             )
             SwitchPreference(
@@ -89,12 +89,12 @@ fun SettingsScreen(
                 summary = stringResource(R.string.opt_out_incremental_summary),
                 checked = optOutIncremental,
                 onCheckedChange = {
-                    settingsViewModel.setOptOutIncremental(it)
+                    state.setOptOutIncremental(it)
                 }
             )
         }
         item {
-            val exportDownload by settingsViewModel.exportDownload.collectAsState(
+            val exportDownload by state.exportDownload.collectAsState(
                 DEFAULT_EXPORT_DOWNLOAD
             )
             val contentResolver = LocalContext.current.contentResolver
@@ -105,7 +105,7 @@ fun SettingsScreen(
                         it,
                         Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                     )
-                    settingsViewModel.setExportDownload(true)
+                    state.setExportDownload(true)
                 }
             var showDialog by remember { mutableStateOf(false) }
             SwitchPreference(
@@ -122,7 +122,7 @@ fun SettingsScreen(
                             showDialog = true
                         }
                     } else {
-                        settingsViewModel.setExportDownload(false)
+                        state.setExportDownload(false)
                     }
                 }
             )

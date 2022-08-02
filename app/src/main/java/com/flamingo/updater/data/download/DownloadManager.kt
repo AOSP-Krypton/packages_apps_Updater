@@ -25,21 +25,14 @@ import android.util.Log
 
 import com.flamingo.updater.R
 
-import dagger.hilt.android.qualifiers.ApplicationContext
-
 import java.io.File
 import java.net.URL
-
-import javax.inject.Inject
-import javax.inject.Singleton
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-@Singleton
-class DownloadManager @Inject constructor(
-    @ApplicationContext context: Context,
-) {
+class DownloadManager(context: Context) {
+
     private val jobScheduler: JobScheduler by lazy {
         context.getSystemService(JobScheduler::class.java)
     }

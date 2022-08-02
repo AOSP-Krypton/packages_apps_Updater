@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-package com.flamingo.updater.viewmodel
+package com.flamingo.updater.ui.states
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 
 import com.flamingo.updater.data.MainRepository
 import com.flamingo.updater.data.settings.SettingsRepository
 
-import dagger.hilt.android.lifecycle.HiltViewModel
-
-import javax.inject.Inject
-
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 
-@HiltViewModel
-class SettingsViewModel @Inject constructor(
+import org.koin.androidx.compose.get
+
+class SettingsScreenState(
+    private val coroutineScope: CoroutineScope,
     private val mainRepository: MainRepository,
     private val settingsRepository: SettingsRepository
-) : ViewModel() {
+) {
 
     val updateCheckInterval: Flow<Int>
         get() = settingsRepository.updateCheckInterval
@@ -44,33 +44,35 @@ class SettingsViewModel @Inject constructor(
     val exportDownload: Flow<Boolean>
         get() = settingsRepository.exportDownload
 
-    /**
-     * Set interval (in days) for automatic update checking.
-     *
-     * @param interval the number of days after which update
-     *      availability should be checked in the background.
-     */
     fun setUpdateCheckInterval(interval: Int) {
-        viewModelScope.launch {
+        coroutineScope.launch {
             settingsRepository.setUpdateCheckInterval(interval)
             mainRepository.setRecheckAlarm(interval)
         }
     }
 
-    /**
-     * Set whether to opt out of incremental updates.
-     *
-     * @param optOut true if opting out, false otherwise.
-     */
     fun setOptOutIncremental(optOut: Boolean) {
-        viewModelScope.launch {
+        coroutineScope.launch {
             settingsRepository.setOptOutIncremental(optOut)
         }
     }
 
     fun setExportDownload(export: Boolean) {
-        viewModelScope.launch {
+        coroutineScope.launch {
             settingsRepository.setExportDownload(export)
         }
     }
+}
+
+@Composable
+fun rememberSettingsScreenState(
+    coroutineScope: CoroutineScope = rememberCoroutineScope(),
+    mainRepository: MainRepository = get(),
+    settingsRepository: SettingsRepository = get()
+) = remember(coroutineScope, mainRepository, settingsRepository) {
+    SettingsScreenState(
+        coroutineScope = coroutineScope,
+        mainRepository = mainRepository,
+        settingsRepository = settingsRepository
+    )
 }

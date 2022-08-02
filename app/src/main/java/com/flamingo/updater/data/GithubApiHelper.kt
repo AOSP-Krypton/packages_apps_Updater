@@ -23,9 +23,6 @@ import com.flamingo.updater.data.retrofit.Content
 import com.flamingo.updater.data.retrofit.OTAJsonContent
 import com.flamingo.updater.data.retrofit.GithubApiService
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.OkHttpClient
 
@@ -33,8 +30,7 @@ import retrofit2.converter.scalars.ScalarsConverterFactory
 import retrofit2.converter.jackson.JacksonConverterFactory
 import retrofit2.Retrofit
 
-@Singleton
-class GithubApiHelper @Inject constructor() {
+class GithubApiHelper {
 
     private val okHttpClient: OkHttpClient = OkHttpClient.Builder().apply {
         if (DEBUG) addInterceptor(HttpLoggingInterceptor().also {

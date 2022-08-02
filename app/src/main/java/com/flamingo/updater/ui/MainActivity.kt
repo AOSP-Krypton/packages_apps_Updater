@@ -42,9 +42,6 @@ import com.flamingo.updater.ui.screens.SettingsScreen
 import com.flamingo.updater.ui.states.rememberMainScreenState
 import com.flamingo.updater.ui.theme.AppTheme
 
-import dagger.hilt.android.AndroidEntryPoint
-
-@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalAnimationApi::class)
