@@ -20,47 +20,38 @@ import android.annotation.StringRes
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.Service
 import android.content.Intent
-import android.os.IBinder
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.lifecycleScope
 
 import com.flamingo.updater.R
 import com.flamingo.updater.data.MainRepository
 import com.flamingo.updater.data.UpdateInfo
 import com.flamingo.updater.ui.MainActivity
 
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 import org.koin.android.ext.android.inject
 
-class PeriodicUpdateCheckerService : Service() {
+class PeriodicUpdateCheckerService : LifecycleService() {
 
     private val mainRepository by inject<MainRepository>()
 
+    private lateinit var oldConfig: Configuration
     private lateinit var activityIntent: PendingIntent
-    private lateinit var serviceScope: CoroutineScope
     private lateinit var notificationManager: NotificationManagerCompat
-
-    private var updateCheckerJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
-        serviceScope = CoroutineScope(Dispatchers.Main)
+        oldConfig = resources.configuration
         notificationManager = NotificationManagerCompat.from(this)
-        notificationManager.createNotificationChannel(
-            NotificationChannel(
-                UPDATE_NOTIFICATION_CHANNEL_ID, UPDATE_NOTIFICATION_CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_HIGH
-            )
-        )
+        createNotificationChannel()
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
@@ -70,32 +61,39 @@ class PeriodicUpdateCheckerService : Service() {
             intent,
             PendingIntent.FLAG_IMMUTABLE
         )
-    }
-
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        updateCheckerJob = serviceScope.launch {
-            val result = mainRepository.fetchUpdateInfo()
-            if (result.isFailure)
+        lifecycleScope.launch {
+            mainRepository.fetchUpdateInfo().onFailure {
                 notifyUser(
                     R.string.auto_update_check_failed,
                     R.string.auto_update_check_failed_desc
                 )
+                stopSelf()
+                return@launch
+            }
             val updateInfo = mainRepository.updateInfo.first()
             if (updateInfo is UpdateInfo.NewUpdate) {
                 notifyUser(R.string.new_system_update, R.string.new_system_update_description)
             }
             stopSelf()
         }
-        return START_STICKY
     }
 
-    override fun onBind(intent: Intent): IBinder? = null
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (newConfig.diff(oldConfig) == ActivityInfo.CONFIG_LOCALE) {
+            createNotificationChannel()
+        }
+        oldConfig = newConfig
+    }
 
-    override fun onDestroy() {
-        updateCheckerJob?.cancel()
-        updateCheckerJob = null
-        serviceScope.cancel()
-        super.onDestroy()
+    private fun createNotificationChannel() {
+        notificationManager.createNotificationChannel(
+            NotificationChannel(
+                UPDATE_NOTIFICATION_CHANNEL_ID,
+                getString(R.string.update_checker_service_notification_channel_name),
+                NotificationManager.IMPORTANCE_HIGH
+            )
+        )
     }
 
     private fun notifyUser(@StringRes titleId: Int, @StringRes descId: Int) {
@@ -113,11 +111,10 @@ class PeriodicUpdateCheckerService : Service() {
     }
 
     companion object {
-        private const val UPDATE_NOTIFICATION_ID = 1001
-        private const val UPDATE_NOTIFICATION_CHANNEL_NAME = "Update notification"
+        private const val UPDATE_NOTIFICATION_ID = 1
         private val UPDATE_NOTIFICATION_CHANNEL_ID =
-            PeriodicUpdateCheckerService::class.qualifiedName!!
+            "${PeriodicUpdateCheckerService::class.qualifiedName!!}_NotificationChannel"
 
-        private const val ACTIVITY_REQUEST_CODE = 10001
+        private const val ACTIVITY_REQUEST_CODE = 1
     }
 }

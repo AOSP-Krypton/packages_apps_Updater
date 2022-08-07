@@ -19,17 +19,20 @@ package com.flamingo.updater.services
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.os.Binder
 import android.os.IBinder
 import android.util.Log
 
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.lifecycleScope
 
 import com.flamingo.updater.R
 import com.flamingo.updater.data.update.UpdateRepository
@@ -38,14 +41,11 @@ import com.flamingo.updater.ui.MainActivity
 
 import kotlin.math.roundToInt
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 import org.koin.android.ext.android.inject
 
-class UpdateInstallerService : Service() {
+class UpdateInstallerService : LifecycleService() {
 
     private val updateRepository by inject<UpdateRepository>()
 
@@ -61,32 +61,29 @@ class UpdateInstallerService : Service() {
         }
     }
 
-    private lateinit var serviceScope: CoroutineScope
+    private lateinit var oldConfig: Configuration
     private lateinit var notificationManager: NotificationManagerCompat
     private lateinit var activityIntent: PendingIntent
     private lateinit var cancelIntent: PendingIntent
     private lateinit var rebootIntent: PendingIntent
-
-    private var binder: IBinder? = null
-
     private lateinit var updateNotificationBuilder: NotificationCompat.Builder
 
+    private var binder: IBinder? = null
     private var currentProgress = 0
 
     override fun onCreate() {
-        logD("onCreate")
         super.onCreate()
-        serviceScope = CoroutineScope(Dispatchers.Main)
-        setupNotificationChannel()
+        logD("onCreate")
+        oldConfig = resources.configuration
+        notificationManager = NotificationManagerCompat.from(this)
+        createNotificationChannel()
         setupIntents()
         binder = ServiceBinder()
         registerReceiver(broadcastReceiver, IntentFilter().apply {
             addAction(ACTION_CANCEL_UPDATE)
             addAction(ACTION_REBOOT)
         })
-        serviceScope.launch {
-            listenForEvents()
-        }
+        listenForEvents()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -96,11 +93,19 @@ class UpdateInstallerService : Service() {
         return super.onStartCommand(intent, flags, startId)
     }
 
-    private fun setupNotificationChannel() {
-        notificationManager = NotificationManagerCompat.from(this)
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (newConfig.diff(oldConfig) == ActivityInfo.CONFIG_LOCALE) {
+            createNotificationChannel()
+        }
+        oldConfig = newConfig
+    }
+
+    private fun createNotificationChannel() {
         notificationManager.createNotificationChannel(
             NotificationChannel(
-                UPDATE_INSTALLATION_CHANNEL_ID, UPDATE_INSTALLATION_CHANNEL_NAME,
+                UPDATE_INSTALLATION_CHANNEL_ID,
+                getString(R.string.update_install_service_notification_channel_name),
                 NotificationManager.IMPORTANCE_DEFAULT
             )
         )
@@ -130,7 +135,7 @@ class UpdateInstallerService : Service() {
     }
 
     private fun listenForEvents() {
-        serviceScope.launch {
+        lifecycleScope.launch {
             updateRepository.updateState.collect {
                 when (it) {
                     is UpdateState.Idle, UpdateState.Initializing -> currentProgress = 0
@@ -246,7 +251,8 @@ class UpdateInstallerService : Service() {
         }
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
+    override fun onBind(intent: Intent): IBinder? {
+        super.onBind(intent)
         logD("onBind")
         return binder
     }
@@ -254,12 +260,12 @@ class UpdateInstallerService : Service() {
     override fun onDestroy() {
         logD("onDestroy")
         unregisterReceiver(broadcastReceiver)
-        serviceScope.cancel()
+        super.onDestroy()
     }
 
     private fun startUpdate() {
         logD("starting update")
-        serviceScope.launch {
+        lifecycleScope.launch {
             updateRepository.start()
         }
     }
@@ -271,11 +277,11 @@ class UpdateInstallerService : Service() {
         }
         logD("pauseOrResumeUpdate, paused = ${updateRepository.isUpdatePaused}")
         if (updateRepository.isUpdatePaused) {
-            serviceScope.launch {
+            lifecycleScope.launch {
                 updateRepository.resume()
             }
         } else {
-            serviceScope.launch {
+            lifecycleScope.launch {
                 updateRepository.pause()
             }
         }
@@ -284,7 +290,7 @@ class UpdateInstallerService : Service() {
     fun cancelUpdate() {
         logD("cancelUpdate, updating = ${updateRepository.isUpdating}")
         if (updateRepository.isUpdating) {
-            serviceScope.launch {
+            lifecycleScope.launch {
                 updateRepository.cancel()
             }
             stop()
@@ -293,7 +299,7 @@ class UpdateInstallerService : Service() {
 
     fun reboot() {
         logD("rebooting")
-        serviceScope.launch {
+        lifecycleScope.launch {
             updateRepository.reboot()
         }
     }
@@ -314,13 +320,12 @@ class UpdateInstallerService : Service() {
         private val DEBUG: Boolean
             get() = Log.isLoggable(TAG, Log.DEBUG)
 
-        private const val UPDATE_INSTALLATION_NOTIFICATION_ID = 2002
-        private val UPDATE_INSTALLATION_CHANNEL_ID = UpdateDownloadService::class.qualifiedName!!
-        private const val UPDATE_INSTALLATION_CHANNEL_NAME = "Update install"
+        private const val UPDATE_INSTALLATION_NOTIFICATION_ID = 4
+        private val UPDATE_INSTALLATION_CHANNEL_ID = "${UpdateInstallerService::class.qualifiedName!!}_NotificationChannel"
 
-        private const val ACTIVITY_REQUEST_CODE = 3001
-        private const val CANCEL_REQUEST_CODE = 30001
-        private const val REBOOT_REQUEST_CODE = 40001
+        private const val ACTIVITY_REQUEST_CODE = 1
+        private const val CANCEL_REQUEST_CODE = 2
+        private const val REBOOT_REQUEST_CODE = 3
 
         const val ACTION_START_UPDATE = "com.flamingo.updater.ACTION_START_UPDATE"
         private const val ACTION_CANCEL_UPDATE = "com.flamingo.updater.ACTION_CANCEL_UPDATE"

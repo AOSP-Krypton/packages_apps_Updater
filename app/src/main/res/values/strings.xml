@@ -22,6 +22,7 @@
     <string name="new_system_update_description">Click here to download and install the update</string>
     <string name="auto_update_check_failed">Automatic update check failed</string>
     <string name="auto_update_check_failed_desc">Please check for updates manually</string>
+    <string name="update_checker_service_notification_channel_name">Automatic update check service</string>
 
     <!-- Download -->
     <string name="downloading">Downloading</string>
@@ -107,6 +108,7 @@
     <string name="install_update">Install update</string>
     <string name="update_installation_failed_with_code">Update failed with error code <xliff:g example="20" id="error_code">%1$d</xliff:g></string>
     <string name="failed_to_verify_update_file">Failed to verify update file</string>
+    <string name="update_install_service_notification_channel_name">Update install service</string>
 
     <!-- Settings -->
     <string name="settings">Settings</string>

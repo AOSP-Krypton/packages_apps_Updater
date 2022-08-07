@@ -25,6 +25,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.util.Log
 
 import androidx.core.app.NotificationCompat
@@ -48,14 +50,6 @@ class UpdateDownloadService : JobService() {
 
     private val downloadRepository by inject<DownloadRepository>()
 
-    private lateinit var serviceScope: CoroutineScope
-
-    private lateinit var notificationManager: NotificationManagerCompat
-    private lateinit var activityIntent: PendingIntent
-
-    private var jobParameters: JobParameters? = null
-
-    private lateinit var cancelIntent: PendingIntent
     private val cancelBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             logD("onReceive")
@@ -63,16 +57,37 @@ class UpdateDownloadService : JobService() {
         }
     }
 
+    private lateinit var oldConfig: Configuration
+    private lateinit var serviceScope: CoroutineScope
+    private lateinit var notificationManager: NotificationManagerCompat
+    private lateinit var activityIntent: PendingIntent
+    private lateinit var cancelIntent: PendingIntent
     private lateinit var downloadNotificationBuilder: NotificationCompat.Builder
 
+    private var jobParameters: JobParameters? = null
     private var currentProgress = 0
 
     override fun onCreate() {
         super.onCreate()
         logD("service created")
+        oldConfig = resources.configuration
         serviceScope = CoroutineScope(Dispatchers.Main)
         notificationManager = NotificationManagerCompat.from(this)
-        setupNotificationChannel()
+        createNotificationChannel()
+        createIntents()
+        registerReceiver(cancelBroadcastReceiver, IntentFilter(CANCEL_BROADCAST_ACTION))
+    }
+
+    private fun createNotificationChannel() {
+        notificationManager.createNotificationChannel(
+            NotificationChannel(
+                DOWNLOAD_NOTIFICATION_CHANNEL_ID, DOWNLOAD_NOTIFICATION_CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+        )
+    }
+
+    private fun createIntents() {
         activityIntent = PendingIntent.getActivity(
             this,
             ACTIVITY_REQUEST_CODE,
@@ -87,16 +102,6 @@ class UpdateDownloadService : JobService() {
             Intent(CANCEL_BROADCAST_ACTION),
             PendingIntent.FLAG_IMMUTABLE
         )
-        registerReceiver(cancelBroadcastReceiver, IntentFilter(CANCEL_BROADCAST_ACTION))
-    }
-
-    private fun setupNotificationChannel() {
-        notificationManager.createNotificationChannel(
-            NotificationChannel(
-                DOWNLOAD_NOTIFICATION_CHANNEL_ID, DOWNLOAD_NOTIFICATION_CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
-        )
     }
 
     override fun onStartJob(jobParameters: JobParameters): Boolean {
@@ -105,6 +110,14 @@ class UpdateDownloadService : JobService() {
         showNotification()
         startJob()
         return true
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (newConfig.diff(oldConfig) == ActivityInfo.CONFIG_LOCALE) {
+            createNotificationChannel()
+        }
+        oldConfig = newConfig
     }
 
     private fun showNotification() {
@@ -252,13 +265,13 @@ class UpdateDownloadService : JobService() {
             if (DEBUG) Log.d(TAG, msg)
         }
 
-        private const val DOWNLOAD_NOTIFICATION_ID = 1002
-        private const val DOWNLOAD_PROGRESS_NOTIFICATION_ID = 1003
+        private const val DOWNLOAD_NOTIFICATION_ID = 2
+        private const val DOWNLOAD_PROGRESS_NOTIFICATION_ID = 3
         private const val DOWNLOAD_NOTIFICATION_CHANNEL_NAME = "Download notification"
-        private val DOWNLOAD_NOTIFICATION_CHANNEL_ID = UpdateDownloadService::class.qualifiedName!!
+        private val DOWNLOAD_NOTIFICATION_CHANNEL_ID = "${UpdateDownloadService::class.qualifiedName!!}_NotificationChannel"
 
-        private const val ACTIVITY_REQUEST_CODE = 10001
-        private const val CANCEL_REQUEST_CODE = 20001
+        private const val ACTIVITY_REQUEST_CODE = 1
+        private const val CANCEL_REQUEST_CODE = 2
 
         private const val CANCEL_BROADCAST_ACTION = "com.flamingo.updater.ACTION_CANCEL_DOWNLOAD"
     }
