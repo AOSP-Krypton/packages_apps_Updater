@@ -136,6 +136,7 @@ class ABUpdateManager(
     }
 
     override fun start() {
+        super.start()
         logD("start: updateScheduled = $updateScheduled")
         if (updateScheduled) return
         if (!batteryMonitor.isBatteryOkay()) {
@@ -174,6 +175,7 @@ class ABUpdateManager(
     }
 
     override fun pause() {
+        super.pause()
         logD("Pause: updateScheduled = $updateScheduled, isUpdatePaused = $isUpdatePaused")
         if (!updateScheduled || isUpdatePaused) return
         try {
@@ -187,6 +189,7 @@ class ABUpdateManager(
     }
 
     override fun resume() {
+        super.resume()
         logD("Resume: updateScheduled = $updateScheduled, isUpdatePaused = $isUpdatePaused")
         if (!updateScheduled || !isUpdatePaused) return
         if (!batteryMonitor.isBatteryOkay()) {
@@ -204,6 +207,7 @@ class ABUpdateManager(
     }
 
     override fun cancel() {
+        super.cancel()
         logD("Cancel")
         try {
             updateEngine.cancel()

@@ -47,6 +47,7 @@ class AOnlyUpdateManager(
     }
 
     override fun start() {
+        super.start()
         logD("start: updateScheduled = $updateScheduled")
         if (updateScheduled) return
         if (!batteryMonitor.isBatteryOkay()) {
@@ -64,7 +65,7 @@ class AOnlyUpdateManager(
         acquireLock()
         val verifyResult = runCatching {
             updateThread?.let {
-                it.run()
+                it.start()
                 it.join(UPDATE_THREAD_TIMEOUT)
             }
         }
@@ -94,6 +95,7 @@ class AOnlyUpdateManager(
     }
 
     override fun cancel() {
+        super.cancel()
         updateThread?.interrupt()
         updateThread = null
         reset()

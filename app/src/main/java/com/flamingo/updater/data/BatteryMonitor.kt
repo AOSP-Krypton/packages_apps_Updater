@@ -74,7 +74,7 @@ class BatteryMonitor(private val context: Context) {
         logD("level = $level")
         isBatteryLow = level <= lowBatteryPercent
         val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-        isChargerConnected = intent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0 != 0
+        isChargerConnected = (intent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0
         logD("charging = $isChargerConnected")
     }
 

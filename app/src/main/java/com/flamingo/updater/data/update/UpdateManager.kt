@@ -28,14 +28,15 @@ import com.flamingo.updater.R
 import com.flamingo.updater.data.BatteryMonitor
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 sealed class UpdateManager(
-    context: Context,
-    applicationScope: CoroutineScope,
-    batteryMonitor: BatteryMonitor
+    private val context: Context,
+    private val applicationScope: CoroutineScope,
+    private val batteryMonitor: BatteryMonitor
 ) {
     protected val updateStateInternal = MutableStateFlow<UpdateState>(UpdateState.Idle)
     val updateState: StateFlow<UpdateState>
@@ -58,23 +59,13 @@ sealed class UpdateManager(
     private val systemUpdateService = context.getSystemService<SystemUpdateManager>()!!
     private val powerManager = context.getSystemService<PowerManager>()!!
 
-    private val wakeLock: PowerManager.WakeLock?
-
-    init {
-        applicationScope.launch {
-            batteryMonitor.batteryState.collect {
-                if (!it && isUpdating) {
-                    cancel()
-                    logAndUpdateState(context.getString(R.string.low_battery_plug_in))
-                }
-            }
-        }
-        wakeLock = if (powerManager.isWakeLockLevelSupported(PowerManager.PARTIAL_WAKE_LOCK)) {
-            powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, UPDATE_WAKELOCK_TAG)
-        } else {
-            null
-        }
+    private val wakeLock: PowerManager.WakeLock? = if (powerManager.isWakeLockLevelSupported(PowerManager.PARTIAL_WAKE_LOCK)) {
+        powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, UPDATE_WAKELOCK_TAG)
+    } else {
+        null
     }
+
+    private var batteryMonitorJob: Job? = null
 
     protected fun acquireLock() {
         if (wakeLock != null && !wakeLock.isHeld) {
@@ -112,17 +103,45 @@ sealed class UpdateManager(
         updateStateInternal.value = UpdateState.Failed(progress, Throwable(msg))
     }
 
-    abstract fun start()
+    open fun start() {
+        monitorBattery()
+    }
 
-    abstract fun pause()
+    open fun pause() {
+        stopMonitoringBattery()
+    }
 
-    abstract fun resume()
+    open fun resume() {
+        monitorBattery()
+    }
 
-    abstract fun cancel()
+    open fun cancel() {
+        stopMonitoringBattery()
+    }
 
     abstract fun reset()
 
     abstract fun reboot()
+
+    private fun monitorBattery() {
+        if (batteryMonitorJob?.isActive != true) {
+            batteryMonitorJob = applicationScope.launch {
+                batteryMonitor.batteryState.collect {
+                    if (!it && isUpdating) {
+                        cancel()
+                        logAndUpdateState(context.getString(R.string.low_battery_plug_in))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun stopMonitoringBattery() {
+        if (batteryMonitorJob?.isActive == true) {
+            batteryMonitorJob?.cancel()
+            batteryMonitorJob = null
+        }
+    }
 
     companion object {
         internal const val TAG = "UpdateManager"

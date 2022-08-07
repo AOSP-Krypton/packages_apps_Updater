@@ -19,12 +19,14 @@ package com.flamingo.updater.ui.states
 import android.content.res.Resources
 import android.util.DataUnit
 
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 
@@ -60,7 +62,8 @@ class DownloadCardState(
     private val snackbarHostState: SnackbarHostState,
     private val coroutineScope: CoroutineScope,
     private val resources: Resources,
-    private val navHostController: NavHostController
+    private val navHostController: NavHostController,
+    private val lifecycle: Lifecycle
 ) {
 
     val titleText: String = resources.getString(R.string.new_update_available)
@@ -127,12 +130,13 @@ class DownloadCardState(
 
     init {
         coroutineScope.launch {
-            downloadRepository.downloadState.filterIsInstance<DownloadState.Failed>().collect {
-                snackbarHostState.showSnackbar(
-                    it.exception?.localizedMessage
-                        ?: resources.getString(R.string.downloading_failed),
-                    duration = SnackbarDuration.Short
-                )
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                downloadRepository.downloadState.filterIsInstance<DownloadState.Failed>().collect {
+                    snackbarHostState.showSnackbar(
+                        it.exception?.localizedMessage
+                            ?: resources.getString(R.string.downloading_failed)
+                    )
+                }
             }
         }
     }
@@ -228,14 +232,16 @@ fun rememberDownloadCardState(
     snackbarHostState: SnackbarHostState = SnackbarHostState(),
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
     resources: Resources = LocalContext.current.resources,
-    navHostController: NavHostController = rememberNavController()
+    navHostController: NavHostController = rememberNavController(),
+    lifecycle: Lifecycle = LocalLifecycleOwner.current.lifecycle
 ) = remember(
     mainRepository,
     downloadRepository,
     snackbarHostState,
     coroutineScope,
     resources,
-    navHostController
+    navHostController,
+    lifecycle
 ) {
     DownloadCardState(
         mainRepository = mainRepository,
@@ -243,6 +249,7 @@ fun rememberDownloadCardState(
         snackbarHostState = snackbarHostState,
         coroutineScope = coroutineScope,
         resources = resources,
-        navHostController = navHostController
+        navHostController = navHostController,
+        lifecycle = lifecycle
     )
 }
