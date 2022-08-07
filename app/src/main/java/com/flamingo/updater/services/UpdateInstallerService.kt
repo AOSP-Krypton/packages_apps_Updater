@@ -115,9 +115,7 @@ class UpdateInstallerService : LifecycleService() {
         activityIntent = PendingIntent.getActivity(
             this,
             ACTIVITY_REQUEST_CODE,
-            Intent(this, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-            },
+            Intent(this, MainActivity::class.java),
             PendingIntent.FLAG_IMMUTABLE
         )
         cancelIntent = PendingIntent.getBroadcast(

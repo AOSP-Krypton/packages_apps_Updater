@@ -52,9 +52,7 @@ class PeriodicUpdateCheckerService : LifecycleService() {
         oldConfig = resources.configuration
         notificationManager = NotificationManagerCompat.from(this)
         createNotificationChannel()
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }
+        val intent = Intent(this, MainActivity::class.java)
         activityIntent = PendingIntent.getActivity(
             this,
             ACTIVITY_REQUEST_CODE,
