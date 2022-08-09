@@ -22,6 +22,7 @@
     <string name="new_system_update_description">點選這裡以下載並安裝更新</string>
     <string name="auto_update_check_failed">自動檢測更新失敗</string>
     <string name="auto_update_check_failed_desc">請手動檢查更新</string>
+    <string name="update_checker_service_notification_channel_name">自動檢測更新服務</string>
 
     <!-- Download -->
     <string name="downloading">下載中</string>
@@ -104,6 +105,7 @@
     <string name="install_update">安裝更新</string>
     <string name="update_installation_failed_with_code">更新失敗，錯誤碼: <xliff:g example="20" id="error_code">%1$d</xliff:g></string>
     <string name="failed_to_verify_update_file">驗證更新包失敗</string>
+    <string name="update_install_service_notification_channel_name">安裝更新服務</string>
 
     <!-- Settings -->
     <string name="settings">更新設定</string>

@@ -15,13 +15,14 @@
      limitations under the License.
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="app_name">Flamingo 更新</string>
+    <string name="app_name">更新</string>
 
     <!-- Update checker -->
     <string name="new_system_update">检测到新的系统更新</string>
     <string name="new_system_update_description">点击这里以下载并安装更新</string>
     <string name="auto_update_check_failed">自动检测更新失败</string>
     <string name="auto_update_check_failed_desc">请手动检查更新</string>
+    <string name="update_checker_service_notification_channel_name">自动检测更新服务</string>
 
     <!-- Download -->
     <string name="downloading">下载中</string>
@@ -104,6 +105,7 @@
     <string name="install_update">安装更新</string>
     <string name="update_installation_failed_with_code">更新失败，错误码: <xliff:g example="20" id="error_code">%1$d</xliff:g></string>
     <string name="failed_to_verify_update_file">验证更新包失败</string>
+    <string name="update_install_service_notification_channel_name">安装更新服务</string>
 
     <!-- Settings -->
     <string name="settings">更新设置</string>
