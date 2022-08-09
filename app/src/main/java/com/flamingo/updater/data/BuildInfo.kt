@@ -19,7 +19,7 @@ package com.flamingo.updater.data
 data class BuildInfo(
     val version: String,
     val date: Long,
-    val preBuildIncremental: Long?,
+    val preBuildIncremental: String?,
     val downloadSources: Map<String, String>,
     val fileName: String,
     val fileSize: Long,

@@ -28,7 +28,7 @@ data class BuildInfoEntity(
     var version: String,
     var date: Long,
     @ColumnInfo(name = "pre_build_incremental")
-    var preBuildIncremental: Long?,
+    var preBuildIncremental: String?,
     @ColumnInfo(name = "download_sources")
     var downloadSources: Map<String, String>,
     @ColumnInfo(name = "file_name")

@@ -42,7 +42,9 @@ class UpdateChecker(
             DeviceInfo.getFlavor(),
             incremental
         )
+        logD("GET result = $result")
         if (result.isFailure) {
+            Log.e(TAG, "Primary update check failed", result.exceptionOrNull())
             return if (incremental) {
                 // Fallback to full OTA hoping that it may work
                 checkForUpdate(false)
@@ -56,6 +58,7 @@ class UpdateChecker(
         }
         val otaJsonContent = result.getOrNull() ?: run {
             return if (incremental) {
+                logD("Incremental ota json unavailable, checking full ota")
                 checkForUpdate(false)
             } else {
                 UpdateInfo.Unavailable
@@ -78,6 +81,7 @@ class UpdateChecker(
             )
         } else {
             if (incremental) {
+                logD("New incremental update not found, checking full ota")
                 checkForUpdate(false)
             } else {
                 UpdateInfo.NoUpdate
@@ -170,7 +174,7 @@ class UpdateChecker(
             }
 
         fun isNewUpdate(buildInfo: BuildInfo, incremental: Boolean): Boolean =
-            (buildInfo.date) > SYSTEM_BUILD_DATE &&
+            (buildInfo.date) >= SYSTEM_BUILD_DATE &&
                     (!incremental || buildInfo.preBuildIncremental == DeviceInfo.getBuildVersionIncremental())
     }
 }

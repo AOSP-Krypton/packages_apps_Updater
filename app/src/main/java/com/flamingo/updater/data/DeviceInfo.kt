@@ -53,8 +53,8 @@ object DeviceInfo {
     /**
      * Get current incremental build version.
      */
-    fun getBuildVersionIncremental(): Long =
-        SystemProperties.get(PROP_BUILD_VERSION_INCREMENTAL, "0").toLong()
+    fun getBuildVersionIncremental(): String =
+        SystemProperties.get(PROP_BUILD_VERSION_INCREMENTAL, "0")
 
     fun isAB() = SystemProperties.getBoolean(PROP_AB_UPDATE, false)
 }

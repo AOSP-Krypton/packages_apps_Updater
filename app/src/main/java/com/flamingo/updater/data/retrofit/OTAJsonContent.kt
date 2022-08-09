@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 data class OTAJsonContent(
     @JsonProperty("version") val version: String,
     @JsonProperty("date") val date: Long,
-    @JsonProperty("pre_build_incremental") val preBuildIncremental: Long?,
+    @JsonProperty("pre_build_incremental") val preBuildIncremental: String?,
     @JsonProperty("download_sources") val downloadSources: Map<String, String>,
     @JsonProperty("file_name") val fileName: String,
     @JsonProperty("file_size") val fileSize: Long,
