@@ -37,11 +37,7 @@ class UpdateChecker(
      * @return the fetch result as [UpdateInfo].
      */
     fun checkForUpdate(incremental: Boolean): UpdateInfo {
-        val result = githubApiHelper.getBuildInfo(
-            DeviceInfo.getDevice(),
-            DeviceInfo.getFlavor(),
-            incremental
-        )
+        val result = githubApiHelper.getBuildInfo(Device, BuildFlavor, incremental)
         logD("GET result = $result")
         if (result.isFailure) {
             Log.e(TAG, "Primary update check failed", result.exceptionOrNull())
@@ -90,7 +86,7 @@ class UpdateChecker(
     }
 
     private fun getChangelog(updateBuildDate: Long): Map<Long, String?>? {
-        val result = githubApiHelper.getChangelogs(DeviceInfo.getDevice(), DeviceInfo.getFlavor())
+        val result = githubApiHelper.getChangelogs(Device, BuildFlavor)
         logD("getChangelog: result = $result")
         if (result.isFailure) {
             Log.e(TAG, "Failed to get changelog", result.exceptionOrNull())
@@ -106,7 +102,7 @@ class UpdateChecker(
             val date = getDateFromChangelogFileName(name)?.time ?: return@forEach
             if (compareTillDay(
                     date,
-                    SYSTEM_BUILD_DATE
+                    BuildDate
                 ) < 0 /* Changelog is older than current build */
                 || compareTillDay(
                     date,
@@ -124,9 +120,6 @@ class UpdateChecker(
         private const val TAG = "UpdateChecker"
         private val DEBUG: Boolean
             get() = Log.isLoggable(TAG, Log.DEBUG)
-
-        private val SYSTEM_BUILD_DATE: Long
-            get() = DeviceInfo.getBuildDate()
 
         // Changelog files are of the format changelog_2021_12_30
         private const val CHANGELOG_FILE_NAME_PREFIX = "changelog_"
@@ -174,8 +167,8 @@ class UpdateChecker(
             }
 
         fun isNewUpdate(buildInfo: BuildInfo, incremental: Boolean): Boolean =
-            (buildInfo.date) >= SYSTEM_BUILD_DATE &&
-                    (!incremental || buildInfo.preBuildIncremental == DeviceInfo.getBuildVersionIncremental())
+            (buildInfo.date) >= BuildDate &&
+                    (!incremental || buildInfo.preBuildIncremental == BuildVersionIncremental)
     }
 }
 

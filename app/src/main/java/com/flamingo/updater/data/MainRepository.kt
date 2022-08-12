@@ -64,9 +64,9 @@ class MainRepository(
     private val appSettingsDataStore = context.appSettingsDataStore
     private val updateInfoDao = appDatabase.updateInfoDao()
 
-    val systemBuildDate = Date(DeviceInfo.getBuildDate())
+    val systemBuildDate = Date(BuildDate)
 
-    val systemBuildVersion: String = DeviceInfo.getBuildVersion()
+    val systemBuildVersion: String = BuildVersion
 
     val lastCheckedTime: Flow<Date> = savedStateDatastore.data.map { Date(it.lastCheckedTime) }
 

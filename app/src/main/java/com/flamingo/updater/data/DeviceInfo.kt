@@ -18,46 +18,34 @@ package com.flamingo.updater.data
 
 import android.os.SystemProperties
 
-object DeviceInfo {
-    private const val PROP_DEVICE = "ro.flamingo.build.device"
-    private const val PROP_DATE = "ro.build.date.utc"
-    private const val PROP_VERSION = "ro.flamingo.build.version"
-    private const val PROP_BUILD_VERSION_INCREMENTAL = "ro.build.version.incremental"
-    private const val PROP_AB_UPDATE = "ro.build.ab_update"
-    private const val PROP_FLAVOR = "ro.flamingo.build.flavor"
+private const val PROP_DEVICE = "ro.flamingo.build.device"
+private const val PROP_DATE = "ro.build.date.utc"
+private const val PROP_VERSION = "ro.flamingo.build.version"
+private const val PROP_BUILD_VERSION_INCREMENTAL = "ro.build.version.incremental"
+private const val PROP_AB_UPDATE = "ro.build.ab_update"
+private const val PROP_FLAVOR = "ro.flamingo.build.flavor"
 
-    /**
-     * Get device code name.
-     */
-    fun getDevice(): String = SystemProperties.get(PROP_DEVICE, "Unknown")
+val Device: String
+    get() = SystemProperties.get(PROP_DEVICE, "Unknown")
 
-    fun getFlavor(): Flavor {
-        return when (SystemProperties.get(PROP_FLAVOR)) {
-            Flavor.VANILLA.value -> Flavor.VANILLA
-            Flavor.GAPPS.value -> Flavor.GAPPS
-            else -> Flavor.GAPPS
-        }
+val BuildFlavor: Flavor
+    get() = when (SystemProperties.get(PROP_FLAVOR)) {
+        Flavor.VANILLA.value -> Flavor.VANILLA
+        Flavor.GAPPS.value -> Flavor.GAPPS
+        else -> Flavor.GAPPS
     }
 
-    /**
-     * Get build date as unix timestamp (milliseconds since epoch).
-     */
-    fun getBuildDate(): Long =
-        SystemProperties.get(PROP_DATE, "0").toLong() * 1000 /* convert to millis */
+val BuildDate: Long
+    get() = SystemProperties.get(PROP_DATE, "0").toLong() * 1000 /* convert to millis */
 
-    /**
-     * Get build version.
-     */
-    fun getBuildVersion(): String = SystemProperties.get(PROP_VERSION, "0.0")
+val BuildVersion: String
+    get() = SystemProperties.get(PROP_VERSION, "0.0")
 
-    /**
-     * Get current incremental build version.
-     */
-    fun getBuildVersionIncremental(): String =
-        SystemProperties.get(PROP_BUILD_VERSION_INCREMENTAL, "0")
+val BuildVersionIncremental: String
+    get() = SystemProperties.get(PROP_BUILD_VERSION_INCREMENTAL, "0")
 
-    fun isAB() = SystemProperties.getBoolean(PROP_AB_UPDATE, false)
-}
+val AB: Boolean
+    get() = SystemProperties.getBoolean(PROP_AB_UPDATE, false)
 
 enum class Flavor(val value: String) {
     VANILLA("Vanilla"),

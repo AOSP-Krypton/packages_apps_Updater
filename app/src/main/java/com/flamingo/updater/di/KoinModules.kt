@@ -21,8 +21,8 @@ import android.os.UpdateEngine
 import androidx.room.Room
 
 import com.flamingo.updater.UpdaterApp
+import com.flamingo.updater.data.AB
 import com.flamingo.updater.data.BatteryMonitor
-import com.flamingo.updater.data.DeviceInfo
 import com.flamingo.updater.data.FileExportManager
 import com.flamingo.updater.data.GithubApiHelper
 import com.flamingo.updater.data.MainRepository
@@ -63,7 +63,7 @@ fun appModule() = module {
     }
 
     single {
-        if (DeviceInfo.isAB()) {
+        if (AB) {
             ABUpdateManager(
                 context = androidContext(),
                 otaFileManager = get(),
