@@ -16,18 +16,18 @@
 
 package com.flamingo.updater.ui.states
 
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
-import android.os.IBinder
 
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 
 import com.flamingo.updater.R
+import com.flamingo.support.compose.runtime.rememberBoundService
 import com.flamingo.updater.data.update.UpdateRepository
 import com.flamingo.updater.data.update.UpdateState
 import com.flamingo.updater.services.UpdateInstallerService
@@ -161,26 +161,12 @@ fun rememberUpdateCardState(
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
     context: Context = LocalContext.current
 ): UpdateCardState {
-    var updateInstallerService by remember { mutableStateOf<UpdateInstallerService?>(null) }
-    val serviceConnection = remember {
-        object : ServiceConnection {
-            override fun onServiceConnected(name: ComponentName, service: IBinder) {
-                updateInstallerService = (service as UpdateInstallerService.ServiceBinder).service
-            }
-
-            override fun onServiceDisconnected(name: ComponentName) {
-                updateInstallerService = null
-            }
+    val updateInstallerService = rememberBoundService(
+        intent = Intent(context, UpdateInstallerService::class.java),
+        obtainService = {
+            (it as UpdateInstallerService.ServiceBinder).service
         }
-    }
-    DisposableEffect(context) {
-        context.bindService(
-            Intent(context, UpdateInstallerService::class.java),
-            serviceConnection,
-            Context.BIND_AUTO_CREATE
-        )
-        onDispose { context.unbindService(serviceConnection) }
-    }
+    )
     return remember(
         updateRepository,
         snackbarHostState,
