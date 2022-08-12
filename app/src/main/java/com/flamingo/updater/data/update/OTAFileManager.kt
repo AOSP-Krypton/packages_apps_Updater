@@ -23,7 +23,8 @@ import android.os.FileUtils
 import android.system.OsConstants
 import android.util.Log
 
-import com.flamingo.updater.data.FilePermissionHelper
+import com.flamingo.updater.data.util.checkRWX
+import com.flamingo.updater.data.util.setPermissions
 
 import java.io.File
 
@@ -38,7 +39,7 @@ class OTAFileManager(private val context: Context) {
         if (!otaPackageDir.isDirectory) {
             throw RuntimeException("OTA package dir ${otaPackageDir.absolutePath} does not exist")
         }
-        if (!FilePermissionHelper.checkRWX(otaPackageDir)) {
+        if (!checkRWX(otaPackageDir)) {
             throw RuntimeException("No rwx permission for ${otaPackageDir.absolutePath}")
         }
     }
@@ -58,7 +59,7 @@ class OTAFileManager(private val context: Context) {
             context.contentResolver.openInputStream(uri)?.use { inStream ->
                 otaFile.outputStream().use { outStream ->
                     FileUtils.copy(inStream, outStream)
-                    val errno: Int = FilePermissionHelper.setPermissions(
+                    val errno: Int = setPermissions(
                         otaFile,
                         OsConstants.S_IRWXU or OsConstants.S_IRWXG,
                     )

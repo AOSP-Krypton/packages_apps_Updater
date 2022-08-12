@@ -24,6 +24,7 @@ import android.os.Bundle
 import android.util.Log
 
 import com.flamingo.updater.R
+import com.flamingo.updater.data.util.verifyHash
 
 import java.io.File
 import java.net.URL
@@ -171,8 +172,7 @@ class DownloadManager(context: Context) {
                 file.delete()
                 return
             }
-            val hashMatch = HashVerifier.verifyHash(file, sha512)
-            if (!hashMatch) {
+            if (!verifyHash(file, sha512)) {
                 Log.w(TAG, "File hash does not match, deleting")
                 file.delete()
                 return

@@ -22,7 +22,7 @@ import android.os.FileUtils
 
 import androidx.documentfile.provider.DocumentFile
 
-import com.flamingo.updater.data.download.HashVerifier
+import com.flamingo.updater.data.util.verifyHash
 
 import java.io.File
 import java.io.FileInputStream
@@ -46,8 +46,7 @@ class FileExportManager(private val context: Context) {
             try {
                 context.contentResolver.openInputStream(it.uri)?.use { firstFileInputStream ->
                     FileInputStream(inputFile).use { secondFileInputStream ->
-                        val hashVerified =
-                            HashVerifier.verifyHash(firstFileInputStream, secondFileInputStream)
+                        val hashVerified = verifyHash(firstFileInputStream, secondFileInputStream)
                         if (hashVerified) {
                             return Result.success(Unit)
                         } else {

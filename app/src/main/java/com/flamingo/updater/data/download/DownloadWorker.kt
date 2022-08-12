@@ -18,6 +18,7 @@ package com.flamingo.updater.data.download
 
 import android.util.DataUnit
 import android.util.Log
+import com.flamingo.updater.data.util.verifyHash
 
 import java.io.File
 import java.io.FileOutputStream
@@ -46,12 +47,6 @@ class DownloadWorker(
 ) {
     private var downloadedBytes = 0L
 
-    /**
-     * Run the worker.
-     *
-     * @return a [DownloadResult] indicating whether the work failed,
-     *   or whether we should retry, or whether it was a success.
-     */
     suspend fun run(updateCallback: (DownloadState) -> Unit) {
         logD("run")
         var resume = downloadFile.isFile
@@ -60,7 +55,7 @@ class DownloadWorker(
             logD("downloadedBytes = $downloadedBytes")
             if (downloadedBytes == fileSize) {
                 logD("file already downloaded, verifying hash")
-                if (HashVerifier.verifyHash(downloadFile, fileHash)) {
+                if (verifyHash(downloadFile, fileHash)) {
                     updateCallback(DownloadState.Finished)
                     return
                 }
@@ -107,7 +102,7 @@ class DownloadWorker(
         }
         updateCallback(
             if (downloadedBytes == fileSize) {
-                if (HashVerifier.verifyHash(downloadFile, fileHash))
+                if (verifyHash(downloadFile, fileHash))
                     DownloadState.Finished
                 else
                     DownloadState.Failed(Throwable("SHA-512 hash doesn't match. Possible download corruption!"))
