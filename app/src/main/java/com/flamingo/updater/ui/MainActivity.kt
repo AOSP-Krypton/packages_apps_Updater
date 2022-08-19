@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavBackStackEntry
@@ -80,6 +81,11 @@ class MainActivity : ComponentActivity() {
                         ) {
                             val mainScreenState =
                                 rememberMainScreenState(navHostController = navHostController)
+                            LaunchedEffect(intent) {
+                                intent?.data?.let {
+                                    mainScreenState.startLocalUpgrade(it)
+                                }
+                            }
                             MainScreen(
                                 mainScreenState,
                                 modifier = Modifier
