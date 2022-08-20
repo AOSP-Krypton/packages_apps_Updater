@@ -113,5 +113,9 @@
     <string name="update_check_interval_summary">設定檢查系統更新頻率（天）</string>
     <string name="opt_out_incremental_title">全量更新</string>
     <string name="opt_out_incremental_summary">只下載安裝全量包\n若您已 ROOT 或以任何形式修改過系統，則您必須開啟此選項。</string>
+    <string name="redirecting">重定向中</string>
+    <string name="confirm_to_open_file_picker">點選 "確定" 按鈕，開啟檔案管理器，選擇要匯出下載的資料夾。注意：需要 DocumentsUI</string>
+    <string name="export_downloads">匯出下載</string>
+    <string name="export_downloads_summary">自動匯出下載的 OTA 檔案</string>
 
 </resources>
