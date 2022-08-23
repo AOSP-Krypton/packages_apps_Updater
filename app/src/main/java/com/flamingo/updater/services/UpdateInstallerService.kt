@@ -44,9 +44,9 @@ import com.flamingo.updater.ui.MainActivity
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
-
 import kotlinx.coroutines.launch
 
 import org.koin.android.ext.android.inject
@@ -207,7 +207,7 @@ class UpdateInstallerService : LifecycleService() {
             UPDATE_INSTALLATION_NOTIFICATION_ID,
             NotificationCompat.Builder(this, UPDATE_INSTALLATION_CHANNEL_ID)
                 .setContentIntent(activityIntent)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setSmallIcon(R.drawable.ic_baseline_system_update_24)
                 .setContentTitle(getString(R.string.installation_failed))
                 .setContentText(reason)
@@ -221,7 +221,7 @@ class UpdateInstallerService : LifecycleService() {
             UPDATE_INSTALLATION_NOTIFICATION_ID,
             NotificationCompat.Builder(this, UPDATE_INSTALLATION_CHANNEL_ID)
                 .setContentIntent(activityIntent)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setSmallIcon(R.drawable.ic_baseline_system_update_24)
                 .setContentTitle(getString(R.string.installation_finished))
                 .setProgress(0, 0, false)
@@ -313,6 +313,8 @@ class UpdateInstallerService : LifecycleService() {
                     getString(R.string.reboot),
                     rebootIntent
                 )
+                .setOnlyAlertOnce(true)
+                .setOngoing(true)
                 .build()
         )
     }

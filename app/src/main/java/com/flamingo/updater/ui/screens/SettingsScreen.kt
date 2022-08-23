@@ -156,7 +156,6 @@ fun SettingsScreen(
         }
         item {
             val autoRebootDelay by state.autoRebootDelay.collectAsState(initial = DEFAULT_AUTO_REBOOT_DELAY)
-
             ListPreference(
                 title = stringResource(id = R.string.auto_reboot_delay),
                 summary = stringResource(id = R.string.auto_reboot_delay_summary),
