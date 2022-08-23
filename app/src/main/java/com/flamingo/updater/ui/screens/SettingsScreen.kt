@@ -31,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.integerArrayResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.DialogProperties
@@ -155,11 +156,12 @@ fun SettingsScreen(
         }
         item {
             val autoRebootDelay by state.autoRebootDelay.collectAsState(initial = DEFAULT_AUTO_REBOOT_DELAY)
+
             ListPreference(
                 title = stringResource(id = R.string.auto_reboot_delay),
                 summary = stringResource(id = R.string.auto_reboot_delay_summary),
                 entries = stringArrayResource(id = R.array.auto_reboot_delay_entries)
-                    .zip(stringArrayResource(id = R.array.auto_reboot_delay_values))
+                    .zip(integerArrayResource(id = R.array.auto_reboot_delay_values).toTypedArray())
                     .map {
                         Entry(it.first, it.second.toLong())
                     },
