@@ -31,14 +31,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 
 import com.flamingo.support.compose.ui.layout.CollapsingToolbarLayout
 import com.flamingo.support.compose.ui.preferences.DiscreteSeekBarPreference
+import com.flamingo.support.compose.ui.preferences.Entry
+import com.flamingo.support.compose.ui.preferences.ListPreference
 import com.flamingo.support.compose.ui.preferences.SwitchPreference
 import com.flamingo.updater.R
+import com.flamingo.updater.data.settings.DEFAULT_AUTO_REBOOT
+import com.flamingo.updater.data.settings.DEFAULT_AUTO_REBOOT_DELAY
 import com.flamingo.updater.data.settings.DEFAULT_EXPORT_DOWNLOAD
 import com.flamingo.updater.data.settings.DEFAULT_OPT_OUT_INCREMENTAL
 import com.flamingo.updater.data.settings.DEFAULT_UPDATE_CHECK_INTERVAL
@@ -135,6 +140,33 @@ fun SettingsScreen(
                 onDismissRequest = {
                     showDialog = false
                 },
+            )
+        }
+        item {
+            val autoReboot by state.autoReboot.collectAsState(initial = DEFAULT_AUTO_REBOOT)
+            SwitchPreference(
+                title = stringResource(id = R.string.auto_reboot),
+                summary = stringResource(id = R.string.auto_reboot_summary),
+                checked = autoReboot,
+                onCheckedChange = {
+                    state.setAutoReboot(it)
+                }
+            )
+        }
+        item {
+            val autoRebootDelay by state.autoRebootDelay.collectAsState(initial = DEFAULT_AUTO_REBOOT_DELAY)
+            ListPreference(
+                title = stringResource(id = R.string.auto_reboot_delay),
+                summary = stringResource(id = R.string.auto_reboot_delay_summary),
+                entries = stringArrayResource(id = R.array.auto_reboot_delay_entries)
+                    .zip(stringArrayResource(id = R.array.auto_reboot_delay_values))
+                    .map {
+                        Entry(it.first, it.second.toLong())
+                    },
+                value = autoRebootDelay,
+                onEntrySelected = {
+                    state.setAutoRebootDelay(it)
+                }
             )
         }
     }

@@ -146,11 +146,8 @@ class UpdateCardState(
     }
 
     private fun startUpdate() {
-        context.startService(
-            Intent(context, UpdateInstallerService::class.java).apply {
-                action = UpdateInstallerService.ACTION_START_UPDATE
-            }
-        )
+        context.startService(Intent(context, UpdateInstallerService::class.java))
+        service?.startUpdate()
     }
 }
 

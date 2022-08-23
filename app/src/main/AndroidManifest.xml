@@ -18,10 +18,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:sharedUserId="android.uid.system">
 
-    <protected-broadcast android:name="com.flamingo.updater.ACTION_CANCEL_DOWNLOAD" />
-    <protected-broadcast android:name="com.flamingo.updater.ACTION_START_UPDATE" />
-    <protected-broadcast android:name="com.flamingo.updater.ACTION_CANCEL_UPDATE" />
-    <protected-broadcast android:name="com.flamingo.updater.ACTION_REBOOT" />
+    <protected-broadcast android:name="com.flamingo.updater.action.CANCEL_UPDATE" />
+    <protected-broadcast android:name="com.flamingo.updater.action.REBOOT" />
+    <protected-broadcast android:name="com.flamingo.updater.action.CANCEL_AUTO_REBOOT" />
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.INTERNET" />

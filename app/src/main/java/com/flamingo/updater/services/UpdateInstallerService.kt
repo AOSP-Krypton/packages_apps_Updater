@@ -27,6 +27,7 @@ import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Binder
 import android.os.IBinder
+import android.os.SystemClock
 import android.util.Log
 
 import androidx.core.app.NotificationCompat
@@ -35,11 +36,16 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 
 import com.flamingo.updater.R
+import com.flamingo.updater.data.settings.SettingsRepository
 import com.flamingo.updater.data.update.UpdateRepository
 import com.flamingo.updater.data.update.UpdateState
 import com.flamingo.updater.ui.MainActivity
 
 import kotlin.math.roundToInt
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.first
 
 import kotlinx.coroutines.launch
 
@@ -48,28 +54,29 @@ import org.koin.android.ext.android.inject
 class UpdateInstallerService : LifecycleService() {
 
     private val updateRepository by inject<UpdateRepository>()
+    private val settingsRepository by inject<SettingsRepository>()
 
     private val broadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            val action = intent?.action ?: return
-            logD("onReceive, action = $action")
-            if (action == ACTION_CANCEL_UPDATE) {
-                cancelUpdate()
-            } else if (action == ACTION_REBOOT) {
-                reboot()
+        override fun onReceive(context: Context, intent: Intent?) {
+            when (intent?.action) {
+                ACTION_CANCEL_UPDATE -> cancelUpdate()
+                ACTION_REBOOT -> reboot()
+                ACTION_CANCEL_AUTO_REBOOT -> cancelAutoReboot()
             }
         }
     }
 
     private lateinit var oldConfig: Configuration
+    private lateinit var binder: IBinder
     private lateinit var notificationManager: NotificationManagerCompat
     private lateinit var activityIntent: PendingIntent
     private lateinit var cancelIntent: PendingIntent
     private lateinit var rebootIntent: PendingIntent
+    private lateinit var cancelAutoRebootIntent: PendingIntent
     private lateinit var updateNotificationBuilder: NotificationCompat.Builder
 
-    private var binder: IBinder? = null
     private var currentProgress = 0
+    private var autoRebootTimer: Job? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -82,15 +89,10 @@ class UpdateInstallerService : LifecycleService() {
         registerReceiver(broadcastReceiver, IntentFilter().apply {
             addAction(ACTION_CANCEL_UPDATE)
             addAction(ACTION_REBOOT)
+            addAction(ACTION_CANCEL_AUTO_REBOOT)
         })
         listenForEvents()
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_START_UPDATE) {
-            startUpdate()
-        }
-        return super.onStartCommand(intent, flags, startId)
+        observeAutoRebootSettings()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -116,19 +118,25 @@ class UpdateInstallerService : LifecycleService() {
             this,
             ACTIVITY_REQUEST_CODE,
             Intent(this, MainActivity::class.java),
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         cancelIntent = PendingIntent.getBroadcast(
             this,
             CANCEL_REQUEST_CODE,
             Intent(ACTION_CANCEL_UPDATE),
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         rebootIntent = PendingIntent.getBroadcast(
             this,
             REBOOT_REQUEST_CODE,
             Intent(ACTION_REBOOT),
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        cancelAutoRebootIntent = PendingIntent.getBroadcast(
+            this,
+            CANCEL_AUTO_REBOOT_REQUEST_CODE,
+            Intent(ACTION_CANCEL_AUTO_REBOOT),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
     }
 
@@ -145,12 +153,35 @@ class UpdateInstallerService : LifecycleService() {
                         currentProgress = 0
                     }
                     is UpdateState.Finished -> {
-                        showUpdateFinishedNotification()
                         currentProgress = 0
+                        lifecycleScope.launch {
+                            val autoReboot = settingsRepository.autoReboot.first()
+                            if (autoReboot) {
+                                startAutoRebootTimer()
+                            } else {
+                                showUpdateFinishedNotification()
+                            }
+                        }
                     }
                 }
             }
         }
+    }
+
+    private fun observeAutoRebootSettings() {
+        lifecycleScope.launch {
+            settingsRepository.autoReboot.collect {
+                if (!it && autoRebootTimer?.isActive == true) {
+                    cancelAutoReboot()
+                }
+            }
+        }
+    }
+
+    private fun cancelAutoReboot() {
+        if (autoRebootTimer?.isActive != true) return
+        autoRebootTimer?.cancel()
+        autoRebootTimer = null
     }
 
     private fun showUpdatePausedNotification() {
@@ -249,7 +280,50 @@ class UpdateInstallerService : LifecycleService() {
         }
     }
 
-    override fun onBind(intent: Intent): IBinder? {
+    private fun startAutoRebootTimer() {
+        if (autoRebootTimer?.isActive == true) return
+        autoRebootTimer = lifecycleScope.launch {
+            var durationLeft = settingsRepository.autoRebootDelay.first().milliseconds
+            var currentTime = SystemClock.uptimeMillis()
+            do {
+                val duration = SystemClock.uptimeMillis() - currentTime
+                durationLeft -= duration.milliseconds
+                updateAutoRebootNotification(durationLeft)
+                currentTime = SystemClock.uptimeMillis()
+            } while (durationLeft.isPositive())
+        }
+    }
+
+    private fun updateAutoRebootNotification(duration: Duration) {
+        notificationManager.notify(
+            UPDATE_INSTALLATION_NOTIFICATION_ID,
+            NotificationCompat.Builder(this, UPDATE_INSTALLATION_CHANNEL_ID)
+                .setContentIntent(activityIntent)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setSmallIcon(R.drawable.ic_baseline_system_update_24)
+                .setContentTitle(getString(R.string.installation_finished))
+                .setContentText(getString(R.string.auto_reboot_notification_text, durationToString(duration)))
+                .addAction(
+                    R.drawable.baseline_cancel_24,
+                    getString(android.R.string.cancel),
+                    cancelAutoRebootIntent
+                )
+                .addAction(
+                    R.drawable.ic_baseline_restart_24,
+                    getString(R.string.reboot),
+                    rebootIntent
+                )
+                .build()
+        )
+    }
+
+    private fun durationToString(duration: Duration): String {
+        return duration.toComponents { minutes, seconds, _ ->
+            "$minutes:${if (seconds < 10) "0$seconds" else seconds}"
+        }
+    }
+
+    override fun onBind(intent: Intent): IBinder {
         super.onBind(intent)
         logD("onBind")
         return binder
@@ -261,7 +335,7 @@ class UpdateInstallerService : LifecycleService() {
         super.onDestroy()
     }
 
-    private fun startUpdate() {
+    fun startUpdate() {
         logD("starting update")
         lifecycleScope.launch {
             updateRepository.start()
@@ -324,10 +398,11 @@ class UpdateInstallerService : LifecycleService() {
         private const val ACTIVITY_REQUEST_CODE = 1
         private const val CANCEL_REQUEST_CODE = 2
         private const val REBOOT_REQUEST_CODE = 3
+        private const val CANCEL_AUTO_REBOOT_REQUEST_CODE = 4
 
-        const val ACTION_START_UPDATE = "com.flamingo.updater.ACTION_START_UPDATE"
-        private const val ACTION_CANCEL_UPDATE = "com.flamingo.updater.ACTION_CANCEL_UPDATE"
-        private const val ACTION_REBOOT = "com.flamingo.updater.ACTION_REBOOT"
+        private const val ACTION_CANCEL_UPDATE = "com.flamingo.updater.action.CANCEL_UPDATE"
+        private const val ACTION_REBOOT = "com.flamingo.updater.action.REBOOT"
+        private const val ACTION_CANCEL_AUTO_REBOOT = "com.flamingo.updater.action.CANCEL_AUTO_REBOOT"
 
         private fun logD(msg: String) {
             if (DEBUG) Log.d(TAG, msg)

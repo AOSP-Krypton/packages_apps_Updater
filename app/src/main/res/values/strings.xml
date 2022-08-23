@@ -109,6 +109,7 @@
     <string name="update_installation_failed_with_code">Update failed with error code <xliff:g example="20" id="error_code">%1$d</xliff:g></string>
     <string name="failed_to_verify_update_file">Failed to verify update file</string>
     <string name="update_install_service_notification_channel_name">Update install service</string>
+    <string name="auto_reboot_notification_text">Auto rebooting in <xliff:g example="1:00 minute" id="duration">%1$s</xliff:g></string>
 
     <!-- Settings -->
     <string name="settings">Settings</string>
@@ -120,5 +121,9 @@
     <string name="confirm_to_open_file_picker">Click on the OK button to open file manager for selecting the folder to export downloads. Note that this requires the stock file manager to be installed.</string>
     <string name="export_downloads">Export downloads</string>
     <string name="export_downloads_summary">Enable to automatically export downloaded OTA files</string>
+    <string name="auto_reboot">Auto reboot</string>
+    <string name="auto_reboot_summary">Whether to auto reboot after a successful system update</string>
+    <string name="auto_reboot_delay">Auto reboot delay</string>
+    <string name="auto_reboot_delay_summary">Duration of time to wait before auto rebooting device</string>
 
 </resources>

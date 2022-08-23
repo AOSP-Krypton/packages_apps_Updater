@@ -31,6 +31,10 @@ class SettingsRepository(context: Context) {
 
     val exportDownload: Flow<Boolean> = appSettings.data.map { it.exportDownload }
 
+    val autoReboot: Flow<Boolean> = appSettings.data.map { it.autoReboot }
+
+    val autoRebootDelay: Flow<Long> = appSettings.data.map { it.autoRebootDelay }
+
     /**
      * Set interval (in days) for automatic update checking.
      *
@@ -62,6 +66,22 @@ class SettingsRepository(context: Context) {
         appSettings.updateData {
             it.toBuilder()
                 .setExportDownload(export)
+                .build()
+        }
+    }
+
+    suspend fun setAutoReboot(autoReboot: Boolean) {
+        appSettings.updateData {
+            it.toBuilder()
+                .setAutoReboot(autoReboot)
+                .build()
+        }
+    }
+
+    suspend fun setAutoRebootDelay(delay: Long) {
+        appSettings.updateData {
+            it.toBuilder()
+                .setAutoRebootDelay(delay)
                 .build()
         }
     }

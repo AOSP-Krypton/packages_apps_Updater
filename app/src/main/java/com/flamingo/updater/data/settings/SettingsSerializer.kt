@@ -25,9 +25,13 @@ import androidx.datastore.dataStore
 import java.io.InputStream
 import java.io.OutputStream
 
+import kotlin.time.Duration.Companion.minutes
+
 const val DEFAULT_UPDATE_CHECK_INTERVAL = 7
 const val DEFAULT_OPT_OUT_INCREMENTAL = false
 const val DEFAULT_EXPORT_DOWNLOAD = false
+const val DEFAULT_AUTO_REBOOT = false
+val DEFAULT_AUTO_REBOOT_DELAY = 1.minutes.inWholeMilliseconds
 
 object SettingsSerializer : Serializer<Settings> {
 
@@ -35,6 +39,8 @@ object SettingsSerializer : Serializer<Settings> {
         .setUpdateCheckInterval(DEFAULT_UPDATE_CHECK_INTERVAL)
         .setOptOutIncremental(DEFAULT_OPT_OUT_INCREMENTAL)
         .setExportDownload(DEFAULT_EXPORT_DOWNLOAD)
+        .setAutoReboot(DEFAULT_AUTO_REBOOT)
+        .setAutoRebootDelay(DEFAULT_AUTO_REBOOT_DELAY)
         .build()
 
     override suspend fun readFrom(input: InputStream): Settings {

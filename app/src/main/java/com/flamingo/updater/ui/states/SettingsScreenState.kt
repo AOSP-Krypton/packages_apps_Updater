@@ -44,6 +44,12 @@ class SettingsScreenState(
     val exportDownload: Flow<Boolean>
         get() = settingsRepository.exportDownload
 
+    val autoReboot: Flow<Boolean>
+        get() = settingsRepository.autoReboot
+
+    val autoRebootDelay: Flow<Long>
+        get() = settingsRepository.autoRebootDelay
+
     fun setUpdateCheckInterval(interval: Int) {
         coroutineScope.launch {
             settingsRepository.setUpdateCheckInterval(interval)
@@ -60,6 +66,18 @@ class SettingsScreenState(
     fun setExportDownload(export: Boolean) {
         coroutineScope.launch {
             settingsRepository.setExportDownload(export)
+        }
+    }
+
+    fun setAutoReboot(autoReboot: Boolean) {
+        coroutineScope.launch {
+            settingsRepository.setAutoReboot(autoReboot)
+        }
+    }
+
+    fun setAutoRebootDelay(delay: Long) {
+        coroutineScope.launch {
+            settingsRepository.setAutoRebootDelay(delay)
         }
     }
 }
