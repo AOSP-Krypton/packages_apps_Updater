@@ -15,13 +15,14 @@
      limitations under the License.
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="app_name">Обновление</string>
+    <string name="app_name">Обновление системы</string>
 
     <!-- Update checker -->
     <string name="new_system_update">Обнаружено новое обновление системы</string>
     <string name="new_system_update_description">Нажмите здесь, чтобы загрузить и установить обновление</string>
     <string name="auto_update_check_failed">Ошибка автоматической проверки обновлений</string>
     <string name="auto_update_check_failed_desc">Пожалуйста, проверьте наличие обновлений вручную</string>
+    <string name="update_checker_service_notification_channel_name">Сервис автоматической проверки обновлений</string>
 
     <!-- Download -->
     <string name="downloading">Загрузка</string>
@@ -33,6 +34,7 @@
     <string name="updater_logo_description">Логотип программы обновления</string>
     <string name="check_for_updates">Проверить обновления</string>
     <string name="checking_for_update">Проверка обновлений…</string>
+    <string name="update_check_failed">Ошибка проверки обновления</string>
     <string name="last_checked_time_format">
         Последняя проверка в <xliff:g example="11:02 AM" id="time">%1$s</xliff:g>
     </string>
@@ -42,36 +44,58 @@
     <string name="new_update_description_format">
         v<xliff:g example="2.3" id="version">%1$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="12-11-2021" id="date">%2$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="1.3GB" id="size">%3$s</xliff:g>
     </string>
-    <string name="download">Скачать</string>
+    <string name="download">Загрузка</string>
+    <string name="select_download_source">Выберите источник загрузки</string>
     <string name="update">Обновить</string>
     <string name="download_text_format">
         Загружено - <xliff:g example="100" id="percent">%1$s%%</xliff:g>
     </string>
     <string name="waiting">Подождите</string>
+    <string name="retrying">Повтор</string>
     <string name="restoring_state">Восстановление состояния</string>
     <string name="exporting_file">Экспорт файла во внутреннюю память</string>
     <string name="exporting_failed">Не удалось экспортировать файл: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="menu_button_content_desc">Меню</string>
+    <string name="updater_logo_content_desc">Логотип обновления</string>
+    <string name="settings_menu_item_desc">Настройки</string>
+    <string name="local_upgrade_menu_item_desc">Локальное обновление</string>
+    <string name="exported_file_successfully">Файл OTA-обновления успешно экспортирован</string>
+    <string name="downloads">Загрузки</string>
+    <string name="downloads_menu_item_desc">Загрузка</string>
+    <string name="clear_cache">Очистить кеш</string>
+    <string name="clear_cache_menu_item_desc">Очистка кеша</string>
+    <string name="activity_not_found">Не найдено действий для открытия каталога экспорта</string>
+    <string name="failed_to_acquire_uri">Не удалось получить uri для каталога экспорта</string>
 
     <!-- Changelog -->
     <string name="changelog">Список изменений</string>
     <string name="changelog_unavailable">Список изменений недоступен</string>
 
     <!-- Update -->
+    <string name="successfully_copied">Успешно скопировано</string>
     <string name="low_battery_plug_in">Батарея разряжена, подключите зарядное устройство, чтобы продолжить</string>
     <string name="payload_generation_failed">Не удалось создать информацию о payload: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="failed_to_retrieve_offset_and_size">Не удалось получить смещение и размер из файла метаданных</string>
+    <string name="failed_to_retrieve_header_key_value_pair">Не удалось получить пару значений ключа заголовка из файла свойств полезной нагрузки</string>
+    <string name="zip_does_not_contain_metadata_file">Zip-файл не содержит файла метаданных</string>
+    <string name="metadata_file_empty">Файл метаданных пуст</string>
+    <string name="failed_to_extract_offset_and_size">Не удалось извлечь смещение и размер из метаданных</string>
+    <string name="zip_file_does_not_contain_payload_properties">Zip-файл не содержит файл свойств полезной нагрузки</string>
+    <string name="payload_properties_file_does_not_have_key_value_pairs">Файл свойств полезной нагрузки не содержит обязательных пар значений ключа заголовка.</string>
     <string name="metadata_verification_failed">Ошибка проверки метаданных</string>
     <string name="not_enough_space">Недостаточно места на устройстве</string>
-    <string name="applying_payload_failed">Не удалось применить payload: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="applying_payload_failed">Не удалось применить полезную нагрузку: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
     <string name="installing_update">Установка обновления</string>
     <string name="installation_failed">Ошибка установки</string>
     <string name="reboot">Перезагрузить</string>
     <string name="initializing">Инициализация…</string>
     <string name="installation_finished">Установка завершена</string>
     <string name="installation_paused">Установка приостановлена</string>
-    <string name="installing_update_format">Устанавливается обновление - <xliff:g example="100" id="percent">%1$s%%</xliff:g></string>
+    <string name="installing_update_format">Установка обновления - <xliff:g example="100" id="percent">%1$s%%</xliff:g></string>
+    <string name="verifying_update">Проверка - <xliff:g example="100.00" id="percent">%1$s%%</xliff:g></string>
     <string name="pause">Пауза</string>
     <string name="downgrading_not_allowed">Понижение версии запрещено</string>
-    <string name="rootfs_verification_failed">Ошибка проверки Rootfs, повторите попытку.</string>
+    <string name="rootfs_verification_failed">Ошибка проверки Rootfs, повторите попытку</string>
     <string name="update_transfer_error">Не удалось передать обновление</string>
     <string name="resume">Продолжить</string>
     <string name="local_upgrade">Локальное обновление</string>
@@ -79,12 +103,24 @@
     <string name="copying_file">Копирование файла</string>
     <string name="copying_failed">Не удалось скопировать: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
     <string name="install_update">Установить обновление</string>
-    <string name="update_installation_failed_with_code">Ошибка обновления <xliff:g example="20" id="error_code">%1$d</xliff:g></string>
+    <string name="update_installation_failed_with_code">Ошибка обновления с кодом <xliff:g example="20" id="error_code">%1$d</xliff:g></string>
+    <string name="failed_to_verify_update_file">Ошибка проверки файла обновления</string>
+    <string name="update_install_service_notification_channel_name">Сервис установки обновления</string>
+    <string name="auto_reboot_notification_text">Автоматическая перезагрузка через <xliff:g example="1:00 minute" id="duration">%1$s</xliff:g></string>
 
     <!-- Settings -->
     <string name="settings">Настройки</string>
     <string name="update_check_interval_title">Частота поиска обновлений</string>
     <string name="update_check_interval_summary">Промежуток времени в днях между поисками доступных обновлений</string>
     <string name="opt_out_incremental_title">Отказаться от мини-OTA обновлений</string>
-    <string name="opt_out_incremental_summary">Всегда устанавливать полные OTA. Нужно для пользователей с root или для тех кто как-то модифицировал систему</string>
+    <string name="opt_out_incremental_summary">Всегда устанавливать полные OTA. Нужно для пользователей с правами суперпользователя или для тех, кто как-то модифицировал систему</string>
+    <string name="redirecting">Перенаправление</string>
+    <string name="confirm_to_open_file_picker">Нажмите кнопку «ОК», чтобы открыть файловый менеджер для выбора папки для экспорта загрузок. Обратите внимание, что для этого требуется установленный стандартный файловый менеджер.</string>
+    <string name="export_downloads">Экспорт загрузок</string>
+    <string name="export_downloads_summary">Включить автоматический экспорт загруженных OTA файлов</string>
+    <string name="auto_reboot">Автоматическая перезагрузка</string>
+    <string name="auto_reboot_summary">Следует ли автоматически перезагружаться после успешного обновления системы</string>
+    <string name="auto_reboot_delay">Задержка автоматической перезагрузки</string>
+    <string name="auto_reboot_delay_summary">Время ожидания до автоматической перезагрузки устройства</string>
+
 </resources>
