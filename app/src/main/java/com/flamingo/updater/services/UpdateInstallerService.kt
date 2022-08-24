@@ -46,6 +46,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -290,6 +291,7 @@ class UpdateInstallerService : LifecycleService() {
                 durationLeft -= duration.milliseconds
                 updateAutoRebootNotification(durationLeft)
                 currentTime = SystemClock.uptimeMillis()
+                delay(1000)
             } while (durationLeft.isPositive())
         }
     }
