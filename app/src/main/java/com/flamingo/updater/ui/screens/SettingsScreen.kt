@@ -20,6 +20,7 @@ import android.content.Intent
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -51,18 +52,20 @@ import com.flamingo.updater.data.settings.DEFAULT_UPDATE_CHECK_INTERVAL
 import com.flamingo.updater.ui.states.SettingsScreenState
 import com.flamingo.updater.ui.states.rememberSettingsScreenState
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SettingsScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
     state: SettingsScreenState = rememberSettingsScreenState()
 ) {
+    val autoReboot by state.autoReboot.collectAsState(initial = DEFAULT_AUTO_REBOOT)
     CollapsingToolbarLayout(
         modifier = modifier,
         title = stringResource(R.string.settings),
         onBackButtonPressed = { navController.popBackStack() }
     ) {
-        item {
+        item(key = R.string.update_check_interval_title) {
             val updateCheckIntervalState by state.updateCheckInterval.collectAsState(
                 DEFAULT_UPDATE_CHECK_INTERVAL
             )
@@ -72,6 +75,7 @@ fun SettingsScreen(
                 )
             }
             DiscreteSeekBarPreference(
+                modifier = Modifier.animateItemPlacement(),
                 title = stringResource(R.string.update_check_interval_title),
                 summary = stringResource(R.string.update_check_interval_summary),
                 min = 1,
@@ -86,11 +90,12 @@ fun SettingsScreen(
                 }
             )
         }
-        item {
+        item(key = R.string.opt_out_incremental_title) {
             val optOutIncremental by state.optOutIncremental.collectAsState(
                 DEFAULT_OPT_OUT_INCREMENTAL
             )
             SwitchPreference(
+                modifier = Modifier.animateItemPlacement(),
                 title = stringResource(R.string.opt_out_incremental_title),
                 summary = stringResource(R.string.opt_out_incremental_summary),
                 checked = optOutIncremental,
@@ -99,7 +104,7 @@ fun SettingsScreen(
                 }
             )
         }
-        item {
+        item(key = R.string.export_downloads) {
             val exportDownload by state.exportDownload.collectAsState(
                 DEFAULT_EXPORT_DOWNLOAD
             )
@@ -115,6 +120,7 @@ fun SettingsScreen(
                 }
             var showDialog by remember { mutableStateOf(false) }
             SwitchPreference(
+                modifier = Modifier.animateItemPlacement(),
                 title = stringResource(R.string.export_downloads),
                 summary = stringResource(R.string.export_downloads_summary),
                 checked = exportDownload,
@@ -143,9 +149,9 @@ fun SettingsScreen(
                 },
             )
         }
-        item {
-            val autoReboot by state.autoReboot.collectAsState(initial = DEFAULT_AUTO_REBOOT)
+        item(key = R.string.auto_reboot) {
             SwitchPreference(
+                modifier = Modifier.animateItemPlacement(),
                 title = stringResource(id = R.string.auto_reboot),
                 summary = stringResource(id = R.string.auto_reboot_summary),
                 checked = autoReboot,
@@ -154,21 +160,24 @@ fun SettingsScreen(
                 }
             )
         }
-        item {
-            val autoRebootDelay by state.autoRebootDelay.collectAsState(initial = DEFAULT_AUTO_REBOOT_DELAY)
-            ListPreference(
-                title = stringResource(id = R.string.auto_reboot_delay),
-                summary = stringResource(id = R.string.auto_reboot_delay_summary),
-                entries = stringArrayResource(id = R.array.auto_reboot_delay_entries)
-                    .zip(integerArrayResource(id = R.array.auto_reboot_delay_values).toTypedArray())
-                    .map {
-                        Entry(it.first, it.second.toLong())
-                    },
-                value = autoRebootDelay,
-                onEntrySelected = {
-                    state.setAutoRebootDelay(it)
-                }
-            )
+        if (autoReboot) {
+            item(key = R.string.auto_reboot_delay) {
+                val autoRebootDelay by state.autoRebootDelay.collectAsState(initial = DEFAULT_AUTO_REBOOT_DELAY)
+                ListPreference(
+                    modifier = Modifier.animateItemPlacement(),
+                    title = stringResource(id = R.string.auto_reboot_delay),
+                    summary = stringResource(id = R.string.auto_reboot_delay_summary),
+                    entries = stringArrayResource(id = R.array.auto_reboot_delay_entries)
+                        .zip(integerArrayResource(id = R.array.auto_reboot_delay_values).toTypedArray())
+                        .map {
+                            Entry(it.first, it.second.toLong())
+                        },
+                    value = autoRebootDelay,
+                    onEntrySelected = {
+                        state.setAutoRebootDelay(it)
+                    }
+                )
+            }
         }
     }
 }
