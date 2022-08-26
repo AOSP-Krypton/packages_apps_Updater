@@ -117,5 +117,9 @@
     <string name="confirm_to_open_file_picker">点击 "确定" 按钮，打开文件管理器，选择要导出下载的文件夹。注意：需要 DocumentsUI</string>
     <string name="export_downloads">导出下载</string>
     <string name="export_downloads_summary">自动导出下载的 OTA 文件</string>
+    <string name="auto_reboot">自动重启</string>
+    <string name="auto_reboot_summary">当系统更新完成后自动重启</string>
+    <string name="auto_reboot_delay">自动重启延迟</string>
+    <string name="auto_reboot_delay_summary">设置自动重启前等待时间</string>
 
 </resources>
