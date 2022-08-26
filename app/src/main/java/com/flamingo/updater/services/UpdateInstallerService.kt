@@ -45,6 +45,7 @@ import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -283,7 +284,7 @@ class UpdateInstallerService : LifecycleService() {
 
     private fun startAutoRebootTimer() {
         if (autoRebootTimer?.isActive == true) return
-        autoRebootTimer = lifecycleScope.launch {
+        autoRebootTimer = lifecycleScope.launch(Dispatchers.Default) {
             var durationLeft = settingsRepository.autoRebootDelay.first().milliseconds
             var currentTime = SystemClock.uptimeMillis()
             do {
@@ -293,6 +294,7 @@ class UpdateInstallerService : LifecycleService() {
                 currentTime = SystemClock.uptimeMillis()
                 delay(1000)
             } while (durationLeft.isPositive())
+            reboot()
         }
     }
 
