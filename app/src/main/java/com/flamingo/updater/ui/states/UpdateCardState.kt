@@ -18,6 +18,7 @@ package com.flamingo.updater.ui.states
 
 import android.content.Context
 import android.content.Intent
+import android.os.UserHandle
 
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -146,7 +147,7 @@ class UpdateCardState(
     }
 
     private fun startUpdate() {
-        context.startService(Intent(context, UpdateInstallerService::class.java))
+        context.startServiceAsUser(Intent(context, UpdateInstallerService::class.java), UserHandle.SYSTEM)
         service?.startUpdate()
     }
 }
@@ -162,7 +163,8 @@ fun rememberUpdateCardState(
         intent = Intent(context, UpdateInstallerService::class.java),
         obtainService = {
             (it as UpdateInstallerService.ServiceBinder).service
-        }
+        },
+        userHandle = UserHandle.SYSTEM
     )
     return remember(
         updateRepository,

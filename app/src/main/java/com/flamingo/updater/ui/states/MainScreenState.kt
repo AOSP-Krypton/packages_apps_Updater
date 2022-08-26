@@ -19,6 +19,7 @@ package com.flamingo.updater.ui.states
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.UserHandle
 
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.material3.SnackbarHostState
@@ -190,7 +191,7 @@ class MainScreenState(
                 val resolvedActivities =
                     context.packageManager.queryIntentActivities(intent, 0 /* flags */)
                 if (resolvedActivities.isNotEmpty()) {
-                    context.startActivity(intent)
+                    context.startActivityAsUser(intent, UserHandle.SYSTEM)
                 } else {
                     snackbarHostState.showSnackbar(context.getString(R.string.activity_not_found))
                 }
