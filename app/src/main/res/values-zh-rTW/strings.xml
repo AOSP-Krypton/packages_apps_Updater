@@ -110,16 +110,16 @@
     <!-- Settings -->
     <string name="settings">更新設定</string>
     <string name="update_check_interval_title">定期檢查更新</string>
-    <string name="update_check_interval_summary">設定檢查系統更新頻率（天）</string>
+    <string name="update_check_interval_summary">設定檢查系統更新的頻率（天）</string>
     <string name="opt_out_incremental_title">全量更新</string>
-    <string name="opt_out_incremental_summary">只下載安裝全量包\n若您已 ROOT 或以任何形式修改過系統，則您必須開啟此選項。</string>
-    <string name="redirecting">重定向中</string>
-    <string name="confirm_to_open_file_picker">點選 "確定" 按鈕，開啟檔案管理器，選擇要匯出下載的資料夾。注意：需要 DocumentsUI</string>
+    <string name="opt_out_incremental_summary">開啟後將只下載安裝全量包\n注意：已 ROOT 或以任何形式修改過系統的裝置必須啟用此選項。</string>
+    <string name="redirecting">提示</string>
+    <string name="confirm_to_open_file_picker">點選 "確定" 按鈕後，將開啟檔案管理器。您需要選擇您想存放已下載檔案的資料夾。\n注意：需要 DocumentsUI</string>
     <string name="export_downloads">匯出下載</string>
     <string name="export_downloads_summary">自動匯出下載的 OTA 檔案</string>
     <string name="auto_reboot">自動重啟</string>
     <string name="auto_reboot_summary">當系統更新完成後自動重啟</string>
     <string name="auto_reboot_delay">自動重啟延遲</string>
-    <string name="auto_reboot_delay_summary">設定自動重啟前等待時間</string>
+    <string name="auto_reboot_delay_summary">設定自動重啟前的等待時間</string>
 
 </resources>
