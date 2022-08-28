@@ -167,7 +167,7 @@ class UpdateChecker(
             }
 
         fun isNewUpdate(buildInfo: BuildInfo, incremental: Boolean): Boolean =
-            (buildInfo.date) >= BuildDate &&
+            (buildInfo.date) > BuildDate &&
                     (!incremental || buildInfo.preBuildIncremental == BuildVersionIncremental)
     }
 }
