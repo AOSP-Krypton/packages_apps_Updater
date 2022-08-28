@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2022 FlamingoOS Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2" tools:ignore="MissingTranslation">
+    <string name="app_name">Atualizador</string>
+
+    <!-- Update checker -->
+    <string name="new_system_update">Uma nova atualização de sistema foi encontrada</string>
+    <string name="new_system_update_description">Toque aqui para baixar e instalar á atualização</string>
+    <string name="auto_update_check_failed">Á atualização automatica falhou</string>
+    <string name="auto_update_check_failed_desc">Por favor tente procurar por atualizações manualmente</string>
+    <string name="update_checker_service_notification_channel_name">Procurar automaticamente por atualizações</string>
+
+    <!-- Download -->
+    <string name="downloading">Baixando</string>
+    <string name="downloading_update">Baixando atualização</string>
+    <string name="downloading_failed">Erro no Download</string>
+    <string name="downloading_finished">atualização Baixada com sucesso</string>
+
+    <!-- Main activity -->
+    <string name="updater_logo_description">Atualizador logo</string>
+    <string name="system_version_format" translatable="false">
+        Flamingo OS v<xliff:g example="2.3" id="version">%1$s</xliff:g>
+    </string>
+    <string name="check_for_updates">Procurar por atualizações</string>
+    <string name="checking_for_update">Procurando por favor agurade…</string>
+    <string name="update_check_failed">Ocorreu um erro ao procurar por atualizações</string>
+    <string name="last_checked_time_format">
+        Last checked at <xliff:g example="11:02 AM" id="time">%1$s</xliff:g>
+    </string>
+    <string name="up_to_date">Seu celular está atualizado</string>
+    <string name="come_back_later">volte aqui em breve…</string>
+    <string name="new_update_available">Uma atualização está disponível</string>
+    <string name="new_update_description_format">
+        v<xliff:g example="2.3" id="version">%1$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="12-11-2021" id="date">%2$s</xliff:g>\u0020\u0020|\u0020\u0020<xliff:g example="1.3GB" id="size">%3$s</xliff:g>
+    </string>
+    <string name="download">Baixar</string>
+    <string name="select_download_source">Selecione a fonte para baixar</string>
+    <string name="update">Atualização</string>
+    <string name="download_text_format">
+        Downloading - <xliff:g example="100" id="percent">%1$s%%</xliff:g>
+    </string>
+    <string name="waiting">Esperando</string>
+    <string name="retrying">Tentando Novamente</string>
+    <string name="restoring_state">Restaurando</string>
+    <string name="exporting_file">Copiando o arquivo para sua memoria interna</string>
+    <string name="exporting_failed">Falha na copia do arquivo: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="menu_button_content_desc">Botão do Menu</string>
+    <string name="updater_logo_content_desc">Atualizador logo</string>
+    <string name="settings_menu_item_desc">Menu de configurações</string>
+    <string name="local_upgrade_menu_item_desc">Atualização local</string>
+    <string name="exported_file_successfully">Copia da atualização concluida com sucesso</string>
+    <string name="downloads">Arquivos baixados</string>
+    <string name="downloads_menu_item_desc">Menu de arquivos baixados</string>
+    <string name="clear_cache">Clear cache</string>
+    <string name="clear_cache_menu_item_desc">Limpar o Cache</string>
+    <string name="activity_not_found">Nenhuma atividade encontrada para abrir o diretório de exportação</string>
+    <string name="failed_to_acquire_uri">Falha ao adquirir uri para o diretório de exportação</string>
+
+    <!-- Changelog -->
+    <string name="changelog">Historico de mudanças</string>
+    <string name="changelog_unavailable">Historico de mudanças não disponível</string>
+
+    <!-- Update -->
+    <string name="successfully_copied">Copiado com sucesso</string>
+    <string name="low_battery_plug_in">Bateria está descarregabndo por favor conecte o carregado para continuar</string>
+    <string name="payload_generation_failed">Informação de payload falhou: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="failed_to_retrieve_offset_and_size">Falha ao recuperar deslocamento e tamanho do arquivo de metadados</string>
+    <string name="failed_to_retrieve_header_key_value_pair">Falha ao recuperar o par de valores de chave de cabeçalho do arquivo de propriedades de carga útil</string>
+    <string name="zip_does_not_contain_metadata_file">O arquivo zip não contém os metadados</string>
+    <string name="metadata_file_empty">Os arquivos de metadados estão vazios</string>
+    <string name="failed_to_extract_offset_and_size">Falha ao extrair o deslocamento e o tamanho dos metadados</string>
+    <string name="zip_file_does_not_contain_payload_properties">O arquivo zip não contém o arquivo de propriedades de carga útil</string>
+    <string name="payload_properties_file_does_not_have_key_value_pairs">O arquivo de propriedades de carga útil não contém pares de valores de chave de cabeçalho obrigatórios</string>
+    <string name="metadata_verification_failed">A verificação dos metadados falhou</string>
+    <string name="not_enough_space">Seu celular está sem memoria</string>
+    <string name="applying_payload_failed">Falha ao aplicar o arquivo de carga: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="installing_update">Instalando atualização</string>
+    <string name="installation_failed">A instalação falhou</string>
+    <string name="reboot">Reiniciando</string>
+    <string name="initializing">Iniciando…</string>
+    <string name="installation_finished">A instalação foi concluída</string>
+    <string name="installation_paused">A instalação foi pausada</string>
+    <string name="installing_update_format">Instalando atualização - <xliff:g example="100.00" id="percent">%1$s%%</xliff:g></string>
+    <string name="verifying_update">Verificando - <xliff:g example="100.00" id="percent">%1$s%%</xliff:g></string>
+    <string name="pause">Pausa</string>
+    <string name="downgrading_not_allowed">Não é possível instalar um sistema anterior ao seu</string>
+    <string name="rootfs_verification_failed">A verificação do Rootfs falhou</string>
+    <string name="update_transfer_error">A transferencia da atualiz falhou</string>
+    <string name="resume">Retomar</string>
+    <string name="local_upgrade">Atualização local</string>
+    <string name="popup_menu">Opções do balão</string>
+    <string name="copying_file">Copiando arquivo</string>
+    <string name="copying_failed">A copia falhou: <xliff:g example="Exception" id="reason">%1$s</xliff:g></string>
+    <string name="install_update">Instalando Atualização</string>
+    <string name="update_installation_failed_with_code">A atualização falhou, codigo do erro <xliff:g example="20" id="error_code">%1$d</xliff:g></string>
+    <string name="failed_to_verify_update_file">Falha ao verificar arquivo de atualização</string>
+    <string name="update_install_service_notification_channel_name">Atualizar serviço de instalação</string>
+    <string name="auto_reboot_notification_text">Reiniciando em <xliff:g example="1:00 minute" id="duration">%1$s</xliff:g></string>
+
+    <!-- Settings -->
+    <string name="settings">configurações</string>
+    <string name="update_check_interval_title">Intervalo de verificação</string>
+    <string name="update_check_interval_summary">Intervalo periódico para procurar por atualizações</string>
+    <string name="opt_out_incremental_title">Desativar atualizações incrementais</string>
+    <string name="opt_out_incremental_summary">Habilita a instalação completa do sistema, nescessario se você tem root ou modificou os sistema de alguma maneira</string>
+    <string name="redirecting">Redirecionando</string>
+    <string name="confirm_to_open_file_picker">Clique no botão OK para abrir o gerenciador de arquivos para selecionar a pasta para exportar os downloads. Observe que isso requer que o gerenciador de arquivos de estoque esteja instalado.</string>
+    <string name="export_downloads">Exportar downloads</string>
+    <string name="export_downloads_summary">Ative para exportar automaticamente os arquivos OTA baixados</string>
+    <string name="auto_reboot">Reiniciar automaticamente</string>
+    <string name="auto_reboot_summary">Reinciar o sistema automaticamente caso a atualização tenha sido instalada com sucesso</string>
+    <string name="auto_reboot_delay">Tempo para reinciar automaticamente</string>
+    <string name="auto_reboot_delay_summary">Quanto tempo o sistema deve eseperar para reiniciar automaticamente</string>
+
+</resources>
