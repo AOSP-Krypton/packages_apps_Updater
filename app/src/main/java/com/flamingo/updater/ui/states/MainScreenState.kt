@@ -18,6 +18,8 @@ package com.flamingo.updater.ui.states
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.pm.PackageManager.ResolveInfoFlags
 import android.net.Uri
 import android.os.UserHandle
 
@@ -188,8 +190,10 @@ class MainScreenState(
             val uriResult = mainRepository.getExportDirectoryUri()
             if (uriResult.isSuccess) {
                 val intent = Intent(Intent.ACTION_VIEW, uriResult.getOrThrow())
-                val resolvedActivities =
-                    context.packageManager.queryIntentActivities(intent, 0 /* flags */)
+                val resolvedActivities = context.packageManager.queryIntentActivities(
+                    intent,
+                    ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY.toLong())
+                )
                 if (resolvedActivities.isNotEmpty()) {
                     context.startActivityAsUser(intent, UserHandle.SYSTEM)
                 } else {
