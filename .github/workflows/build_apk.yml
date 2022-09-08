@@ -7,7 +7,7 @@ concurrency:
 on:
   push:
     branches:
-      - 'A12.1'
+      - 'A13'
     paths-ignore:
       - '**.mkdn'
       - '.**'
@@ -33,7 +33,7 @@ jobs:
 
       - name: Clone our prebuilts
         run: |
-          git clone https://.:${{ secrets.API_TOKEN_GITHUB }}@github.com/Flamingo-OS/vendor_prebuilts
+          git clone https://.:${{ secrets.API_TOKEN_GITHUB }}@github.com/Flamingo-OS/vendor_prebuilts -b A13
           mkdir app/libs
           cp vendor_prebuilts/libs/framework.jar vendor_prebuilts/libs/support-compose.aar app/libs/
 
@@ -85,5 +85,5 @@ jobs:
               message="Update Updater APK for ${{ env.GIT_LINK }}"
             fi
             git commit -m "$message"
-            git push origin A12.1
+            git push origin A13
           fi

@@ -113,7 +113,7 @@ class GithubApiHelper {
             get() = Log.isLoggable(TAG, Log.DEBUG)
 
         // Git branch to fetch contents from
-        private const val GIT_BRANCH = "A12.1"
+        private const val GIT_BRANCH = "main"
 
         private const val OTA_JSON = "ota.json"
         private const val INCREMENTAL_OTA_JSON = "incremental_ota.json"
