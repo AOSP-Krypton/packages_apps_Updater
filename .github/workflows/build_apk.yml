@@ -33,7 +33,7 @@ jobs:
 
       - name: Clone our prebuilts
         run: |
-          git clone https://.:${{ secrets.API_TOKEN_GITHUB }}@gitlab.com/Flamingo-OS/vendor_prebuilts -b A13
+          git clone https://.:${{ secrets.API_TOKEN_GITLAB }}@gitlab.com/Flamingo-OS/vendor_prebuilts -b A13
           mkdir app/libs
           cp vendor_prebuilts/libs/framework.jar vendor_prebuilts/libs/support-compose.aar app/libs/
 
