@@ -33,7 +33,7 @@ jobs:
 
       - name: Clone our prebuilts
         run: |
-          git clone https://.:${{ secrets.API_TOKEN_GITLAB }}@gitlab.com/Flamingo-OS/vendor_prebuilts -b A13
+          git clone https://.:${{ secrets.PREBUILTS_REPO_TOKEN }}@gitlab.com/AOSP-Krypton/vendor_prebuilts -b A13
           mkdir app/libs
           cp vendor_prebuilts/libs/framework.jar vendor_prebuilts/libs/support-compose.aar app/libs/
 
@@ -67,7 +67,7 @@ jobs:
         if: ${{ !github.event.pull_request }}
         run: |
           git_hash=$(git rev-parse "$GITHUB_SHA")
-          link="https://github.com/Flamingo-OS/packages_apps_Updater/commit/$git_hash"
+          link="https://github.com/AOSP-Krypton/packages_apps_Updater/commit/$git_hash"
           echo "GIT_LINK=$link" >> $GITHUB_ENV
 
       - name: Uploading artifact

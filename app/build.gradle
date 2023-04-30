@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace 'com.flamingo.updater'
+    namespace 'com.kosp.updater'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.flamingo.updater"
+        applicationId "com.kosp.updater"
         minSdk 31
         targetSdk 33
         versionCode 1

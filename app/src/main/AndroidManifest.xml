@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     Copyright (C) 2022 FlamingoOS Project
+     Copyright (C) 2021-2023 AOSP-Krypton Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:sharedUserId="android.uid.system">
 
-    <protected-broadcast android:name="com.flamingo.updater.action.CANCEL_UPDATE" />
-    <protected-broadcast android:name="com.flamingo.updater.action.REBOOT" />
-    <protected-broadcast android:name="com.flamingo.updater.action.CANCEL_AUTO_REBOOT" />
+    <protected-broadcast android:name="com.kosp.updater.action.CANCEL_UPDATE" />
+    <protected-broadcast android:name="com.kosp.updater.action.REBOOT" />
+    <protected-broadcast android:name="com.kosp.updater.action.CANCEL_AUTO_REBOOT" />
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.INTERNET" />
